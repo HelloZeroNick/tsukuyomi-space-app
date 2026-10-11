@@ -1,7 +1,11 @@
 {
+  "ci-validation.json": "61827f7e2b36fcd4d9cfbb0d319d82cb633acfd8cc4dd97acfa36b8bbc846b9c",
   "detail-comparison.png": "b5006b91b706ffb99b7274302ed15b40ead3bab6c2296b270cec7dbf6fe82b33",
-  "sharpness-before.json": "e312709949439de9e4919caf2b5621394a184b301578bb423a63e2fe2de00d2d",
-  "sharpness-after.json": "148e1be16a930ed0d0fe07cadf783d724018fe82719986325589fcc5af6113dc",
+  "local-validation.json": "ce0880d2c1f6139c0e8293a6307ef5c73d84d55e2e14f782f8f4ec27498bcb19",
+  "native-gpu-render.json": "556ea4f2f75c584cb58665671f78e0f4a1ce86a489988a64c2c834e72809f049",
+  "performance/room-after.json": "40be1b359f57143f2d982435455b1f82a09565427a38ec0cda22875b7971d611",
   "performance/room-before.json": "38079beae2d5cfdada736d64d0889eb5bf10de471b00c9917cfe43b86462cdfc",
-  "performance/room-after.json": "40be1b359f57143f2d982435455b1f82a09565427a38ec0cda22875b7971d611"
+  "release-validation.json": "4bda55b0154c0a5b54003bc3ef51841e6cccca0af43f5f2b66dadd7701182e9b",
+  "sharpness-after.json": "148e1be16a930ed0d0fe07cadf783d724018fe82719986325589fcc5af6113dc",
+  "sharpness-before.json": "e312709949439de9e4919caf2b5621394a184b301578bb423a63e2fe2de00d2d"
 }

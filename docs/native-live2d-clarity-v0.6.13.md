@@ -42,6 +42,16 @@ Apple M5 / 16GiB / macOS27.0.1，Flutter3.47.5 Profile；窗口1280×820，角�
 
 原始数据：[基线](qa/live2d-clarity-v0.6.13/performance/room-before.json)、[本版](qa/live2d-clarity-v0.6.13/performance/room-after.json)。
 
+## 发布验证
+
+本地完整回归803项通过、33项可选检查跳过，静态分析与格式检查通过；真实Cubism检查启用。macOS原生GPU补查30帧眨眼，细节、UV、遮罩、染色、混合检查均通过。macOS发布构建0.6.13+19的419项资源、两个编译着色器、arm64/x64桌面运行时及包签名校验通过。
+
+[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38125433211)的818项测试通过、18项可选检查跳过；五平台构建及Android原生探针通过。Windows/macOS/Linux各通过81项桌面控制与绘制回归、110项打包后的Agent验证。
+
+[v0.6.13-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.13-beta.1)指向生产代码 `2b210da32b7a94ef9c1b0e9d774bf078f8f86a76`；全部11个发布附件、合计2,207,814,723字节已实际下载，匹配GitHub官方摘要及SHA256SUMS。应用更新联网测试也识别本版，下载并验证127,644,641字节的iOS自签包，未执行安装。
+
+记录：[本地验证](qa/live2d-clarity-v0.6.13/local-validation.json)、[CI验证](qa/live2d-clarity-v0.6.13/ci-validation.json)、[发布附件校验](qa/live2d-clarity-v0.6.13/release-validation.json)。
+
 ## 复测与边界
 
 ```sh
@@ -50,4 +60,4 @@ flutter drive --profile -d macos --driver=test_driver/performance_driver.dart --
 flutter test --dart-define=RUN_CUBISM_TESTS=true test/live2d_native_test.dart test/live2d_renderer_test.dart test/live2d_scene_controller_test.dart test/live2d_blink_test.dart
 ```
 
-Android发布探针使用生产默认3072纹理与900,000预算，增加细线和变形裁切验证，并继续验证遮罩、染色、混合、音频及更新接口。CI模拟器提供功能证据，不能代替手机流畅度或发热测试。用户的Android手机、9070和4060显卡未连接到本工作区；对应设备的实际画质、GPU占用和长时间内存仍需复测。iOS安装包仍需自签。
+Android发布探针使用生产默认3072纹理与900,000预算，增加细线和变形裁切验证，并继续验证遮罩、染色、混合、音频及更新接口。本次软件渲染模拟器采集11帧，UI P95为10.788ms、Raster P95为812.722ms，未达到30fps预算；真实模型没有触发局部合成，另由合成用例验证该路径。CI模拟器提供功能证据，不能代替手机流畅度或发热测试。用户的Android手机、9070和4060显卡未连接到本工作区；对应设备的实际画质、GPU占用和长时间内存仍需复测。iOS安装包仍需自签。

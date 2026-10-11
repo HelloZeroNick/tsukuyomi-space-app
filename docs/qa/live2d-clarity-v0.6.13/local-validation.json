@@ -1,6 +1,6 @@
 {
   "version": "0.6.13+19",
-  "validated_at": "2026-10-11T08:35:32.867668+00:00",
+  "validated_at": "2026-10-11T09:10:57.637603+00:00",
   "format": "passed",
   "analysis": "no issues",
   "flutter_regression": {
@@ -35,5 +35,34 @@
     "Still-image mobile dimensions rendered on native macOS GPU",
     "Higher default texture memory is an intentional detail tradeoff; economy retains 2048 textures",
     "Profile fixtures use 1x1 PNG image messages, no live API or disk credentials"
-  ]
+  ],
+  "macos_release": {
+    "source_commit": "2b210da32b7a94ef9c1b0e9d774bf078f8f86a76",
+    "version": "0.6.13",
+    "build": "19",
+    "built": true,
+    "runtime_arches": [
+      "arm64",
+      "x64"
+    ],
+    "runtime_manifests": "verified",
+    "codesign_deep_strict": "passed",
+    "exact_packaged_assets": 419,
+    "compiled_shaders": 2
+  },
+  "native_gpu_regression": {
+    "passed": true,
+    "blink_frames": 30,
+    "texture_rgba_bytes": 75497472,
+    "tinted_meshes": 14,
+    "source": "native-gpu-render.json"
+  },
+  "live_app_updater": {
+    "detected_tag": "v0.6.13-beta.1",
+    "download_verified": true,
+    "installed": false,
+    "asset": "tsukuyomi-space-0.6.13-ios-arm64-unsigned.ipa",
+    "bytes": 127644641,
+    "sha256": "ed5965999d448077037bebdc734220f63ab7d3d90d980532fe499e46ceff0fc6"
+  }
 }
