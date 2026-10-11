@@ -1,5 +1,5 @@
 {
-  "source": "836e11b56610cf83550fe7d51a4f830f95f05df5",
+  "source": "99947400d6bcf8921cfbdeb16ebb53991cbcf3e1",
   "cases": [
     {
       "settings": {
@@ -306,8 +306,6 @@
         "model": "claude-sonnet",
         "stream": true,
         "options": {},
-        "temperature": 0.7,
-        "top_p": 0.9,
         "max_tokens": 2048
       },
       "capabilities": {
@@ -380,8 +378,6 @@
         "model": "claude-sonnet",
         "stream": true,
         "options": {},
-        "temperature": 0.2,
-        "top_p": 0.9,
         "max_tokens": 1024
       },
       "capabilities": {
@@ -707,6 +703,14 @@
         },
         "publicList": false
       }
+    },
+    {
+      "input": {
+        "apiUrl": "https://api.anthropic.com/v1/chat/completions",
+        "apiKey": "fixture-key",
+        "workspaceId": "workspace-test"
+      },
+      "error": "WORKSPACE_REQUIRED"
     },
     {
       "input": {

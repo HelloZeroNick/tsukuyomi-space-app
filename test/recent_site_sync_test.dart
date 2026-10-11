@@ -41,7 +41,10 @@ void main() {
       final settings = RoomSettings(
         llmUrl: input['apiUrl'],
         apiKey: input['apiKey'],
-        options: {'aliyunWorkspaceId': input['workspaceId']},
+        options: {
+          'aliyunWorkspaceId': input['workspaceId'],
+          'anthropicWorkspaceId': input['workspaceId'],
+        },
       );
       if (item['error'] != null) {
         expect(() => catalogPlan(settings), throwsA(isA<ApiFailure>()));
@@ -123,6 +126,254 @@ void main() {
       );
       catalog.close();
     }
+  });
+  RoomSettings claude([String workspace = '']) => RoomSettings(
+    llmUrl: 'https://api.anthropic.com/v1/messages',
+    apiKey: 'fixture-key',
+    options: {
+      'anthropicWorkspaceId': workspace,
+      'aliyunWorkspaceId': 'aliyun-only',
+    },
+  );
+  test('Claude catalog sends its own headers, workspace and cursor', () {
+    var plan = catalogPlan(claude());
+    expect(plan.provider, 'anthropic');
+    expect(
+      plan.url.toString(),
+      'https://api.anthropic.com/v1/models?limit=1000',
+    );
+    expect(plan.headers, {
+      'Accept': 'application/json',
+      'x-api-key': 'fixture-key',
+      'anthropic-version': '2023-06-01',
+    });
+    plan = catalogPlan(claude(' wrkspc_01-ab '), cursor: 'claude-opus-5-5');
+    expect(plan.url.queryParameters, {
+      'limit': '1000',
+      'after_id': 'claude-opus-5-5',
+    });
+    expect(plan.headers['anthropic-workspace-id'], 'wrkspc_01-ab');
+    expect(catalogWorkspaceId(claude(' wrkspc_01-ab ')), 'wrkspc_01-ab');
+    expect(
+      catalogWorkspaceId(
+        const RoomSettings(
+          llmUrl: 'https://dashscope.aliyuncs.com/v1/chat/completions',
+          options: {
+            'aliyunWorkspaceId': 'aliyun-only',
+            'anthropicWorkspaceId': 'wrkspc_a',
+          },
+        ),
+      ),
+      'aliyun-only',
+    );
+    // Invalid workspace IDs are never sent; a native app needs no CORS opt-in.
+    for (final workspace in [
+      'workspace-test',
+      'wrkspc_',
+      'wrkspc_a b',
+      'wrkspc_${'a' * 121}',
+    ]) {
+      expect(
+        () => catalogPlan(claude(workspace)),
+        throwsA(
+          isA<ApiFailure>().having(
+            (e) => e.message,
+            'message',
+            contains('wrkspc_'),
+          ),
+        ),
+      );
+    }
+    expect(
+      plan.headers.keys,
+      isNot(contains('anthropic-dangerous-direct-browser-access')),
+    );
+    expect(
+      () => catalogPlan(claude(), cursor: 'claude/opus'),
+      throwsA(isA<ApiFailure>()),
+    );
+  });
+  test('Claude catalog reads its model fields and pages by last_id', () {
+    final page = normalizeCatalog({
+      'data': [
+        {
+          'type': 'model',
+          'id': 'claude-opus-5-5',
+          'display_name': 'Claude Opus 5.5',
+          'created_at': '2026-07-01T00:00:00Z',
+          'max_input_tokens': 1000000,
+          'capabilities': {
+            'image_input': {'supported': true},
+          },
+        },
+        {
+          'type': 'model',
+          'id': 'claude-text',
+          'capabilities': {
+            'image_input': {'supported': false},
+          },
+        },
+      ],
+      'has_more': true,
+      'last_id': 'claude-text',
+    }, 'anthropic');
+    expect(page.cursor, 'claude-text');
+    expect(page.models.first['label'], 'Claude Opus 5.5');
+    expect(page.models.first['contextLength'], 1000000);
+    expect(
+      page.models.first['created'],
+      DateTime.utc(2026, 7).millisecondsSinceEpoch ~/ 1000,
+    );
+    expect(page.models.first['capabilities'], {'image': true});
+    expect(page.models.last['capabilities'], {'image': false});
+    expect(page.models.last['created'], 0);
+    expect(
+      normalizeCatalog({
+        'data': [],
+        'has_more': false,
+        'last_id': 'x',
+      }, 'anthropic').cursor,
+      '',
+    );
+  });
+  test(
+    'Claude catalog follows pages and explains a missing workspace',
+    () async {
+      final seen = <Uri>[];
+      var catalog = ModelCatalog(
+        client: MockClient((request) async {
+          seen.add(request.url);
+          expect(request.headers['x-api-key'], 'fixture-key');
+          expect(request.headers['anthropic-version'], '2023-06-01');
+          expect(request.headers['anthropic-workspace-id'], 'wrkspc_fixture');
+          expect(request.headers['Authorization'], isNull);
+          final first = request.url.queryParameters['after_id'] == null;
+          final id = first ? 'claude-opus-5-5' : 'claude-sonnet-5-5';
+          return http.Response(
+            jsonEncode({
+              'data': [
+                {'id': id},
+              ],
+              'has_more': first,
+              'last_id': id,
+            }),
+            200,
+          );
+        }),
+      );
+      final rows = await catalog.load(claude('wrkspc_fixture'));
+      expect(rows.map((row) => row['id']), [
+        'claude-opus-5-5',
+        'claude-sonnet-5-5',
+      ]);
+      expect(seen.last.queryParameters['after_id'], 'claude-opus-5-5');
+      await catalog.load(claude('wrkspc_fixture'));
+      expect(seen.length, 2, reason: 'same workspace reuses the cached list');
+      catalog.close();
+      catalog = ModelCatalog(
+        client: MockClient((_) async => http.Response('{}', 400)),
+      );
+      addTearDown(catalog.close);
+      await expectLater(
+        catalog.load(claude()),
+        throwsA(
+          isA<ApiFailure>().having(
+            (e) => e.message,
+            'message',
+            contains('Anthropic 工作区 ID'),
+          ),
+        ),
+      );
+    },
+  );
+  test('Claude API omits sampling and sends effort only where supported', () {
+    Map<String, dynamic> apply(String url, String model, Map payload) {
+      final key = ModelRuntime(RoomSettings(llmUrl: url)).providerKey;
+      return ModelRuntime(
+        RoomSettings(
+          llmUrl: url,
+          model: model,
+          options: {
+            'runtimeConfig': {
+              'providers': {
+                key: {
+                  'parameters': {
+                    'temperature': .7,
+                    'topP': .9,
+                    'reasoningEffort': 'high',
+                  },
+                },
+              },
+            },
+          },
+        ),
+      ).apply(Map<String, dynamic>.from(payload));
+    }
+
+    const claudeUrl = 'https://api.anthropic.com/v1/messages';
+    final payload = {
+      'max_tokens': 16000,
+      'temperature': 1,
+      'output_config': {'format': 'fixture'},
+    };
+    for (final model in [
+      'claude-opus-5-5',
+      'claude-fable-5-1',
+      'claude-opus-4-6',
+      'claude-sonnet-4-6',
+      'claude-haiku-5-0',
+    ]) {
+      final body = apply(claudeUrl, model, payload);
+      expect(body.containsKey('temperature'), isFalse, reason: model);
+      expect(body.containsKey('top_p'), isFalse, reason: model);
+      expect(body['output_config'], {
+        'format': 'fixture',
+        'effort': 'high',
+      }, reason: model);
+    }
+    expect(payload['output_config'], {'format': 'fixture'});
+    for (final model in ['claude-sonnet-4-5', 'claude-haiku-4-5', 'claude-3']) {
+      final body = apply(claudeUrl, model, payload);
+      expect(body.containsKey('temperature'), isFalse, reason: model);
+      expect(body['output_config'], {'format': 'fixture'}, reason: model);
+    }
+    // Other Messages-compatible gateways keep sampling and get no effort.
+    final minimax = apply('https://api.minimaxi.com/anthropic', 'MiniMax-M2', {
+      'max_tokens': 4096,
+      'temperature': 1,
+    });
+    expect(minimax['temperature'], .7);
+    expect(minimax['top_p'], .9);
+    expect(minimax.containsKey('output_config'), isFalse);
+    final runtime = ModelRuntime(claude());
+    expect(
+      runtime.allowedMappings('reasoningEffort'),
+      contains('output_config.effort'),
+    );
+    expect(
+      ModelRuntime(
+        const RoomSettings(
+          llmUrl: 'https://api.openai.com/v1/chat/completions',
+        ),
+      ).allowedMappings('reasoningEffort'),
+      isNot(contains('output_config.effort')),
+    );
+    final capabilities = ModelRuntime(
+      claude().copyWith(model: 'claude-opus-5-5'),
+    ).resolveCapabilities();
+    for (final key in ['text', 'image', 'tools', 'streaming']) {
+      expect(capabilities[key]['value'], isTrue, reason: key);
+      expect(capabilities[key]['source'], 'builtin', reason: key);
+    }
+    expect(
+      ModelRuntime(
+        const RoomSettings(
+          llmUrl: 'https://openrouter.ai/api/v1/chat/completions',
+          model: 'claude-opus-5-5',
+        ),
+      ).resolveCapabilities()['image']['source'],
+      'unknown',
+    );
   });
   test('runtime rejects unlisted mappings and invalid values', () {
     for (final layer in [

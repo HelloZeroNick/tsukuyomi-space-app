@@ -124,8 +124,8 @@ void main() {
       containsPair('stream', false),
     );
     final anthropic = siteGuideRequestBody(
-      guideSettings.copyWith(model: 'claude'),
-      Uri.parse('https://api.anthropic.com/v1/messages'),
+      guideSettings.copyWith(model: 'MiniMax-M2'),
+      Uri.parse('https://api.minimaxi.com/anthropic/v1/messages'),
       'system',
       [],
       'question',
@@ -133,6 +133,18 @@ void main() {
     expect(anthropic['max_tokens'], 900);
     expect(anthropic['temperature'], .25);
     expect(anthropic['system'], 'system');
+    // Claude thinks within max_tokens and rejects sampling fields.
+    final claude = siteGuideRequestBody(
+      guideSettings.copyWith(model: 'claude-haiku-4-5'),
+      Uri.parse('https://api.anthropic.com/v1/messages'),
+      'system',
+      [],
+      'question',
+    );
+    expect(claude['max_tokens'], 16000);
+    expect(claude.containsKey('temperature'), isFalse);
+    expect(claude.containsKey('fallbacks'), isFalse);
+    expect(claude['system'], 'system');
     expect(
       siteGuideRequestBody(
         guideSettings.copyWith(model: 'kimi-k2'),
@@ -164,6 +176,80 @@ void main() {
       )['X-OpenRouter-Title'],
       'Tsukuyomi Space Guide',
     );
+  });
+
+  test('Claude guide sends workspace and fallback headers and never shows a refused or cut answer', () async {
+    final requests = <http.Request>[];
+    var answer = <String, dynamic>{
+      'content': [
+        {'type': 'text', 'text': '前往 /editor。'},
+      ],
+      'stop_reason': 'end_turn',
+    };
+    final service = SiteGuideService(
+      clientFactory: () => MockClient((r) async {
+        requests.add(r);
+        return guideReply(answer);
+      }),
+    );
+    addTearDown(service.dispose);
+    final s = guideSettings.copyWith(
+      llmUrl: 'https://api.anthropic.com/v1/messages',
+      model: 'claude-opus-5-5',
+      options: {'anthropicWorkspaceId': ' wrkspc_team '},
+    );
+    expect(await service.ask(settings: s, question: '怎么发布？'), '前往 /editor。');
+    final request = requests.single, body = jsonDecode(request.body) as Map;
+    expect(request.headers['x-api-key'], 'private-key');
+    expect(request.headers['anthropic-workspace-id'], 'wrkspc_team');
+    expect(
+      request.headers['anthropic-beta'],
+      'server-side-fallback-2026-07-01',
+    );
+    expect(request.headers.containsKey('Authorization'), isFalse);
+    expect(
+      request.headers.keys,
+      isNot(contains('anthropic-dangerous-direct-browser-access')),
+    );
+    expect(body['fallbacks'], 'default');
+    expect(body['max_tokens'], 16000);
+    expect(body.containsKey('temperature'), isFalse);
+    expect(
+      siteGuideHeaders(
+        s.copyWith(options: {'anthropicWorkspaceId': 'team'}),
+        Uri.parse('https://api.anthropic.com/v1/messages'),
+      ).containsKey('anthropic-workspace-id'),
+      isFalse,
+    );
+
+    for (final (reason, message) in [
+      ('refusal', '拒绝'),
+      ('max_tokens', '未完整结束'),
+    ]) {
+      answer = {
+        'content': [
+          {'type': 'text', 'text': '半句'},
+        ],
+        'stop_reason': reason,
+      };
+      await expectLater(
+        service.ask(settings: s, question: '怎么发布？'),
+        throwsA(
+          isA<ApiFailure>().having((e) => e.message, reason, contains(message)),
+        ),
+      );
+    }
+
+    requests.clear();
+    answer = {
+      'success': true,
+      'data': {'reply': '前往 /editor。'},
+    };
+    await service.ask(
+      settings: s.copyWith(options: {...s.options, 'llmProxy': true}),
+      question: '怎么发布？',
+    );
+    expect(jsonDecode(requests.single.body)['workspaceId'], 'wrkspc_team');
   });
 
   test('proxy uses original /api/chat, clamps questions and history, and redacts failed messages', () async {

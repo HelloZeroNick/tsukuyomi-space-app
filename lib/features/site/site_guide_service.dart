@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../core/models.dart';
 import '../../core/room_archive.dart';
+import '../../core/room_protocol.dart';
 import 'site_guide_data.dart';
 
 class SiteGuideReference {
@@ -150,6 +151,11 @@ List<Map<String, dynamic>> siteGuideHistory(
   ];
 }
 
+bool siteGuideMessagesApi(Uri endpoint, String model) => RegExp(
+  r'api\.anthropic\.com|anthropic\.com/v1/messages|minimaxi\.com/anthropic|/anthropic/v1/messages|MiniMax-M2',
+  caseSensitive: false,
+).hasMatch('$endpoint ${model.trim()}');
+
 Map<String, dynamic> siteGuideRequestBody(
   RoomSettings settings,
   Uri endpoint,
@@ -183,16 +189,12 @@ Map<String, dynamic> siteGuideRequestBody(
       'max_output_tokens': 900,
     };
   }
-  if (RegExp(
-    r'api\.anthropic\.com|anthropic\.com/v1/messages|minimaxi\.com/anthropic|/anthropic/v1/messages|MiniMax-M2',
-    caseSensitive: false,
-  ).hasMatch('$endpoint $model')) {
+  if (siteGuideMessagesApi(endpoint, model)) {
     return {
       'model': model,
       'system': system,
       'messages': messages,
-      'max_tokens': 900,
-      'temperature': .25,
+      ...roomMessagesOptions(endpoint, model, maxTokens: 900, temperature: .25),
       'stream': false,
     };
   }
@@ -215,10 +217,14 @@ Map<String, dynamic> siteGuideRequestBody(
 Map<String, String> siteGuideHeaders(RoomSettings settings, Uri endpoint) => {
   'Content-Type': 'application/json',
   if (!siteGuideLocal(endpoint)) ...{
-    if (endpoint.host == 'api.anthropic.com') ...{
-      'x-api-key': settings.apiKey,
-      'anthropic-version': '2023-06-01',
-    } else
+    if (claudeApi(endpoint))
+      ...roomMessagesHeaders(
+        endpoint,
+        settings.apiKey,
+        settings.model.trim(),
+        workspaceId: settings.option('anthropicWorkspaceId'),
+      )
+    else
       'Authorization': 'Bearer ${settings.apiKey}',
     if (endpoint.host == 'openrouter.ai') ...{
       'HTTP-Referer': endpointUri(settings.siteUrl).origin,
@@ -313,6 +319,9 @@ class SiteGuideService {
         conversation = siteGuideHistory(history),
         system = SiteGuideReference.systemPrompt(language, routeName);
     final proxy = settings.flag('llmProxy') && !status.local;
+    final workspace = claudeApi(endpoint)
+        ? claudeWorkspaceId(settings.option('anthropicWorkspaceId'))
+        : '';
     try {
       final request =
           http.Request(
@@ -341,6 +350,7 @@ class SiteGuideService {
                       'apiKey': settings.apiKey,
                       'apiUrl': '$endpoint',
                       'model': settings.model,
+                      if (workspace.isNotEmpty) 'workspaceId': workspace,
                       'systemPrompt': system,
                     }
                   : siteGuideRequestBody(
@@ -371,6 +381,11 @@ class SiteGuideService {
           throw ApiFailure(
             '${data['message'] ?? 'The guide could not reach the configured model.'}',
           );
+        }
+        // Claude reports refusals and length cuts as HTTP 200; never show a
+        // partial answer.
+        if (!proxy && siteGuideMessagesApi(endpoint, settings.model)) {
+          validateCompletion(data);
         }
         final reply = siteGuideReply(proxy ? data['data'] : data);
         if (reply.isEmpty) {

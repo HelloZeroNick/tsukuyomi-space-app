@@ -19,6 +19,8 @@ moduleData('constants/room/knowledgeEntries.js');
 moduleData('constants/room/musicTracks.js');
 moduleData('constants/room/yachiyoModelParameterRegistry.js');
 moduleData('services/room/live2dTrackingFrameMapper.js');
+// TTS_PRESETS spreads the one-click GPT-SoVITS defaults.
+moduleData('services/room/oneclickTts.mjs');
 const page = read('pages/RoomSettingsPage.vue');
 vm.runInContext(page.slice(page.indexOf('const LLM_PRESETS'), page.indexOf('const BEGINNER_LLM_PROVIDERS')), ctx);
 const chat = read('composables/room/useRoomChat.js');

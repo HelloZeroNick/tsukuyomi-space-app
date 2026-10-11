@@ -146,6 +146,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
       'mcpBasePath',
       'mcpAllowlist',
       'aliyunWorkspaceId',
+      'anthropicWorkspaceId',
     ]) {
       values[key] = s.option(
         key,
@@ -186,6 +187,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
       'mcpBasePath',
       'mcpAllowlist',
       'aliyunWorkspaceId',
+      'anthropicWorkspaceId',
     ]) {
       o[k] = fields[k]!.text.trim();
     }
@@ -349,7 +351,12 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
       obscureText: secret && !showKey,
       maxLines: secret ? 1 : lines,
       onChanged: (_) {
-        if (['llmUrl', 'apiKey', 'aliyunWorkspaceId'].contains(key)) {
+        if ([
+          'llmUrl',
+          'apiKey',
+          'aliyunWorkspaceId',
+          'anthropicWorkspaceId',
+        ].contains(key)) {
           _modelCatalog.cancel();
           catalog = [];
         }
@@ -509,7 +516,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
           (await c.workspace.request('POST', '/api/room/models/list', {
             'apiUrl': settings.llmUrl,
             'apiKey': settings.apiKey,
-            'workspaceId': settings.option('aliyunWorkspaceId'),
+            'workspaceId': catalogWorkspaceId(settings),
             'cursor': cursor,
           }))['data'],
         );
@@ -718,7 +725,14 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
             ),
             _field('systemPrompt', '补充聊天指令', lines: 5),
             _hint('聊天固定使用八千代的基础身份；日记人设只用于日记生成。'),
-            _field('aliyunWorkspaceId', '百炼工作空间 ID'),
+            if (catalogProvider(fields['llmUrl']!.text.trim()) == 'anthropic')
+              _field(
+                'anthropicWorkspaceId',
+                'Anthropic 工作区 ID（可选，密钥未绑定工作区时填写）',
+                hint: 'wrkspc_…',
+              )
+            else
+              _field('aliyunWorkspaceId', '百炼工作空间 ID'),
             _field('siteUrl', '月读空间站点'),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,

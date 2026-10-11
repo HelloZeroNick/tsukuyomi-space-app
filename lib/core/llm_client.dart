@@ -114,6 +114,9 @@ class LlmClient implements ChatService {
       final useJson = jsonObject && !_plainJsonEndpoints.contains(jsonKey);
       final runtime = ModelRuntime(settings)..require('text');
       if (image != null) runtime.require('image');
+      final workspace = claudeApi(direct)
+          ? claudeWorkspaceId(settings.option('anthropicWorkspaceId'))
+          : '';
       final baseBody = proxy
           ? {
               'message': message,
@@ -121,6 +124,7 @@ class LlmClient implements ChatService {
               'apiKey': settings.apiKey,
               'apiUrl': direct.toString(),
               'model': settings.model,
+              if (workspace.isNotEmpty) 'workspaceId': workspace,
               'systemPrompt': system,
               'image': image,
               'runtimeConfig': runtime.transport(),
@@ -182,6 +186,19 @@ class LlmClient implements ChatService {
             ? enabled
             : <Map<String, dynamic>>[];
         modelBound(turns, 524288);
+        // Messages APIs reject tool_use history without tool definitions. The
+        // final round keeps the tools already used this turn but forbids new calls.
+        final closing =
+            !proxy &&
+            roomProtocol(direct) == 'anthropic' &&
+            definitions.isEmpty &&
+            turns.isNotEmpty;
+        final used = {
+          for (final turn in turns)
+            for (final r in turn['results'] as List) r['name'],
+        };
+        // Calls to tools that were never enabled still need some definition.
+        final kept = enabled.where((t) => used.contains(t['name'])).toList();
         final body = proxy
             ? {
                 ...baseBody,
@@ -191,9 +208,10 @@ class LlmClient implements ChatService {
             : modelWithTools(
                 baseBody,
                 roomProtocol(direct),
-                definitions,
+                closing ? (kept.isEmpty ? enabled : kept) : definitions,
                 turns,
               );
+        if (closing) body['tool_choice'] = {'type': 'none'};
         if (runtime.unsupported('streaming')) body['stream'] = false;
         var response = await client
             .send(requestFor(body))
