@@ -12,9 +12,41 @@ class KaguyaRuntime extends ChangeNotifier {
   KaguyaRuntime(Map<String, dynamic> project, {math.Random? random})
     : random = random ?? math.Random() {
     for (final raw in project['targets'] as List) {
-      sprites.add(KaguyaSprite(Map<String, dynamic>.from(raw)));
+      final sprite = KaguyaSprite(Map<String, dynamic>.from(raw));
+      _validateInputs(sprite);
+      sprites.add(sprite);
     }
   }
+
+  // Reject malformed reporter graphs before entering the UI-thread VM. Script
+  // `next` edges intentionally remain outside this graph (loops are valid).
+  static void _validateInputs(KaguyaSprite sprite) {
+    final visiting = <String>{}, checked = <String>{};
+    void visit(String id, int depth) {
+      if (checked.contains(id)) return;
+      if (depth > 128 || !visiting.add(id)) {
+        throw FormatException('游戏条件表达式循环或嵌套过深：${sprite.name}');
+      }
+      final block = sprite.blocks[id];
+      if (block is Map) {
+        for (final input in (block['inputs'] as Map? ?? {}).values) {
+          if (input is List &&
+              input.length > 1 &&
+              input[1] is String &&
+              sprite.blocks.containsKey(input[1])) {
+            visit(input[1] as String, depth + 1);
+          }
+        }
+      }
+      visiting.remove(id);
+      checked.add(id);
+    }
+
+    for (final id in sprite.blocks.keys) {
+      visit(id, 0);
+    }
+  }
+
   static const supportedOpcodes = <String>{
     'control_create_clone_of',
     'control_delete_this_clone',

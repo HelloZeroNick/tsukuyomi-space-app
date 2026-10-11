@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/site_localization.dart';
+import '../../core/desktop_window.dart';
 import '../../core/models.dart';
 import '../room/room_controller.dart';
 import '../room/room_style.dart';
@@ -80,8 +81,15 @@ class _GamePageState extends State<GamePage>
       _assets?.dispose();
       _assets = assets;
       _runtime = assets.runtime();
-      _audio = KaguyaAudio(_runtime!)
-        ..configure(gain: session.volume, mute: session.muted);
+      _audio = KaguyaAudio(
+        _runtime!,
+        onError: (message) {
+          if (mounted) {
+            ScaffoldMessenger.maybeOf(context)
+                ?.showSnackBar(SnackBar(content: SiteText(message)));
+          }
+        },
+      )..configure(gain: session.volume, mute: session.muted);
       _runtime!.greenFlag();
       _runtime!.paused = _backgroundPause;
       _audio!.pause(_backgroundPause);
@@ -147,6 +155,13 @@ class _GamePageState extends State<GamePage>
   KeyEventResult _key(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
     final down = event is! KeyUpEvent;
+    final window = DesktopWindowScope.maybeOf(context);
+    if (event is KeyDownEvent &&
+        key == LogicalKeyboardKey.escape &&
+        window?.fullscreen == true) {
+      unawaited(window!.setFullscreen(false));
+      return KeyEventResult.handled;
+    }
     if (down &&
         event is KeyDownEvent &&
         (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.keyP)) {

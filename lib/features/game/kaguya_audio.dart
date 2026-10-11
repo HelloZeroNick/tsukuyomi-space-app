@@ -15,15 +15,37 @@ abstract interface class KaguyaSoundVoice {
   Future<void> dispose();
 }
 
-class _PlayerVoice implements KaguyaSoundVoice {
+// Concurrent Scratch voices must mix. Taking focus for each effect pauses BGM
+// on Android; ambient iOS sessions may also obey the hardware silent switch.
+AudioContext get kaguyaAudioContext => AudioContext(
+  android: const AudioContextAndroid(
+    usageType: AndroidUsageType.game,
+    audioFocus: AndroidAudioFocus.none,
+  ),
+  iOS: AudioContextIOS(
+    category: AVAudioSessionCategory.playback,
+    options: {AVAudioSessionOptions.mixWithOthers},
+  ),
+);
+
+class KaguyaPlayerVoice implements KaguyaSoundVoice {
   final player = AudioPlayer();
+  Future<void>? _ready;
   @override
   bool get playing => player.state == PlayerState.playing;
   @override
   bool get paused => player.state == PlayerState.paused;
   @override
-  Future<void> playAsset(String path, double volume) =>
-      player.play(AssetSource(path), volume: volume);
+  Future<void> playAsset(String path, double volume) async {
+    try {
+      await (_ready ??= player.setAudioContext(kaguyaAudioContext));
+    } catch (_) {
+      _ready = null;
+      rethrow;
+    }
+    await player.play(AssetSource(path), volume: volume);
+  }
+
   @override
   Future<void> stop() => player.stop();
   @override
@@ -38,12 +60,16 @@ class _PlayerVoice implements KaguyaSoundVoice {
 
 /// One voice per Scratch sound bank entry: starting the same sound restarts it.
 class KaguyaAudio {
-  KaguyaAudio(this.runtime, {KaguyaSoundVoice Function()? voiceFactory})
-    : _voiceFactory = voiceFactory ?? _PlayerVoice.new {
+  KaguyaAudio(
+    this.runtime, {
+    KaguyaSoundVoice Function()? voiceFactory,
+    this.onError,
+  }) : _voiceFactory = voiceFactory ?? KaguyaPlayerVoice.new {
     runtime.onSound = _play;
     runtime.onStopSounds = stop;
   }
   final KaguyaRuntime runtime;
+  final void Function(String)? onError;
   final KaguyaSoundVoice Function() _voiceFactory;
   final _voices = <String, KaguyaSoundVoice>{};
   final _owners = <String, KaguyaSprite>{};
@@ -82,7 +108,10 @@ class KaguyaAudio {
     _queues[key] = (_queues[key] ?? Future.value())
         .then((_) => operation())
         .catchError((_) {
-          if (!_disposed) error = '声音暂不可用，可继续游戏';
+          if (!_disposed && error.isEmpty) {
+            error = '声音暂不可用，可继续游戏';
+            onError?.call(error);
+          }
         });
   }
 

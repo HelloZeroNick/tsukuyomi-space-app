@@ -11,6 +11,8 @@
 
 `project.json` 保留原积木、变量、广播、克隆、造型及声音元数据，仅去掉编辑器中的坐标/注释。新增的 `file`、`imageWidth/Height`、`alphaBounds`、`maskOffset/Length`、`physicsHull` 是原素材生成的原生绘制/碰撞数据。
 
+0.6.12 修复 `feichua` 飞行控制的 11 个积木：消除上下条件自引用，将下降条件绑定到实际按键分支，移除无需按键的持续上移，并统一 -108 / 64 边界。其余角色、声音及素材保持原内容。具体故障和回归见 `docs/native-pc-game-v0.6.12.md`。
+
 PNG/WAV 保留原始内容。8 个 SVG 造型使用 librsvg 转为原生 PNG，按 2 倍分辨率同步放大旋转中心；原 SVG 仍随包保留。`masks.bin` 保存每个造型 alpha 大于 0 的逐像素碰撞位图，`physicsHull` 保存同一透明轮廓的凸包。
 
 Flutter 通过 `KaguyaRuntime` 原生执行这些脚本，通过 `CustomPainter` 显示造型，通过 audioplayers 播放原声音，通过纯 Dart Forge2D 执行原 griffpatch 物理扩展使用的 Box2D。运行时不加载 HTML、不执行 JavaScript，也不使用 WebView。

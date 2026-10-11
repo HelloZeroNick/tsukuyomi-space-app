@@ -266,15 +266,18 @@ class _CharacterStageState extends State<CharacterStage>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              SeasonalArt(p.palette.season).room(_day),
-              gaplessPlayback: true,
-              cacheHeight:
-                  (box.maxHeight * MediaQuery.devicePixelRatioOf(context))
-                      .ceil()
-                      .clamp(1, 1200),
-              fit: BoxFit.cover,
-              excludeFromSemantics: true,
+            RepaintBoundary(
+              key: const Key('room-backdrop'),
+              child: Image.asset(
+                SeasonalArt(p.palette.season).room(_day),
+                gaplessPlayback: true,
+                cacheHeight:
+                    (box.maxHeight * MediaQuery.devicePixelRatioOf(context))
+                        .ceil()
+                        .clamp(1, 1200),
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+              ),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -294,7 +297,10 @@ class _CharacterStageState extends State<CharacterStage>
               height: box.maxHeight * (mobile ? .90 : .86),
               child: _fullscreen && !expanded
                   ? const SizedBox.shrink()
-                  : _character(),
+                  : ClipRect(
+                      key: const Key('room-character-viewport'),
+                      child: RepaintBoundary(child: _character()),
+                    ),
             ),
             if (!mobile) ...[
               Positioned(

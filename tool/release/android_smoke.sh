@@ -8,6 +8,8 @@ for attempt in $(seq 1 30); do
   adb logcat -d -b main -v brief > artifacts/android-smoke.log 2>&1 || true
   if grep -q 'TSUKUYOMI_LIVE2D_OK' artifacts/android-smoke.log; then
     grep -q 'TSUKUYOMI_UPDATE_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep -q 'TSUKUYOMI_GAME_AUDIO_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep 'TSUKUYOMI_GAME_AUDIO_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_UPDATE_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_OK' artifacts/android-smoke.log
     exit 0

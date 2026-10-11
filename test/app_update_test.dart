@@ -514,7 +514,7 @@ void main() {
       PackageInfo.setMockInitialValues(
         appName: 'Tsukuyomi',
         packageName: 'space.tsukuyomi.tsukuyomi_space_app',
-        version: '0.6.11',
+        version: appReleaseTag.substring(1).split('-').first,
         buildNumber: '17',
         buildSignature: '',
       );

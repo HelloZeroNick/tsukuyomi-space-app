@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
+import 'package:tsukuyomi_space_app/features/game/kaguya_audio.dart';
 
 import 'package:tsukuyomi_space_app/core/app_update_installer.dart';
 
@@ -60,6 +61,27 @@ Future<void> main() async {
         ),
       ),
     );
+    if (Platform.isAndroid || Platform.isIOS) {
+      final music = KaguyaPlayerVoice(), effect = KaguyaPlayerVoice();
+      try {
+        await music
+            .playAsset('game/e799e693821d6133a07ef791ed2b1616.wav', 0)
+            .timeout(const Duration(seconds: 20));
+        await effect
+            .playAsset('game/9ff5abe1a6e774272a0be10461f4f1a4.wav', 0)
+            .timeout(const Duration(seconds: 20));
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        if (!music.playing) throw StateError('An effect interrupted game BGM');
+        await music.pause();
+        await music.resume();
+        if (!music.playing) throw StateError('Game BGM did not resume');
+        // ignore: avoid_print
+        print('TSUKUYOMI_GAME_AUDIO_OK BGM+SFX mixed, pause/resume verified');
+      } finally {
+        await effect.dispose();
+        await music.dispose();
+      }
+    }
     await Future<void>.delayed(const Duration(seconds: 2));
     for (var i = 0; i < 120; i++) {
       model.tick(i / 60, 1 / 60, mouth: (i % 30) / 30);

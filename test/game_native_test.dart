@@ -108,6 +108,53 @@ class PendingGameVoice implements KaguyaSoundVoice {
 }
 
 void main() {
+  test(
+    'shipped flight can mount Iroha and move both directions within the stage',
+    () {
+      final vm = shippedRuntime();
+      addTearDown(vm.dispose);
+      vm.greenFlag();
+      frames(vm, 3);
+      vm.startGame();
+      frames(vm, 150);
+      vm.setVariableByName('心情值', 1000);
+      vm.broadcast('辉夜消失');
+      frames(vm, 12);
+      final ship = vm.sprites.firstWhere((s) => s.name == 'feichua');
+      expect(ship.visible, true);
+      final before = ship.y;
+      vm.key('up arrow', true);
+      frames(vm, 90);
+      vm.key('up arrow', false);
+      expect(ship.y, greaterThan(before));
+      expect(ship.y, lessThanOrEqualTo(70));
+      vm.key('down arrow', true);
+      frames(vm, 180);
+      vm.key('down arrow', false);
+      expect(ship.y, lessThan(before));
+      expect(ship.y, greaterThanOrEqualTo(-114));
+      expect(vm.running, true);
+      expect(vm.unknownOpcodes, isEmpty);
+      vm.togglePause();
+      final stopped = vm.time;
+      frames(vm, 30);
+      expect(vm.time, stopped);
+      vm.togglePause();
+      frames(vm, 1);
+      expect(vm.time, greaterThan(stopped));
+    },
+  );
+
+  test('cyclic reporters are rejected before the game frame loop', () {
+    final project = shippedProject();
+    final sprite = (project['targets'] as List).firstWhere(
+      (s) => s['name'] == 'feichua',
+    );
+    final condition = sprite['blocks']['tsukuyomi-flight-up-in-bounds'];
+    condition['inputs']['OPERAND1'] = [2, 'tsukuyomi-flight-up-in-bounds'];
+    expect(() => KaguyaRuntime(project), throwsFormatException);
+  });
+
   test('200 postgame cycles preserve score/mood with acknowledged resets and bounded clones/speed', () {
     final vm = shippedRuntime();
     addTearDown(vm.dispose);

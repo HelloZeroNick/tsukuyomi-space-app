@@ -7,6 +7,7 @@ import 'package:html/parser.dart' as html;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/models.dart';
+import '../../core/desktop_window.dart';
 import '../../core/site_localization.dart';
 import '../../core/site_theme.dart';
 import '../../core/season_theme.dart';
@@ -379,9 +380,10 @@ class SiteHeader extends StatelessWidget {
       final path = ModalRoute.of(context)?.settings.name ?? '';
       final controller = SiteControllerScope.maybeOf(context);
       final music = SiteMusicScope.maybeOf(context);
+      final window = DesktopWindowScope.maybeOf(context);
       final administrator =
           username != null && (role == 'admin' || role == 'super_admin');
-      final explore = SiteExploreMenu(
+      Widget buildExplore() => SiteExploreMenu(
         currentPath: path,
         administrator: administrator,
         showLabel: !compact,
@@ -390,6 +392,8 @@ class SiteHeader extends StatelessWidget {
           'music': '全站音乐',
           'theme': '切换主题',
           'season': '季节主题',
+          if (window?.supported == true)
+            'fullscreen': desktopFullscreenLabel(context, window!.fullscreen),
           'language:zh': '中文',
           'language:ja': '日本語',
           'language:en': 'English',
@@ -397,7 +401,9 @@ class SiteHeader extends StatelessWidget {
             '/app/update': updateText(context, 'title'),
         },
         onSelected: (value) {
-          if (value == 'season') {
+          if (value == 'fullscreen') {
+            toggleDesktopFullscreen(context);
+          } else if (value == 'season') {
             showSiteSeasonPicker(context);
           } else if (value == 'theme') {
             onTheme?.call();
@@ -412,6 +418,12 @@ class SiteHeader extends StatelessWidget {
           }
         },
       );
+      final explore = window?.supported == true
+          ? ListenableBuilder(
+              listenable: window!,
+              builder: (_, _) => buildExplore(),
+            )
+          : buildExplore();
       Widget capsule(Widget child) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: child,
@@ -508,6 +520,7 @@ class SiteHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     AppUpdateButton(onOpen: () => onGo('/app/update')),
+                    if (!compact) const DesktopFullscreenButton(),
                     if (!compact && controller != null)
                       IconButton(
                         tooltip: siteTr(context, 'search'),

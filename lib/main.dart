@@ -1,4 +1,5 @@
 import 'core/site_localization.dart';
+import 'core/desktop_window.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -44,6 +45,7 @@ import 'features/live2d/live2d_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final window = await DesktopWindowController.create();
   final preferences = await SharedPreferences.getInstance();
   final controller = RoomController(
     storage: DeviceRoomStorage(preferences),
@@ -54,6 +56,7 @@ Future<void> main() async {
   runApp(
     TsukuyomiApp(
       controller: controller,
+      window: window,
       updates: AppUpdateController(preferences: preferences),
     ),
   );
@@ -68,9 +71,11 @@ class TsukuyomiApp extends StatefulWidget {
     this.modelLoader,
     this.initialPath = '/room',
     this.updates,
+    this.window,
   });
   final RoomController controller;
   final AppUpdateController? updates;
+  final DesktopWindowController? window;
   final bool loadNative;
   final Future<Live2DModel> Function()? modelLoader;
   final String initialPath;
@@ -230,95 +235,103 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              builder: (context, child) => Shortcuts(
-                shortcuts: const {
-                  SingleActivator(LogicalKeyboardKey.keyK, meta: true):
-                      _SearchIntent(),
-                  SingleActivator(LogicalKeyboardKey.keyK, control: true):
-                      _SearchIntent(),
-                },
-                child: Actions(
-                  actions: {
-                    _SearchIntent: CallbackAction<_SearchIntent>(
-                      onInvoke: (_) {
-                        final route = Uri.tryParse(_activePath.value)?.path;
-                        if ([
-                          '/',
-                          '/login',
-                          '/register',
-                          '/live2d',
-                        ].contains(route)) {
-                          return null;
-                        }
-                        final navigatorContext =
-                            _navigator.currentState?.overlay?.context;
-                        if (navigatorContext != null) {
-                          showSiteSearch(
-                            navigatorContext,
-                            widget.controller,
-                            (path) => navigateSite(
-                              navigatorContext,
-                              widget.controller,
-                              path,
-                            ),
-                          );
-                        }
-                        return null;
+              builder: (context, child) => DesktopWindowScope(
+                controller: widget.window,
+                child: DesktopWindowShortcuts(
+                  controller: widget.window,
+                  child: Shortcuts(
+                    shortcuts: const {
+                      SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+                          _SearchIntent(),
+                      SingleActivator(LogicalKeyboardKey.keyK, control: true):
+                          _SearchIntent(),
+                    },
+                    child: Actions(
+                      actions: {
+                        _SearchIntent: CallbackAction<_SearchIntent>(
+                          onInvoke: (_) {
+                            final route = Uri.tryParse(_activePath.value)?.path;
+                            if ([
+                              '/',
+                              '/login',
+                              '/register',
+                              '/live2d',
+                            ].contains(route)) {
+                              return null;
+                            }
+                            final navigatorContext =
+                                _navigator.currentState?.overlay?.context;
+                            if (navigatorContext != null) {
+                              showSiteSearch(
+                                navigatorContext,
+                                widget.controller,
+                                (path) => navigateSite(
+                                  navigatorContext,
+                                  widget.controller,
+                                  path,
+                                ),
+                              );
+                            }
+                            return null;
+                          },
+                        ),
                       },
-                    ),
-                  },
-                  child: SiteChromeScope(
-                    controller: _chrome,
-                    child: Overlay.wrap(
-                      child: SiteVisitPopupOverlay(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            child ?? const SizedBox(),
-                            Positioned(
-                              right: 14,
-                              bottom: 12,
-                              child: ValueListenableBuilder<String>(
-                                valueListenable: _activePath,
-                                builder: (context, path, _) {
-                                  final route = Uri.tryParse(path)?.path ?? '/';
-                                  final hidden =
-                                      [
-                                        '/',
-                                        '/login',
-                                        '/register',
-                                        '/room',
-                                        '/room/settings',
-                                        '/game',
-                                      ].contains(route) ||
-                                      route.startsWith('/room/shared/');
-                                  return Offstage(
-                                    offstage: hidden,
-                                    child: TickerMode(
-                                      enabled: !hidden,
-                                      child: SiteGuideButton(
-                                        controller: widget.controller,
-                                        path: path,
-                                        reduced: hidden || !widget.loadNative,
-                                        dialogContext: () => _navigator
-                                            .currentState!
-                                            .overlay!
-                                            .context,
-                                        onGo: (next) => navigateSite(
-                                          _navigator
-                                              .currentState!
-                                              .overlay!
-                                              .context,
-                                          widget.controller,
-                                          next,
+                      child: SiteChromeScope(
+                        controller: _chrome,
+                        child: Overlay.wrap(
+                          child: SiteVisitPopupOverlay(
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                child ?? const SizedBox(),
+                                Positioned(
+                                  right: 14,
+                                  bottom: 12,
+                                  child: ValueListenableBuilder<String>(
+                                    valueListenable: _activePath,
+                                    builder: (context, path, _) {
+                                      final route =
+                                          Uri.tryParse(path)?.path ?? '/';
+                                      final hidden =
+                                          [
+                                            '/',
+                                            '/login',
+                                            '/register',
+                                            '/room',
+                                            '/room/settings',
+                                            '/game',
+                                          ].contains(route) ||
+                                          route.startsWith('/room/shared/');
+                                      return Offstage(
+                                        offstage: hidden,
+                                        child: TickerMode(
+                                          enabled: !hidden,
+                                          child: SiteGuideButton(
+                                            controller: widget.controller,
+                                            path: path,
+                                            reduced:
+                                                hidden || !widget.loadNative,
+                                            dialogContext: () => _navigator
+                                                .currentState!
+                                                .overlay!
+                                                .context,
+                                            onGo: (next) => navigateSite(
+                                              _navigator
+                                                  .currentState!
+                                                  .overlay!
+                                                  .context,
+                                              widget.controller,
+                                              next,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),

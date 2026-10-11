@@ -24,6 +24,8 @@ packages/tsukuyomi_live2d/src/vendor/dr_libs/LICENSE.
 
 Flutter, Dart and third-party Dart packages retain their respective licenses. Flutter's generated NOTICES file in the application's asset bundle contains dependency notices.
 
+Desktop fullscreen uses window_manager 0.5.2 and its screen_retriever dependencies by LiJianying (MIT). Their full licenses are included in the generated Flutter NOTICES bundle; source: https://github.com/leanflutter/window_manager and https://github.com/leanflutter/screen_retriever.
+
 ## Desktop Agent runtimes (0.6)
 
 Desktop distributions include unmodified [OpenCode v1.18.33](https://github.com/anomalyco/opencode/releases/tag/v1.18.33) (MIT, Copyright 2025 opencode) and [OpenAI Codex 0.159.0](https://github.com/openai/codex/releases/tag/rust-v0.159.0) (Apache-2.0, Copyright 2025 OpenAI). OpenCode's MIT license and Codex's license/NOTICE are copied into each runtime bundle's `licenses/` directory. Bundled Codex package helpers retain their upstream attribution. Upstream source and build inputs remain available at the pinned tags. The small POSIX process supervisor is project code. macOS binaries receive an ad-hoc signature for packaging; runtime-manifest.json is regenerated after signing and records the final distributed bytes.
