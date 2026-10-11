@@ -12,14 +12,23 @@ import 'model.dart';
 class Live2DPainter extends CustomPainter {
   Live2DPainter(this.model) : super(repaint: model);
   final Live2DModel model;
+  // Zero keeps the direct path (probes and full-resolution mode). Large native
+  // viewports bound the normal-compositing passes, preserving blend order.
+  int rasterPixelBudget = 0;
+  double pixelRatio = 1;
   final _buffers = <int, _MeshBuffer>{};
   List<int> _sorted = [], _orders = [];
+  List<int> _flags = [];
+  List<List<int>> _groups = [];
+  int boundedPasses = 0, rasterizedPixels = 0;
+  final _imagePaint = Paint()..filterQuality = FilterQuality.low;
   final _layerPaint = Paint();
   final _maskLayerPaint = Paint();
 
   void dispose() {
     for (final buffer in _buffers.values) {
       buffer.vertices?.dispose();
+      buffer.tintShader?.dispose();
     }
     _buffers.clear();
     for (final shader in _shaders) {
@@ -79,18 +88,16 @@ class Live2DPainter extends CustomPainter {
     if (bounds.isEmpty || size.isEmpty || model.meshes.isEmpty) return;
     final scale =
         .94 * (size.width / bounds.width).clamp(0, size.height / bounds.height);
-    canvas.save();
-    canvas.translate(
-      size.width / 2 - bounds.center.dx * scale,
-      size.height / 2 - bounds.center.dy * scale,
-    );
-    canvas.scale(scale);
+    boundedPasses = 0;
+    rasterizedPixels = 0;
     if (_orders.length != model.meshes.length) {
       for (final buffer in _buffers.values) {
         buffer.vertices?.dispose();
+        buffer.tintShader?.dispose();
       }
       _buffers.clear();
       _orders = List.filled(model.meshes.length, -1);
+      _flags = List.filled(model.meshes.length, -1);
       _sorted = List.generate(model.meshes.length, (i) => i);
     }
     var orderChanged = false;
@@ -99,21 +106,89 @@ class Live2DPainter extends CustomPainter {
         _orders[i] = model.meshes[i].order;
         orderChanged = true;
       }
+      if (_flags[i] != model.meshes[i].flags) {
+        _flags[i] = model.meshes[i].flags;
+        orderChanged = true;
+      }
     }
-    if (orderChanged) {
+    if (orderChanged || _groups.isEmpty) {
       _sorted.sort((a, b) {
         final order = _orders[a].compareTo(_orders[b]);
         return order == 0 ? a.compareTo(b) : order;
       });
+      _groups = [];
+      for (final index in _sorted) {
+        if (_groups.isEmpty ||
+            _blend(model.meshes[_groups.last.last]) !=
+                _blend(model.meshes[index])) {
+          _groups.add([]);
+        }
+        _groups.last.add(index);
+      }
     }
-    for (final i in _sorted) {
+    final pixels = size.width * size.height * pixelRatio * pixelRatio;
+    final bounded = rasterPixelBudget > 0 && pixels > rasterPixelBudget * 1.2;
+    for (final group in _groups) {
+      // SrcOver is associative, so a normal pass can be composed on transparent
+      // pixels first. Add/multiply must still see the real destination beneath.
+      // Combining them into one transparent image changes highlights and alpha.
+      final useImage =
+          bounded &&
+          _blend(model.meshes[group.first]) == BlendMode.srcOver &&
+          group
+                  .where(
+                    (i) =>
+                        model.meshes[i].visible && model.meshes[i].opacity > 0,
+                  )
+                  .length >=
+              12;
+      if (useImage) {
+        final ratio = math.sqrt(rasterPixelBudget / (size.width * size.height));
+        final width = math.max(1, (size.width * ratio).floor());
+        final height = math.max(1, (size.height * ratio).floor());
+        final recorder = ui.PictureRecorder();
+        final target = Canvas(recorder)
+          ..scale(width / size.width, height / size.height);
+        _paintGroup(target, size, scale, group);
+        final picture = recorder.endRecording();
+        final image = picture.toImageSync(width, height);
+        try {
+          canvas.drawImageRect(
+            image,
+            Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
+            Offset.zero & size,
+            _imagePaint,
+          );
+        } finally {
+          image.dispose();
+          picture.dispose();
+        }
+        boundedPasses++;
+        rasterizedPixels += width * height;
+      } else {
+        _paintGroup(canvas, size, scale, group);
+      }
+    }
+  }
+
+  BlendMode _blend(LiveMesh mesh) => mesh.flags & 1 != 0
+      ? BlendMode.plus
+      : mesh.flags & 2 != 0
+      ? BlendMode.multiply
+      : BlendMode.srcOver;
+
+  void _paintGroup(Canvas canvas, Size size, double scale, List<int> group) {
+    final bounds = model.bounds;
+    canvas.save();
+    canvas.translate(
+      size.width / 2 - bounds.center.dx * scale,
+      size.height / 2 - bounds.center.dy * scale,
+    );
+    canvas.scale(scale);
+    for (final i in group) {
       final mesh = model.meshes[i];
       if (!mesh.visible || mesh.opacity <= 0 || mesh.indices.isEmpty) continue;
-      final blend = mesh.flags & 1 != 0
-          ? BlendMode.plus
-          : mesh.flags & 2 != 0
-          ? BlendMode.multiply
-          : BlendMode.srcOver;
+      final blend = _blend(mesh);
       if (mesh.masks.isEmpty) {
         _draw(canvas, i, mesh, blend);
       } else {
@@ -178,7 +253,64 @@ class Live2DPainter extends CustomPainter {
             s[0] != 0 ||
             s[1] != 0 ||
             s[2] != 0)) {
-      paint.colorFilter = ColorFilter.matrix([
+      if (model.tintProgram != null) {
+        paint.shader = buffer.shaderTint(model.tintProgram!, image, m, s);
+      } else {
+        paint.colorFilter = buffer.tint(m, s);
+      }
+    }
+    canvas.drawVertices(vertices, BlendMode.srcOver, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant Live2DPainter oldDelegate) =>
+      oldDelegate.model != model;
+}
+
+class _MeshBuffer {
+  Float32List positions = Float32List(0), uvs = Float32List(0);
+  Uint16List indices = Uint16List(0);
+  ui.Vertices? vertices;
+  Float32List sourceUvs = Float32List(0);
+  int textureWidth = 0, textureHeight = 0;
+  int? geometryRevision;
+  LiveMesh? source;
+  final paint = Paint(), maskPaint = Paint();
+  ui.FragmentShader? tintShader;
+  Shader shaderTint(
+    ui.FragmentProgram program,
+    ui.Image image,
+    List<double> m,
+    List<double> s,
+  ) {
+    final first = tintShader == null;
+    final shader = tintShader ??= program.fragmentShader();
+    if (first) {
+      shader
+        ..setFloat(0, image.width.toDouble())
+        ..setFloat(1, image.height.toDouble())
+        ..setImageSampler(0, image);
+    }
+    for (var i = 0; i < 3; i++) {
+      if (first || _tintValues[i] != m[i]) shader.setFloat(i + 2, m[i]);
+      if (first || _tintValues[i + 3] != s[i]) shader.setFloat(i + 5, s[i]);
+      _tintValues[i] = m[i];
+      _tintValues[i + 3] = s[i];
+    }
+    return shader;
+  }
+
+  final _tintValues = List<double>.filled(6, double.nan);
+  ColorFilter? _tint;
+  ColorFilter tint(List<double> m, List<double> s) {
+    var changed = _tint == null;
+    for (var i = 0; i < 3; i++) {
+      if (_tintValues[i] != m[i] || _tintValues[i + 3] != s[i]) changed = true;
+      _tintValues[i] = m[i];
+      _tintValues[i + 3] = s[i];
+    }
+    if (changed) {
+      _tint = ColorFilter.matrix([
         m[0] * (1 - s[0]),
         0,
         0,
@@ -201,21 +333,9 @@ class Live2DPainter extends CustomPainter {
         0,
       ]);
     }
-    canvas.drawVertices(vertices, BlendMode.srcOver, paint);
+    return _tint!;
   }
 
-  @override
-  bool shouldRepaint(covariant Live2DPainter oldDelegate) =>
-      oldDelegate.model != model;
-}
-
-class _MeshBuffer {
-  Float32List positions = Float32List(0), uvs = Float32List(0);
-  Uint16List indices = Uint16List(0);
-  ui.Vertices? vertices;
-  Float32List sourceUvs = Float32List(0);
-  int textureWidth = 0, textureHeight = 0;
-  final paint = Paint(), maskPaint = Paint();
   ui.Vertices update(LiveMesh mesh, int width, int height) {
     var changed = vertices == null;
     if (positions.length != mesh.positions.length ||
@@ -226,20 +346,29 @@ class _MeshBuffer {
       indices = Uint16List(mesh.indices.length);
       changed = true;
     }
-    for (var i = 0; i < positions.length; i += 2) {
-      final x = mesh.positions[i], y = -mesh.positions[i + 1];
-      if (positions[i] != x || positions[i + 1] != y) changed = true;
-      positions[i] = x;
-      positions[i + 1] = y;
+    final retained = identical(source, mesh) && mesh.staticTopology;
+    final geometryChanged =
+        !retained ||
+        mesh.geometryRevision == null ||
+        geometryRevision != mesh.geometryRevision;
+    if (changed || geometryChanged) {
+      for (var i = 0; i < positions.length; i += 2) {
+        final x = mesh.positions[i], y = -mesh.positions[i + 1];
+        if (positions[i] != x || positions[i + 1] != y) changed = true;
+        positions[i] = x;
+        positions[i + 1] = y;
+      }
     }
     if (sourceUvs.length != mesh.uvs.length) {
       sourceUvs = Float32List(mesh.uvs.length);
       changed = true;
     }
     var uvChanged = textureWidth != width || textureHeight != height;
-    for (var i = 0; i < sourceUvs.length; i++) {
-      if (sourceUvs[i] != mesh.uvs[i]) uvChanged = true;
-      sourceUvs[i] = mesh.uvs[i];
+    if (!retained) {
+      for (var i = 0; i < sourceUvs.length; i++) {
+        if (sourceUvs[i] != mesh.uvs[i]) uvChanged = true;
+        sourceUvs[i] = mesh.uvs[i];
+      }
     }
     if (uvChanged) {
       changed = true;
@@ -250,9 +379,11 @@ class _MeshBuffer {
         uvs[i + 1] = (1 - mesh.uvs[i + 1]) * height;
       }
     }
-    for (var i = 0; i < indices.length; i++) {
-      if (indices[i] != mesh.indices[i]) changed = true;
-      indices[i] = mesh.indices[i];
+    if (!retained) {
+      for (var i = 0; i < indices.length; i++) {
+        if (indices[i] != mesh.indices[i]) changed = true;
+        indices[i] = mesh.indices[i];
+      }
     }
     if (changed) {
       vertices?.dispose();
@@ -263,6 +394,8 @@ class _MeshBuffer {
         indices: indices,
       );
     }
+    source = mesh;
+    geometryRevision = mesh.geometryRevision;
     return vertices!;
   }
 }

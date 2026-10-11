@@ -1,0 +1,48 @@
+{
+  "label": "v0612-before",
+  "scene": "1280x820 native macOS; 2000 turns, 200 image messages, streamed fragments, Live2D, three runs",
+  "runs": [
+    {
+      "run": 1,
+      "input_ready_ms": 72,
+      "frames": 659,
+      "ui_p95_ms": 10.121,
+      "raster_p95_ms": 9.941,
+      "frames_over_16_7_ms": 1,
+      "rss_bytes": 391921664,
+      "rss_after_navigation_bytes": 407388160,
+      "model_ticks": 542,
+      "model_update_cpu_percent": 3.433654378390341,
+      "model_update_mean_ms": 0.5722546125461245,
+      "hidden_model_ticks": 0
+    },
+    {
+      "run": 2,
+      "input_ready_ms": 56,
+      "frames": 658,
+      "ui_p95_ms": 10.405,
+      "raster_p95_ms": 9.79,
+      "frames_over_16_7_ms": 0,
+      "rss_bytes": 408502272,
+      "rss_after_navigation_bytes": 424591360,
+      "model_ticks": 542,
+      "model_update_cpu_percent": 3.4407218777679396,
+      "model_update_mean_ms": 0.5733690036900375,
+      "hidden_model_ticks": 0
+    },
+    {
+      "run": 3,
+      "input_ready_ms": 46,
+      "frames": 635,
+      "ui_p95_ms": 8.763,
+      "raster_p95_ms": 11.964,
+      "frames_over_16_7_ms": 2,
+      "rss_bytes": 410271744,
+      "rss_after_navigation_bytes": 386678784,
+      "model_ticks": 362,
+      "model_update_cpu_percent": 2.3365518768685627,
+      "model_update_mean_ms": 0.5829116022099444,
+      "hidden_model_ticks": 0
+    }
+  ]
+}

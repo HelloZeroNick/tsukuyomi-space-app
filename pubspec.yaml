@@ -48,6 +48,7 @@ flutter:
   uses-material-design: true
   shaders:
     - assets/shaders/kaguya_effect.frag
+    - assets/shaders/live2d_tint.frag
   assets:
     - assets/images/
     - assets/images/sakura/

@@ -1,0 +1,63 @@
+{
+  "version": "0.6.12+18",
+  "validated_at": "2026-10-11T01:19:41.207582+00:00",
+  "format": "passed",
+  "analysis": "no issues",
+  "flutter_regression": {
+    "passed": 795,
+    "skipped": 37,
+    "reason": "Opt-in network, site fixture, native runtime and image capture checks; release CI enables its fixture/Cubism checks."
+  },
+  "release_tool_tests": 38,
+  "agent_packaging_tests": 3,
+  "game_and_window_tests": 18,
+  "updater_and_navigation_tests": 37,
+  "cubism_motion_background_test": {
+    "passed": 1,
+    "motions": 8,
+    "pixel_and_layout_unchanged": true
+  },
+  "macos_release": {
+    "built": true,
+    "version": "0.6.12",
+    "build": "18",
+    "bundled_agent_manifests": "verified arm64 and x64",
+    "codesign_deep_strict": "passed",
+    "exact_packaged_assets": 419,
+    "native_gui": [
+      "fullscreen button",
+      "F11 toggle",
+      "Escape exit",
+      "Ctrl+Cmd+F toggle",
+      "Room to Hub retains fullscreen",
+      "Room motion inspection"
+    ],
+    "source": "8de7456 before performance changes; latest release build reverified separately"
+  },
+  "limits": [
+    "No Windows or Linux GUI hardware available",
+    "Android audio probe validates player state at zero volume; physical device listening remains required",
+    "Unsigned iOS requires signing and device validation",
+    "9070 and 4060 GPU utilization and physical Android performance not measured on this Mac",
+    "Room benchmark image fixtures are repeated 1x1 PNG, not a large-photo decoding benchmark"
+  ],
+  "base_commit": "8de7456016311e551b686bddda5aef10c4ad513e",
+  "source_state": "main performance changes; final tag commit recorded after publication",
+  "performance_regression": {
+    "scene_cadence_minimize": "passed",
+    "content_image_decoding_bounds_and_Wiki": "passed",
+    "full_quality_texture_dimensions": "passed",
+    "native_GPU_colors_UVs_alpha_masks_blends": "passed",
+    "native_GPU_blink_frames": 30,
+    "native_GPU_tinted_meshes": 14,
+    "default_texture_rgba_bytes": 33554432,
+    "room_three_run_final_shader": "passed",
+    "room_raster_p95_mean_ms": 6.682,
+    "room_raster_p95_reduction_percent": 36.8,
+    "hidden_model_ticks": [
+      0,
+      0,
+      0
+    ]
+  }
+}

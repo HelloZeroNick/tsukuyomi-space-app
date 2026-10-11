@@ -141,6 +141,7 @@ class ReleaseTests(unittest.TestCase):
             'Name': '透明度：角色模型',
             'FileReferences': {'Moc': 'character.moc3', 'Textures': ['texture.webp']}}, ensure_ascii=False), encoding='utf-8')
         (source / 'shaders/kaguya_effect.frag').write_bytes(b'compiled-shader')
+        (source / 'shaders/live2d_tint.frag').write_bytes(b'compiled-tint-shader')
         target = self.root / 'flutter_assets'
         shutil.copytree(source, target / 'assets')
         return target

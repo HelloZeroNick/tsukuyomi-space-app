@@ -16,17 +16,25 @@ class LiveMesh {
     required this.masks,
     required this.multiply,
     required this.screen,
+    this.geometryRevision,
+    this.staticTopology = false,
   });
   final Float32List positions, uvs;
   final Uint16List indices;
-  final int texture, order, flags;
-  final bool visible;
-  final double opacity;
+  final int texture, flags;
+  int order;
+  bool visible;
+  double opacity;
+  // Native models retain their buffers and advance only changed geometry.
+  // Other model implementations use content comparison by default.
+  int? geometryRevision;
+  final bool staticTopology;
   final List<int> masks;
   final List<double> multiply, screen;
 }
 
 abstract class Live2DModel extends ChangeNotifier {
+  ui.FragmentProgram? get tintProgram => null;
   Map<String, double> parameterOverrides = {};
   List<LiveMesh> get meshes;
   List<ui.Image> get textures;

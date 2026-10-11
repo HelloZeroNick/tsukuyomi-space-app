@@ -985,6 +985,14 @@ const nativeSiteMessages = <String, Map<String, String>>{
 };
 const nativeSiteSupplementalMessages = <String, Map<String, String>>{
   "zh": {
+    "nativeLive2dQuality": "角色画质",
+    "nativeLive2dQualityAuto": "自动（推荐）",
+    "nativeLive2dQualityEconomy": "省电 · 降低显卡负载",
+    "nativeLive2dQualityFull": "完整分辨率",
+    "nativeLive2dFrameRate": "角色帧率",
+    "nativeLive2dFrameAuto": "自动（电脑 60 / 手机 30）",
+    "nativeLive2dPerformanceHint":
+        "自动模式限制大窗口的角色绘制分辨率；文字和页面保持清晰。省电模式更适合高分辨率屏幕。隐藏页面或最小化窗口会暂停角色。",
     "navigation.search": "搜索月读空间",
     "navigation.searchHint": "搜索页面、文章…",
     "navigation.account": "账号菜单",
@@ -4017,6 +4025,13 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeAssetPagination": "{total} 项 · 第 {page} / {pages} 页",
   },
   "ja": {
+    "nativeLive2dQuality": "キャラクター画質",
+    "nativeLive2dQualityAuto": "自動（推奨）",
+    "nativeLive2dQualityEconomy": "省電力 · GPU 負荷を軽減",
+    "nativeLive2dQualityFull": "フル解像度",
+    "nativeLive2dFrameRate": "キャラクターのフレームレート",
+    "nativeLive2dFrameAuto": "自動（PC 60 / モバイル 30）",
+    "nativeLive2dPerformanceHint": "自動モードでは大きなウィンドウのキャラクター解像度を調整します。文字やページの鮮明さは維持されます。高解像度画面には省電力モードがおすすめです。非表示や最小化時はキャラクターを停止します。",
     "navigation.search": "月読空間を検索",
     "navigation.searchHint": "ページ・記事を検索…",
     "navigation.account": "アカウント",
@@ -7067,6 +7082,13 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeAssetPagination": "{total}件 · {page} / {pages}ページ",
   },
   "en": {
+    "nativeLive2dQuality": "Character quality",
+    "nativeLive2dQualityAuto": "Automatic (recommended)",
+    "nativeLive2dQualityEconomy": "Power saving · Lower GPU load",
+    "nativeLive2dQualityFull": "Full resolution",
+    "nativeLive2dFrameRate": "Character frame rate",
+    "nativeLive2dFrameAuto": "Automatic (desktop 60 / mobile 30)",
+    "nativeLive2dPerformanceHint": "Automatic mode limits character resolution in large windows while keeping text and pages sharp. Power saving suits high-resolution displays. Hidden pages and minimized windows pause the character.",
     "navigation.search": "Search Tsukuyomi",
     "navigation.searchHint": "Search pages and articles…",
     "navigation.account": "Account menu",

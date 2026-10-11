@@ -1,11 +1,9 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import '../room/room_style.dart';
 
-/// A single bounded glass layer for the fixed header or an open menu. Scrolling
-/// content never receives a full-screen filter or an animation controller.
+/// Tinted glass and cached ornament retain the seasonal style without reading
+/// the changing framebuffer during every scroll/model frame.
 class SiteSeasonalSurface extends StatelessWidget {
   const SiteSeasonalSurface({
     super.key,
@@ -24,7 +22,7 @@ class SiteSeasonalSurface extends StatelessWidget {
     final ornament =
         'assets/images/navigation/seasons-v1/'
         '${p.palette.season.name}-ornament.webp';
-    Widget contents = Stack(
+    final contents = Stack(
       children: [
         Positioned.fill(
           child: DecoratedBox(
@@ -33,8 +31,8 @@ class SiteSeasonalSurface extends StatelessWidget {
                 alpha: opaque
                     ? 1
                     : p.dark
-                    ? .84
-                    : .76,
+                    ? .94
+                    : .90,
               ),
               borderRadius: BorderRadius.circular(radius),
               border: Border.all(color: p.line),
@@ -95,15 +93,11 @@ class SiteSeasonalSurface extends StatelessWidget {
         child,
       ],
     );
-    if (!opaque) {
-      contents = BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
         child: contents,
-      );
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: contents,
+      ),
     );
   }
 }

@@ -14,8 +14,21 @@ void main() {
     final scene = model!;
     try {
       expect(scene.meshes.length, greaterThan(100));
+      expect(
+        scene.textures.every((t) => t.width <= 2048 && t.height <= 2048),
+        true,
+      );
       final before = scene.meshes.expand((m) => m.positions).toList();
+      final meshes = List.of(scene.meshes);
+      final revisions = scene.meshes.map((m) => m.geometryRevision).toList();
       scene.tick(1, 1 / 60, mouth: .8, lookX: .6, expression: 'smile');
+      for (var i = 0; i < meshes.length; i++) {
+        expect(identical(scene.meshes[i], meshes[i]), true);
+      }
+      expect(
+        scene.meshes.map((m) => m.geometryRevision).toList(),
+        isNot(equals(revisions)),
+      );
       expect(
         scene.meshes.expand((m) => m.positions).toList(),
         isNot(equals(before)),
@@ -24,7 +37,11 @@ void main() {
         final recorder = ui.PictureRecorder();
         final canvas = Canvas(recorder);
         canvas.drawColor(const Color(0xff13192b), BlendMode.src);
-        Live2DPainter(scene).paint(canvas, const Size(720, 960));
+        final painter = Live2DPainter(scene)
+          ..pixelRatio = 2
+          ..rasterPixelBudget = 450000;
+        painter.paint(canvas, const Size(720, 960));
+        expect(painter.boundedPasses, greaterThan(0));
         final picture = recorder.endRecording();
         final image = await picture.toImage(720, 960);
         final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -33,9 +50,23 @@ void main() {
         await output.writeAsBytes(bytes!.buffer.asUint8List());
         image.dispose();
         picture.dispose();
+        painter.dispose();
       });
     } finally {
       scene.dispose();
+    }
+  }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
+  testWidgets('full character quality keeps the original texture dimensions', (
+    tester,
+  ) async {
+    final model = (await tester.runAsync(() => loadLive2D(maxTextureSize: 0)))!;
+    try {
+      expect(
+        model.textures.every((t) => t.width == 4096 && t.height == 4096),
+        true,
+      );
+    } finally {
+      model.dispose();
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
 }

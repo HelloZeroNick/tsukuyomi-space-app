@@ -389,6 +389,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
     String label,
     Map<String, String> values, {
     String fallback = '',
+    bool numeric = false,
   }) {
     final value = '${options[key] ?? fallback}';
     return Padding(
@@ -406,7 +407,11 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
               ),
             )
             .toList(),
-        onChanged: busy ? null : (v) => setState(() => options[key] = v),
+        onChanged: busy
+            ? null
+            : (v) => setState(
+                () => options[key] = numeric ? int.tryParse(v ?? '') : v,
+              ),
       ),
     );
   }
@@ -946,6 +951,34 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
   Widget _model() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      _selectOption(
+        'live2dRenderQuality',
+        siteTr(context, 'nativeLive2dQuality'),
+        {
+          'auto': siteTr(context, 'nativeLive2dQualityAuto'),
+          'economy': siteTr(context, 'nativeLive2dQualityEconomy'),
+          'full': siteTr(context, 'nativeLive2dQualityFull'),
+        },
+        fallback: 'auto',
+      ),
+      _selectOption(
+        'live2dFrameRate',
+        siteTr(context, 'nativeLive2dFrameRate'),
+        {
+          '0': siteTr(context, 'nativeLive2dFrameAuto'),
+          '30': '30 fps',
+          '60': '60 fps',
+        },
+        fallback: '0',
+        numeric: true,
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: Text(
+          siteTr(context, 'nativeLive2dPerformanceHint'),
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
       _slider('modelScale', '角色大小（%）', 60, 160, 100),
       _slider('modelX', '水平位置', -240, 240, 0),
       _slider('modelY', '垂直位置', -180, 180, 0),

@@ -3,11 +3,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/features/game/kaguya_audio.dart';
 
 import 'package:tsukuyomi_space_app/core/app_update_installer.dart';
+
+import '../test/support/live2d_render_probe.dart';
 
 // Run this release entrypoint on devices, not only with the host test runner.
 Future<void> main() async {
@@ -51,13 +54,18 @@ Future<void> main() async {
     if (model.meshes.length < 10 || model.textures.isEmpty) {
       throw StateError('Cubism returned an empty model');
     }
+    final painter = Live2DPainter(model)
+      ..rasterPixelBudget = 450000
+      ..pixelRatio = WidgetsBinding
+          .instance
+          .platformDispatcher
+          .views
+          .first
+          .devicePixelRatio;
     runApp(
       MaterialApp(
         home: Scaffold(
-          body: CustomPaint(
-            painter: Live2DPainter(model),
-            size: const Size(390, 800),
-          ),
+          body: CustomPaint(painter: painter, size: const Size(390, 800)),
         ),
       ),
     );
@@ -83,10 +91,63 @@ Future<void> main() async {
       }
     }
     await Future<void>.delayed(const Duration(seconds: 2));
-    for (var i = 0; i < 120; i++) {
-      model.tick(i / 60, 1 / 60, mouth: (i % 30) / 30);
-      await Future<void>.delayed(const Duration(milliseconds: 17));
+    final bounded = await probeLive2DBoundedPasses();
+    final uvs = await probeLive2DShaderUvs();
+    for (var pixel = 0; pixel < 4; pixel++) {
+      for (var channel = 0; channel < 4; channel++) {
+        if ((uvs['shader']![pixel][channel] - uvs['image']![pixel][channel])
+                .abs() >
+            2) {
+          throw StateError('Native shader UV/alpha mismatch: $uvs');
+        }
+      }
     }
+    for (final entry in bounded.entries) {
+      final value = entry.value as Map;
+      if (value['passes'] < 1 ||
+          List.generate(
+            4,
+            (i) => (value['direct'][i] - value['bounded'][i]).abs() > 2,
+          ).any((v) => v)) {
+        throw StateError(
+          'Native bounded rendering mismatch: ${entry.key} $value',
+        );
+      }
+      if (entry.key == 'tint' &&
+          List.generate(
+            4,
+            (i) => (value['bounded'][i] - [50, 74, 73, 255][i]).abs() > 2,
+          ).any((v) => v)) {
+        throw StateError(
+          'Native tint did not match its expected colors: $value',
+        );
+      }
+    }
+    // ignore: avoid_print
+    print(
+      'TSUKUYOMI_LIVE2D_RENDER_OK bounded masks/tints/destination blends verified',
+    );
+    final frames = <FrameTiming>[];
+    void record(List<FrameTiming> batch) => frames.addAll(batch);
+    SchedulerBinding.instance.addTimingsCallback(record);
+    for (var i = 0; i < 120; i++) {
+      model.tick(i / 30, 1 / 30, mouth: (i % 30) / 30);
+      await Future<void>.delayed(const Duration(milliseconds: 34));
+    }
+    SchedulerBinding.instance.removeTimingsCallback(record);
+    double p95(Iterable<int> data) {
+      final sorted = data.toList()..sort();
+      return sorted.isEmpty
+          ? 0
+          : sorted[((sorted.length - 1) * .95).round()] / 1000;
+    }
+
+    // Emulator timing is diagnostic; real phone performance requires a profile
+    // run on that device, not a threshold inferred from CI hardware.
+    // ignore: avoid_print
+    print(
+      'TSUKUYOMI_LIVE2D_TIMINGS frames=${frames.length} ui_p95_ms=${p95(frames.map((f) => f.buildDuration.inMicroseconds))} raster_p95_ms=${p95(frames.map((f) => f.rasterDuration.inMicroseconds))} bounded_passes=${painter.boundedPasses} pixels=${painter.rasterizedPixels}',
+    );
     // ignore: avoid_print
     print(
       'TSUKUYOMI_LIVE2D_OK meshes=${model.meshes.length} textures=${model.textures.length}',

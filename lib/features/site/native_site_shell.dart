@@ -139,7 +139,7 @@ class NativeSiteShell extends StatelessWidget {
                     ),
                   ),
                 ),
-              Expanded(child: body),
+              Expanded(child: RepaintBoundary(child: body)),
             ],
           ),
         ),
@@ -207,30 +207,44 @@ Widget nativeSiteImage(
         child: const Center(child: Icon(Icons.image_not_supported_outlined)),
       );
   final asset = SiteArchive.imageAsset(value);
-  if (asset != null) {
-    return Image.asset(
-      asset,
-      height: height,
-      width: width,
-      fit: fit,
-      semanticLabel: label,
-      errorBuilder: (_, _, _) => failed,
-    );
-  }
   try {
-    final uri = endpointUri(site).resolve(value);
-    if (value.isEmpty ||
-        !['http', 'https'].contains(uri.scheme) ||
-        uri.userInfo.isNotEmpty) {
+    final uri = asset == null ? endpointUri(site).resolve(value) : null;
+    if (asset == null &&
+        (value.isEmpty ||
+            !['http', 'https'].contains(uri!.scheme) ||
+            uri.userInfo.isNotEmpty)) {
       return failed;
     }
-    return Image.network(
-      '$uri',
-      height: height,
-      width: width,
-      fit: fit,
-      semanticLabel: label,
-      errorBuilder: (_, _, _) => failed,
+    return LayoutBuilder(
+      builder: (context, box) {
+        final logicalWidth =
+            (width?.isFinite == true ? width : null) ??
+            (box.hasBoundedWidth
+                ? box.maxWidth
+                : MediaQuery.sizeOf(context).width);
+        final ratio = MediaQuery.devicePixelRatioOf(context);
+        final logicalHeight =
+            (height?.isFinite == true ? height : null) ??
+            (box.hasBoundedHeight
+                ? box.maxHeight
+                : MediaQuery.sizeOf(context).height);
+        final ImageProvider provider = asset != null
+            ? AssetImage(asset)
+            : NetworkImage('$uri');
+        return Image(
+          image: ResizeImage(
+            provider,
+            width: (logicalWidth * ratio).ceil().clamp(1, 2048),
+            height: (logicalHeight * ratio).ceil().clamp(1, 2048),
+            policy: ResizeImagePolicy.fit,
+          ),
+          height: height,
+          width: width,
+          fit: fit,
+          semanticLabel: label,
+          errorBuilder: (_, _, _) => failed,
+        );
+      },
     );
   } catch (_) {
     return failed;

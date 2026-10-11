@@ -177,7 +177,7 @@ jobs:
         run: python tool/agent/prepare_runtime.py --target "${{ matrix.target }}"
       - name: Verify updater and fullscreen controls on each desktop OS
         if: matrix.target == 'macos' || matrix.target == 'windows' || matrix.target == 'linux'
-        run: flutter test --no-pub --concurrency=1 test/app_update_test.dart test/app_update_transport_test.dart test/app_update_ui_test.dart test/desktop_window_test.dart
+        run: flutter test --no-pub --concurrency=1 test/app_update_test.dart test/app_update_transport_test.dart test/app_update_ui_test.dart test/desktop_window_test.dart test/live2d_scene_controller_test.dart test/live2d_renderer_test.dart test/native_site_image_performance_test.dart
       - name: Build macOS universal release
         if: matrix.target == 'macos'
         run: |

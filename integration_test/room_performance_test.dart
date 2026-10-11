@@ -115,7 +115,21 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       sample.stop();
       final recordedTicks = ticks;
+      expect(
+        recordedTicks,
+        greaterThan(120),
+        reason: 'Benchmark must run with a visible, actively updating model',
+      );
       final recordedModelMs = modelCpuMs;
+      final painters = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((w) => w.painter)
+          .whereType<Live2DPainter>()
+          .toList();
+      expect(painters, hasLength(1));
+      final painter = painters.single;
+      final boundedPasses = painter.boundedPasses;
+      final boundedPixels = painter.rasterizedPixels;
       final rssBefore = ProcessInfo.currentRss;
       // Cover Room with another route and verify its model clock stops.
       Navigator.of(tester.element(find.byType(Scaffold).first)).push(
@@ -130,6 +144,7 @@ void main() {
       final hiddenStart = ticks;
       await tester.pump(const Duration(seconds: 1));
       final hiddenTicks = ticks - hiddenStart;
+      expect(hiddenTicks, 0);
       Navigator.of(tester.element(find.text('hidden scene'))).pop();
       await tester.pump(const Duration(milliseconds: 400));
       SchedulerBinding.instance.removeTimingsCallback(timings);
@@ -162,6 +177,13 @@ void main() {
         'model_update_mean_ms': recordedTicks == 0
             ? 0
             : recordedModelMs / recordedTicks,
+        'live2d_bounded_passes': boundedPasses,
+        'live2d_rasterized_pixels': boundedPixels,
+        'live2d_pixel_budget': painter.rasterPixelBudget,
+        'live2d_texture_rgba_bytes': model!.textures.fold<int>(
+          0,
+          (sum, image) => sum + image.width * image.height * 4,
+        ),
         'hidden_model_ticks': hiddenTicks,
       };
       runs.add(run);

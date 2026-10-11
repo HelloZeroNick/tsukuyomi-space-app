@@ -27,6 +27,8 @@ final class NativeMesh extends Struct {
   external int visible;
   @Int32()
   external int maskCount;
+  @Int32()
+  external int positionsChanged;
   @Float()
   external double opacity;
   external Pointer<Float> positions;
@@ -74,4 +76,13 @@ external int nativeMesh(
   Pointer<Void> model,
   int index,
   Pointer<NativeMesh> out,
+);
+
+@Native<Int32 Function(Pointer<Void>, Pointer<NativeMesh>, Int32)>(
+  symbol: 'ts_meshes',
+)
+external int nativeMeshes(
+  Pointer<Void> model,
+  Pointer<NativeMesh> out,
+  int count,
 );

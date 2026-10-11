@@ -989,9 +989,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   return AnimatedBuilder(
                     key: const ValueKey('streaming-reply'),
                     animation: c.streamRevision,
-                    builder: (context, _) => Column(
+                    child: _bubble(c.sendingText, user: true, mobile: mobile),
+                    builder: (context, question) => Column(
                       children: [
-                        _bubble(c.sendingText, user: true, mobile: mobile),
+                        question!,
                         _replyBubbles(
                           cleanRoomReply(c.partial).isEmpty
                               ? '正在想怎么回答你…'

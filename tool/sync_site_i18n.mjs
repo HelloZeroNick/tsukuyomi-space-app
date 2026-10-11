@@ -55,6 +55,13 @@ for (const language of ['zh','ja','en']) {
   extras[language].nativeEditorPreviewEmpty = {zh:'写下内容，这里会显示文章效果。',ja:'本文を書くと、ここに記事のプレビューが表示されます。',en:'Start writing to see your article here.'}[language];
   extras[language].nativeAuthResendSeconds = {zh:'{count}s 后重发',ja:'{count}秒後に再送',en:'Resend in {count}s'}[language];
   extras[language].nativeLive2DAudienceQueue = {zh:'{count} 条留言等待回应',ja:'{count}件のメッセージが返答待ち',en:'{count} messages waiting for a response'}[language];
+  extras[language].nativeLive2dQuality = {zh:'角色画质',ja:'キャラクター画質',en:'Character quality'}[language];
+  extras[language].nativeLive2dQualityAuto = {zh:'自动（推荐）',ja:'自動（推奨）',en:'Automatic (recommended)'}[language];
+  extras[language].nativeLive2dQualityEconomy = {zh:'省电 · 降低显卡负载',ja:'省電力 · GPU 負荷を軽減',en:'Power saving · Lower GPU load'}[language];
+  extras[language].nativeLive2dQualityFull = {zh:'完整分辨率',ja:'フル解像度',en:'Full resolution'}[language];
+  extras[language].nativeLive2dFrameRate = {zh:'角色帧率',ja:'キャラクターのフレームレート',en:'Character frame rate'}[language];
+  extras[language].nativeLive2dFrameAuto = {zh:'自动（电脑 60 / 手机 30）',ja:'自動（PC 60 / モバイル 30）',en:'Automatic (desktop 60 / mobile 30)'}[language];
+  extras[language].nativeLive2dPerformanceHint = {zh:'自动模式限制大窗口的角色绘制分辨率；文字和页面保持清晰。省电模式更适合高分辨率屏幕。隐藏页面或最小化窗口会暂停角色。',ja:'自動モードでは大きなウィンドウのキャラクター解像度を調整します。文字やページの鮮明さは維持されます。高解像度画面には省電力モードがおすすめです。非表示や最小化時はキャラクターを停止します。',en:'Automatic mode limits character resolution in large windows while keeping text and pages sharp. Power saving suits high-resolution displays. Hidden pages and minimized windows pause the character.'}[language];
   extras[language].nativeAssetPagination = {zh:'{total} 项 · 第 {page} / {pages} 页',ja:'{total}件 · {page} / {pages}ページ',en:'{total} items · Page {page} / {pages}'}[language];
 }
 const literal = value => JSON.stringify(value).replaceAll('$', '\\$');

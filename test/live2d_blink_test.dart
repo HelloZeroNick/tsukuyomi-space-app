@@ -10,6 +10,7 @@ void main() {
     tester,
   ) async {
     final model = (await tester.runAsync(() => loadLive2D()))!;
+    final painter = Live2DPainter(model);
     try {
       await tester.runAsync(() async {
         final recorder = ui.PictureRecorder();
@@ -28,7 +29,7 @@ void main() {
           canvas.clipRect(const Rect.fromLTWH(0, 0, 420, 330));
           canvas.scale(3);
           canvas.translate(-290, -85);
-          Live2DPainter(model).paint(canvas, const Size(720, 960));
+          painter.paint(canvas, const Size(720, 960));
           canvas.restore();
         }
         final picture = recorder.endRecording();
@@ -43,6 +44,7 @@ void main() {
         picture.dispose();
       });
     } finally {
+      painter.dispose();
       model.dispose();
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));

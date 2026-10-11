@@ -240,29 +240,36 @@ class SiteBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(
-          SeasonalArt(p.palette.season).background(p.dark),
-          fit: BoxFit.cover,
-          alignment: narrow ? const Alignment(.7, -1) : Alignment.center,
-          cacheHeight:
-              (MediaQuery.sizeOf(context).height *
-                      MediaQuery.devicePixelRatioOf(context))
-                  .ceil()
-                  .clamp(1, 1600),
-          excludeFromSemantics: true,
-        ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                p.background.withValues(alpha: p.dark ? .84 : .20),
-                p.background.withValues(alpha: p.dark ? .94 : .82),
-                p.background.withValues(alpha: p.dark ? .94 : .92),
-                p.background.withValues(alpha: p.dark ? .94 : .82),
-                p.background.withValues(alpha: p.dark ? .84 : .20),
-              ],
-              stops: const [0, .24, .5, .76, 1],
-            ),
+        RepaintBoundary(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                SeasonalArt(p.palette.season).background(p.dark),
+                fit: BoxFit.cover,
+                alignment: narrow ? const Alignment(.7, -1) : Alignment.center,
+                cacheHeight:
+                    (MediaQuery.sizeOf(context).height *
+                            MediaQuery.devicePixelRatioOf(context))
+                        .ceil()
+                        .clamp(1, 1600),
+                excludeFromSemantics: true,
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      p.background.withValues(alpha: p.dark ? .84 : .20),
+                      p.background.withValues(alpha: p.dark ? .94 : .82),
+                      p.background.withValues(alpha: p.dark ? .94 : .92),
+                      p.background.withValues(alpha: p.dark ? .94 : .82),
+                      p.background.withValues(alpha: p.dark ? .84 : .20),
+                    ],
+                    stops: const [0, .24, .5, .76, 1],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         child,

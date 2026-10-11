@@ -15,6 +15,7 @@ class DesktopWindowController extends ChangeNotifier with WindowListener {
   final Future<bool> Function() read;
   final Future<void> Function(bool) set;
   bool fullscreen = false, busy = false, _disposed = false;
+  bool minimized = false;
   String error = '';
   bool _nativeListener = false;
 
@@ -90,6 +91,18 @@ class DesktopWindowController extends ChangeNotifier with WindowListener {
 
   @override
   void onWindowFocus() => refresh();
+
+  @override
+  void onWindowMinimize() {
+    minimized = true;
+    _changed();
+  }
+
+  @override
+  void onWindowRestore() {
+    minimized = false;
+    _changed();
+  }
 
   @override
   void dispose() {

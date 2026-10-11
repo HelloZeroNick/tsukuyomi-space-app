@@ -117,6 +117,18 @@ void main() {
     );
     await tester.pumpAndSettle();
     final slider = find.byType(Slider).first;
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('live2dRenderQuality:auto')),
+    );
+    await tester.tap(find.byKey(const ValueKey('live2dRenderQuality:auto')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('省电 · 降低显卡负载').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('live2dFrameRate:0')));
+    await tester.tap(find.byKey(const ValueKey('live2dFrameRate:0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('30 fps').last);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(slider);
     await tester.tap(slider);
     await tester.pump();
@@ -124,6 +136,8 @@ void main() {
     await tester.tap(find.text('保存并进入房间'));
     await tester.pumpAndSettle();
     expect(storage.value.options['modelScale'], isA<num>());
+    expect(storage.value.options['live2dRenderQuality'], 'economy');
+    expect(storage.value.number('live2dFrameRate'), 30);
     expect(storage.value.toJson().keys, isNot(contains('apiKey')));
   });
   testWidgets('capture settings desktop and mobile using native fonts', (

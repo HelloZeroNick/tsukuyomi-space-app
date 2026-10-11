@@ -9,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 
 import '../core/voice_service.dart';
+import '../core/desktop_window.dart';
 import '../core/season_theme.dart';
 import '../core/site_localization.dart';
 import '../core/models.dart';
@@ -79,7 +80,11 @@ class _CharacterStageState extends State<CharacterStage>
   double _x = 0, _y = 0;
   bool _paused = false;
   bool _visible = true;
+  DesktopWindowController? _window;
   String _expression = 'neutral';
+  int _loadRevision = 0;
+  int _textureLimit(RoomSettings settings) =>
+      settings.option('live2dRenderQuality', 'auto') == 'full' ? 0 : 2048;
   @override
   void initState() {
     super.initState();
@@ -112,10 +117,13 @@ class _CharacterStageState extends State<CharacterStage>
 
   Future<void> _load() async {
     if (!mounted) return;
+    final revision = ++_loadRevision;
     _updateScene(() => _failure = null);
     try {
-      final model = await (widget.modelLoader ?? loadLive2D)();
-      if (!mounted) {
+      final model =
+          await (widget.modelLoader?.call() ??
+              loadLive2D(maxTextureSize: _textureLimit(widget.settings)));
+      if (!mounted || revision != _loadRevision) {
         model.dispose();
         return;
       }
@@ -124,7 +132,9 @@ class _CharacterStageState extends State<CharacterStage>
       widget.onReady?.call(true);
       _syncTicker();
     } catch (e) {
-      if (mounted) _updateScene(() => _failure = e.toString());
+      if (mounted && revision == _loadRevision) {
+        _updateScene(() => _failure = e.toString());
+      }
     }
   }
 
@@ -144,6 +154,7 @@ class _CharacterStageState extends State<CharacterStage>
     if (!mounted) return;
     _sceneController.active =
         _visible &&
+        _window?.minimized != true &&
         (_routeVisible || _fullscreen) &&
         !_paused &&
         _model != null;
@@ -152,6 +163,12 @@ class _CharacterStageState extends State<CharacterStage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final window = DesktopWindowScope.maybeOf(context);
+    if (window != _window) {
+      _window?.removeListener(_syncTicker);
+      _window = window;
+      _window?.addListener(_syncTicker);
+    }
     _routeVisible = TickerMode.valuesOf(context).enabled;
     _syncTicker();
     _syncLighting();
@@ -160,6 +177,11 @@ class _CharacterStageState extends State<CharacterStage>
   @override
   void didUpdateWidget(covariant CharacterStage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.loadNative &&
+        widget.modelLoader == null &&
+        _textureLimit(oldWidget.settings) != _textureLimit(widget.settings)) {
+      unawaited(_load());
+    }
     // The fullscreen route is outside this widget's subtree.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _sceneRevision.value++;
@@ -176,6 +198,7 @@ class _CharacterStageState extends State<CharacterStage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _window?.removeListener(_syncTicker);
     _lightingTimer?.cancel();
     _sceneController.dispose();
     _sceneRevision.dispose();
@@ -210,51 +233,60 @@ class _CharacterStageState extends State<CharacterStage>
   );
 
   Widget _character() => LayoutBuilder(
-    builder: (context, box) => MouseRegion(
-      onHover: (e) {
-        _x = (e.localPosition.dx / box.maxWidth * 2 - 1).clamp(-1, 1);
-        _y = (1 - e.localPosition.dy / box.maxHeight * 2).clamp(-1, 1);
-      },
-      onExit: (_) {
-        _x = 0;
-        _y = 0;
-      },
-      child: Semantics(
-        label: '月见八千代',
-        image: true,
-        child: _model == null
-            ? Image.asset(
-                'assets/images/yachiyo-hub-stand.png',
-                fit: BoxFit.contain,
-                excludeFromSemantics: true,
-              )
-            : AnimatedBuilder(
-                animation: _model!,
-                child: RepaintBoundary(
-                  child: CustomPaint(painter: _sceneController.painter),
-                ),
-                builder: (context, child) {
-                  final a = widget.animation;
-                  return Transform.translate(
-                    offset: Offset(
-                      widget.settings.number('modelX', 0) + (a?.x ?? 0),
-                      widget.settings.number('modelY', 0) + (a?.y ?? 0),
-                    ),
-                    child: Transform.rotate(
-                      angle: (a?.rotation ?? 0) * 3.141592653589793 / 180,
-                      child: Transform.scale(
-                        scale:
-                            widget.settings.number('modelScale', 100) /
-                            100 *
-                            (a?.scale ?? 1),
-                        child: child,
+    builder: (context, box) {
+      _sceneController.configure(
+        quality:
+            widget.settings.options['live2dRenderQuality']?.toString() ??
+            'auto',
+        frameLimit: widget.settings.number('live2dFrameRate', 0).toInt(),
+        pixelRatio: MediaQuery.devicePixelRatioOf(context),
+      );
+      return MouseRegion(
+        onHover: (e) {
+          _x = (e.localPosition.dx / box.maxWidth * 2 - 1).clamp(-1, 1);
+          _y = (1 - e.localPosition.dy / box.maxHeight * 2).clamp(-1, 1);
+        },
+        onExit: (_) {
+          _x = 0;
+          _y = 0;
+        },
+        child: Semantics(
+          label: '月见八千代',
+          image: true,
+          child: _model == null
+              ? Image.asset(
+                  'assets/images/yachiyo-hub-stand.png',
+                  fit: BoxFit.contain,
+                  excludeFromSemantics: true,
+                )
+              : AnimatedBuilder(
+                  animation: _model!,
+                  child: RepaintBoundary(
+                    child: CustomPaint(painter: _sceneController.painter),
+                  ),
+                  builder: (context, child) {
+                    final a = widget.animation;
+                    return Transform.translate(
+                      offset: Offset(
+                        widget.settings.number('modelX', 0) + (a?.x ?? 0),
+                        widget.settings.number('modelY', 0) + (a?.y ?? 0),
                       ),
-                    ),
-                  );
-                },
-              ),
-      ),
-    ),
+                      child: Transform.rotate(
+                        angle: (a?.rotation ?? 0) * 3.141592653589793 / 180,
+                        child: Transform.scale(
+                          scale:
+                              widget.settings.number('modelScale', 100) /
+                              100 *
+                              (a?.scale ?? 1),
+                          child: child,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      );
+    },
   );
 
   Widget _scene({bool expanded = false}) => LayoutBuilder(

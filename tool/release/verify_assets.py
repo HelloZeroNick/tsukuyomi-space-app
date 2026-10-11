@@ -60,10 +60,12 @@ def verify(target, root=ROOT):
                 raise ValueError(f"Missing or changed packaged asset: {name}")
         if not read("assets/shaders/kaguya_effect.frag"):
             raise ValueError("Native game shader is missing")
+        if not read("assets/shaders/live2d_tint.frag"):
+            raise ValueError("Native Live2D tint shader is missing")
     finally:
         if archive:
             archive.close()
-    print(f"PASS {target}: {len(expected)} exact site/game/model assets and compiled game shader")
+    print(f"PASS {target}: {len(expected)} exact site/game/model assets and both compiled shaders")
 
 
 if __name__ == "__main__":

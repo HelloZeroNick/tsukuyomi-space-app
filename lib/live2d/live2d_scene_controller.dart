@@ -19,22 +19,50 @@ class Live2DSceneController {
   Live2DModel? model;
   Live2DPainter? painter;
   Duration? _last;
+  int? _nextFrame;
+  int _lastFps = 0, _frameLimit = 0;
+  String _quality = 'auto';
+  double _pixelRatio = 1;
   double _seconds = 0;
   int _slow = 0, _good = 0;
   bool _active = false;
-  int get fps => mobile || _slow >= 12 ? 30 : 60;
+  int get fps {
+    final limit = _frameLimit == 0 ? (mobile ? 30 : 60) : _frameLimit;
+    return _slow >= 12 ? math.min(limit, mobile ? 20 : 30) : limit;
+  }
+
+  void configure({
+    String quality = 'auto',
+    int frameLimit = 0,
+    double? pixelRatio,
+  }) {
+    _quality = quality;
+    if (pixelRatio != null && pixelRatio.isFinite && pixelRatio > 0) {
+      _pixelRatio = pixelRatio;
+    }
+    _frameLimit = const [30, 60].contains(frameLimit) ? frameLimit : 0;
+    painter
+      ?..pixelRatio = _pixelRatio
+      ..rasterPixelBudget = switch (_quality) {
+        'full' => 0,
+        'economy' => mobile ? 225000 : 450000,
+        _ => mobile ? 450000 : 900000,
+      };
+  }
 
   void attach(Live2DModel value) {
     painter?.dispose();
     model?.dispose();
     model = value;
     painter = Live2DPainter(value);
+    configure(quality: _quality, frameLimit: _frameLimit);
   }
 
   set active(bool value) {
     if (_active == value) return;
     _active = value;
     _last = null;
+    _nextFrame = null;
     if (value && model != null) {
       ticker.start();
     } else {
@@ -45,28 +73,39 @@ class Live2DSceneController {
   void _tick(Duration elapsed) {
     if (_last == null) {
       _last = elapsed;
+      _nextFrame = elapsed.inMicroseconds + (1000000 / fps).round();
+      _lastFps = fps;
       return;
     }
+    final now = elapsed.inMicroseconds, interval = (1000000 / fps).round();
+    if (_lastFps != fps) {
+      _nextFrame = _last!.inMicroseconds + interval;
+      _lastFps = fps;
+    }
+    if (now < _nextFrame! - 1000) return;
     final micros = (elapsed - _last!).inMicroseconds;
-    // A small tolerance avoids halving a nominal 60Hz display's update rate.
-    if (micros < 1000000 / fps - 1000) return;
     _last = elapsed;
+    _nextFrame = _nextFrame! + interval;
+    if (_nextFrame! <= now) {
+      _nextFrame =
+          _nextFrame! + ((now - _nextFrame!) ~/ interval + 1) * interval;
+    }
     final delta = (micros / 1000000).clamp(0.0, .05);
     _seconds += delta;
     onTick(_seconds, delta);
   }
 
   void _timings(List<FrameTiming> timings) {
-    if (!_active || mobile) return;
+    if (!_active) return;
     for (final frame in timings) {
       final work = math.max(
         frame.buildDuration.inMicroseconds,
         frame.rasterDuration.inMicroseconds,
       );
-      if (work > 16667) {
+      if (work > (mobile ? 33333 : 16667)) {
         _slow = (_slow + 1).clamp(0, 12);
         _good = 0;
-      } else if (work < 12000) {
+      } else if (work < (mobile ? 24000 : 12000)) {
         if (++_good >= 240) {
           _slow = 0;
           _good = 0;

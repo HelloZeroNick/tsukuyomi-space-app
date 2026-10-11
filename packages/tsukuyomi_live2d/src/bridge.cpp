@@ -12,7 +12,7 @@
 #endif
 
 struct Mesh {
-  int32_t vertices, indices, texture, order, flags, visible, mask_count;
+  int32_t vertices, indices, texture, order, flags, visible, mask_count, positions_changed;
   float opacity;
   const float* positions;
   const float* uvs;
@@ -99,7 +99,10 @@ API void ts_update(void* ptr, float delta) {
   if (!ptr) return;
   auto* s = static_cast<Scene*>(ptr);
   if (s->physics) s->physics->Evaluate(s->model, std::clamp(delta, 0.0f, 0.05f));
-  s->model->Update();
+  // CubismModel::Update clears changed flags immediately after evaluation.
+  // Retain them until the bridge has read this frame, then reset next time.
+  Core::csmResetDrawableDynamicFlags(s->model->GetModel());
+  Core::csmUpdateModel(s->model->GetModel());
 }
 API int ts_mesh_count(void* ptr) { return ptr ? static_cast<Scene*>(ptr)->model->GetDrawableCount() : 0; }
 API int ts_mesh(void* ptr, int index, Mesh* out) {
@@ -112,6 +115,7 @@ API int ts_mesh(void* ptr, int index, Mesh* out) {
   out->flags = Core::csmGetDrawableConstantFlags(core)[index];
   out->visible = m->GetDrawableDynamicFlagIsVisible(index);
   out->mask_count = m->GetDrawableMaskCounts()[index];
+  out->positions_changed = m->GetDrawableDynamicFlagVertexPositionsDidChange(index);
   out->opacity = m->GetDrawableOpacity(index);
   out->positions = m->GetDrawableVertices(index);
   out->uvs = reinterpret_cast<const float*>(m->GetDrawableVertexUvs(index));
@@ -120,6 +124,11 @@ API int ts_mesh(void* ptr, int index, Mesh* out) {
   const auto mul = m->GetDrawableMultiplyColor(index); const auto scr = m->GetDrawableScreenColor(index);
   out->multiply[0] = mul.X; out->multiply[1] = mul.Y; out->multiply[2] = mul.Z; out->multiply[3] = mul.W;
   out->screen[0] = scr.X; out->screen[1] = scr.Y; out->screen[2] = scr.Z; out->screen[3] = scr.W;
+  return 1;
+}
+API int ts_meshes(void* ptr, Mesh* out, int count) {
+  if (!ptr || !out || count != ts_mesh_count(ptr)) return 0;
+  for (int i = 0; i < count; ++i) if (!ts_mesh(ptr, i, out + i)) return 0;
   return 1;
 }
 #else
@@ -131,4 +140,5 @@ API void ts_parameter(void*, const char*, float, int) {}
 API void ts_update(void*, float) {}
 API int ts_mesh_count(void*) { return 0; }
 API int ts_mesh(void*, int, Mesh*) { return 0; }
+API int ts_meshes(void*, Mesh*, int) { return 0; }
 #endif
