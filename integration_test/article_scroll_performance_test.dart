@@ -6,11 +6,17 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:tsukuyomi_space_app/features/site/site_widgets.dart';
+import 'package:window_manager/window_manager.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized()
     ..framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
   testWidgets('long native article scroll benchmark', (tester) async {
+    await windowManager.ensureInitialized();
+    await windowManager.setFullScreen(false);
+    await windowManager.setSize(const Size(1280, 820));
+    await windowManager.show();
+    await windowManager.focus();
     final content = List.generate(
       60,
       (i) =>
@@ -78,7 +84,15 @@ void main() {
             )
             .length,
         'rss_bytes': ProcessInfo.currentRss,
+        'window_focused': await windowManager.isFocused(),
+        'viewport_width':
+            tester.view.physicalSize.width / tester.view.devicePixelRatio,
+        'viewport_height':
+            tester.view.physicalSize.height / tester.view.devicePixelRatio,
+        'pixel_ratio': tester.view.devicePixelRatio,
       };
+      expect(frames.length, greaterThan(100));
+      expect(run['window_focused'], isTrue);
       runs.add(run);
       // ignore: avoid_print
       print('ARTICLE_BENCHMARK ${jsonEncode(run)}');

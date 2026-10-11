@@ -28,6 +28,14 @@
 
 本地静态分析及格式检查通过，发布工具 38 项、Agent 打包工具 3 项通过。窗口、游戏和更新/导航专项回归通过，真实 Cubism 的八种动作背景像素回归通过。macOS Release 实际打开后验证全屏按钮、F11、Esc、Ctrl+Cmd+F，以及全屏中 Room → 中枢的页面切换；测试结束恢复普通窗口并退出应用。Release 内两种架构的 Agent 运行时清单及深层签名校验通过。
 
-最终本地完整回归为 795 项通过、37 项可选环境检查跳过；原生 GPU 探针验证 30 帧眨眼及 14 个染色网格，颜色、UV、半透明、遮罩和混合均通过。五平台发布结果在完成后补充。自动化测试不能替代用户报告设备上的显示驱动、系统音频和安装交互验收；Windows / Linux 真实窗口和 Android / iOS 真机听音尚未验证，iOS 发布包仍需自行签名。
+最终本地完整回归为 795 项通过、37 项可选环境检查跳过；原生 GPU 探针验证 30 帧眨眼及 14 个染色网格，颜色、UV、半透明、遮罩和混合均通过。自动化测试不能替代用户报告设备上的显示驱动、系统音频和安装交互验收；Windows / Linux 真实窗口和 Android / iOS 真机听音尚未验证，iOS 发布包仍需自行签名。
+
+## 发布验收
+
+[v0.6.12-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.12-beta.1) 已发布，源码为 `30d034e7831f866f8acd8695c867ba9883cb7ba4`。[发布流水线](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38101481317)全部成功：五平台构建，整站及真实后端/Cubism回归814项通过、18项可选检查跳过，三个桌面的窗口/更新器/绘制专项各78项、打包后的Agent专项各110项通过；Android原生绘制、音频播放状态和更新器探针通过。
+
+已实际下载全部11个发布文件（2,208,428,512字节），逐项核对GitHub官方SHA-256及SHA256SUMS。标签对应源码提交也已核对；真实应用更新器检测并下载本次版本的未签名IPA，通过大小和哈希校验，没有执行安装。最终macOS Release的两个运行时、419个精确资源、两份编译着色器及深层签名均通过检查，并实际验证F11、Esc、角色显示及性能设置。
+
+完整证据见[本地检查](qa/native-pc-game-v0.6.12/local-validation.json)、[CI检查](qa/native-pc-game-v0.6.12/ci-validation.json)、[发布文件校验](qa/native-pc-game-v0.6.12/release-validation.json)及[性能报告](native-performance-v0.6.12.md)。Android模拟器的绘制帧耗时仅用于诊断，没有通过真机性能验收；9070、4060及物理手机仍需对应设备复测。
 
 更新器从 0.6.11 起提供。旧版用户可在应用更新页面检查预览版，下载经 SHA-256 校验的 GitHub 安装包，再按系统提示安装。

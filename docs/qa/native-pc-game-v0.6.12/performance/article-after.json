@@ -1,0 +1,42 @@
+{
+  "label": "v0612-after",
+  "scene": "macOS Profile 1280x820; 60 headings, 600 paragraphs, 20 code blocks, 20 tables, 20 image fixtures; 180 scroll steps; three runs",
+  "runs": [
+    {
+      "run": 1,
+      "frames": 361,
+      "ui_p95_ms": 0.252,
+      "raster_p95_ms": 0.674,
+      "frames_over_16_7_ms": 0,
+      "rss_bytes": 256376832,
+      "window_focused": true,
+      "viewport_width": 1280.0,
+      "viewport_height": 788.0,
+      "pixel_ratio": 2.0
+    },
+    {
+      "run": 2,
+      "frames": 364,
+      "ui_p95_ms": 0.25,
+      "raster_p95_ms": 0.584,
+      "frames_over_16_7_ms": 0,
+      "rss_bytes": 255393792,
+      "window_focused": true,
+      "viewport_width": 1280.0,
+      "viewport_height": 788.0,
+      "pixel_ratio": 2.0
+    },
+    {
+      "run": 3,
+      "frames": 364,
+      "ui_p95_ms": 0.235,
+      "raster_p95_ms": 0.572,
+      "frames_over_16_7_ms": 0,
+      "rss_bytes": 259555328,
+      "window_focused": true,
+      "viewport_width": 1280.0,
+      "viewport_height": 788.0,
+      "pixel_ratio": 2.0
+    }
+  ]
+}

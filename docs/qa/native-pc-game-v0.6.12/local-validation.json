@@ -1,6 +1,6 @@
 {
   "version": "0.6.12+18",
-  "validated_at": "2026-10-11T01:19:41.207582+00:00",
+  "validated_at": "2026-10-11T01:53:11.056855+00:00",
   "format": "passed",
   "analysis": "no issues",
   "flutter_regression": {
@@ -25,24 +25,25 @@
     "codesign_deep_strict": "passed",
     "exact_packaged_assets": 419,
     "native_gui": [
-      "fullscreen button",
-      "F11 toggle",
+      "fullscreen F11",
       "Escape exit",
-      "Ctrl+Cmd+F toggle",
-      "Room to Hub retains fullscreen",
-      "Room motion inspection"
+      "Room native Live2D display",
+      "performance settings and quality menu",
+      "returned to Room"
     ],
-    "source": "8de7456 before performance changes; latest release build reverified separately"
+    "source": "30d034e7831f866f8acd8695c867ba9883cb7ba4",
+    "compiled_shaders": 2
   },
   "limits": [
     "No Windows or Linux GUI hardware available",
     "Android audio probe validates player state at zero volume; physical device listening remains required",
     "Unsigned iOS requires signing and device validation",
     "9070 and 4060 GPU utilization and physical Android performance not measured on this Mac",
-    "Room benchmark image fixtures are repeated 1x1 PNG, not a large-photo decoding benchmark"
+    "Room benchmark image fixtures are repeated 1x1 PNG, not a large-photo decoding benchmark",
+    "Input-ready timing uses in-memory storage and excludes real disk/keychain initialization"
   ],
   "base_commit": "8de7456016311e551b686bddda5aef10c4ad513e",
-  "source_state": "main performance changes; final tag commit recorded after publication",
+  "source_state": "published release source_commit; main also contains subsequent QA evidence and article harness guards",
   "performance_regression": {
     "scene_cadence_minimize": "passed",
     "content_image_decoding_bounds_and_Wiki": "passed",
@@ -58,6 +59,44 @@
       0,
       0,
       0
+    ],
+    "article_guarded_three_runs": "passed"
+  },
+  "source_commit": "30d034e7831f866f8acd8695c867ba9883cb7ba4",
+  "ci_regression": {
+    "passed": 814,
+    "skipped": 18,
+    "original_backend_fixture": true,
+    "real_cubism": true,
+    "run_id": 38101481317
+  },
+  "android_native_probe": {
+    "functional_result": "passed",
+    "model_updates": 120,
+    "rendered_frames": 5,
+    "raster_p95_ms": 606.205,
+    "bounded_passes_in_real_model_probe": 0,
+    "renderer": "CI emulator software rendering",
+    "performance_acceptance": false,
+    "checks": [
+      "UV and alpha",
+      "bounded synthetic masks/tints/blends",
+      "real model 409 meshes and 2 textures",
+      "BGM plus SFX player state and pause/resume",
+      "native updater ABI/private cache"
     ]
+  },
+  "release": {
+    "tag": "v0.6.12-beta.1",
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.12-beta.1",
+    "source_commit": "30d034e7831f866f8acd8695c867ba9883cb7ba4",
+    "tag_commit_verified": true,
+    "five_platform_builds": "passed",
+    "three_desktop_control_tests_each": 78,
+    "three_desktop_agent_tests_each": 110,
+    "published_assets": 11,
+    "published_asset_bytes": 2208428512,
+    "official_and_manifest_sha256": "all verified by actual downloads",
+    "updater_live_download_and_verify": "passed v0.6.12-beta.1; unsigned IPA download only"
   }
 }
