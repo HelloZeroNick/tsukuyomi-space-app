@@ -408,7 +408,12 @@ void main() {
   test(
     'game restart cannot resurrect a sound waiting for the native platform',
     () async {
-      final vm = shippedRuntime();
+      // Isolate the pending voice from the fresh start screen's own BGM.
+      final project = shippedProject();
+      for (final target in project['targets'] as List) {
+        target['blocks'] = <String, dynamic>{};
+      }
+      final vm = KaguyaRuntime(project);
       addTearDown(vm.dispose);
       final voice = PendingGameVoice()..playGate = Completer<void>();
       final audio = KaguyaAudio(vm, voiceFactory: () => voice);

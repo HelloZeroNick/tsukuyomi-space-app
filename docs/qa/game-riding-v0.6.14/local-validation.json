@@ -1,0 +1,62 @@
+{
+  "version": "0.6.14+20",
+  "validated_at": "2026-10-11T23:58:46.818295+00:00",
+  "baseline_commit": "b0096637aff0c1ed50c0d896db138f22d3e2af9a",
+  "format": "passed",
+  "analysis": "no issues",
+  "flutter_regression": {
+    "passed": 809,
+    "skipped": 33,
+    "native_cubism_enabled": true
+  },
+  "game_regression": {
+    "passed": 21,
+    "full_rides": 3,
+    "paint_phases": 19,
+    "restart_rgba_different_bytes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "frame_clock_exception_and_real_restart_button": "passed",
+    "mutated_reporter_cycle": "passed",
+    "physics_and_fractional_clock_reset": "passed"
+  },
+  "before_regressions": {
+    "expected_failures": 2,
+    "source": "b009663",
+    "isolated_temporary_project": true,
+    "spontaneous_current_source_riding_freeze_reproduced": false
+  },
+  "release_tool_tests": 38,
+  "agent_packaging_tests": 3,
+  "physical_android_device": false,
+  "limits": [
+    "Reporter installed version is unknown",
+    "Native Android CI probe must pass before publication",
+    "Controlled injected script failures verify recovery rather than identify the exact user device trigger"
+  ],
+  "macos_native_release_probe": {
+    "passed": true,
+    "render_backend": "Metal Impeller",
+    "game_paint_phases": 19,
+    "restart_different_bytes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "live2d_detail_and_render": "passed"
+  }
+}

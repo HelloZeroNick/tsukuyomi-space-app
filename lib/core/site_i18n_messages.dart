@@ -4012,6 +4012,7 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeUi.3d4d1075e7f1": "工具调用",
     "nativeUi.5b6aae8c30dd": "流式输出",
     "nativeMcpEndpoint": "MCP 端点",
+    "nativeGameRuntimeError": "游戏运行异常，请重开这一局",
     "nativeMcpTransport": "MCP 连接方式",
     "nativeMcpRest": "REST 桥接",
     "nativeMcpHint":
@@ -7070,6 +7071,7 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeUi.3d4d1075e7f1": "ツール呼び出し",
     "nativeUi.5b6aae8c30dd": "ストリーミング出力",
     "nativeMcpEndpoint": "MCP エンドポイント",
+    "nativeGameRuntimeError": "ゲームでエラーが発生しました。このゲームをやり直してください。",
     "nativeMcpTransport": "MCP 接続方式",
     "nativeMcpRest": "REST ブリッジ",
     "nativeMcpHint": "REST ブリッジと Streamable HTTP に対応し、MCP の接続処理を自動で行います。検索と添付画像の理解は許可リストに従います。ツールの結果は参考情報です。",
@@ -10285,6 +10287,8 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeUi.3d4d1075e7f1": "Tool calls",
     "nativeUi.5b6aae8c30dd": "Streaming output",
     "nativeMcpEndpoint": "MCP endpoint",
+    "nativeGameRuntimeError":
+        "The game encountered an error. Please restart this run.",
     "nativeMcpTransport": "MCP transport",
     "nativeMcpRest": "REST bridge",
     "nativeMcpHint": "Supports REST bridges and Streamable HTTP with automatic MCP initialization. Search and current image understanding follow the allowlist; tool results are reference material.",

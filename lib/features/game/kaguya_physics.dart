@@ -19,11 +19,17 @@ class KaguyaPhysics {
   final _walls = <box.Body>[];
   double restitution = .2;
 
-  void reset() {
-    for (final body in _bodies.values) {
-      world.destroyBody(body);
+  void reset({bool resetSettings = false}) {
+    for (final entry in _bodies.entries) {
+      world.destroyBody(entry.value);
+      entry.key.physics = false;
     }
     _bodies.clear();
+    if (resetSettings) {
+      restitution = .2;
+      gravity(0, -10);
+      setStage(true);
+    }
   }
 
   void setStage(bool boxed) {

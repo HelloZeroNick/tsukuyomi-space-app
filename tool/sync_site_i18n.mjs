@@ -47,6 +47,7 @@ for (const language of ['zh','ja','en']) {
     extras[language][key] = ({zh,ja,en})[language].replaceAll('\\n','\n');
   }
   extras[language].nativeMcpEndpoint = {zh:'MCP 端点',ja:'MCP エンドポイント',en:'MCP endpoint'}[language];
+  extras[language].nativeGameRuntimeError = {zh:'游戏运行异常，请重开这一局',ja:'ゲームでエラーが発生しました。このゲームをやり直してください。',en:'The game encountered an error. Please restart this run.'}[language];
   extras[language].nativeMcpTransport = {zh:'MCP 连接方式',ja:'MCP 接続方式',en:'MCP transport'}[language];
   extras[language].nativeMcpRest = {zh:'REST 桥接',ja:'REST ブリッジ',en:'REST bridge'}[language];
   extras[language].nativeMcpHint = {zh:'支持 REST 桥接和 Streamable HTTP，自动完成 MCP 握手。搜索和当前图片理解按白名单调用；工具结果仅作为参考资料。',ja:'REST ブリッジと Streamable HTTP に対応し、MCP の接続処理を自動で行います。検索と添付画像の理解は許可リストに従います。ツールの結果は参考情報です。',en:'Supports REST bridges and Streamable HTTP with automatic MCP initialization. Search and current image understanding follow the allowlist; tool results are reference material.'}[language];

@@ -1,0 +1,57 @@
+Resolving dependencies...
+Downloading packages...
++ async 2.13.1
++ boolean_selector 2.1.2
++ characters 1.4.1
++ clock 1.1.3
++ collection 1.19.1
++ fake_async 1.3.3
++ flutter 0.0.0 from sdk flutter
++ flutter_test 0.0.0 from sdk flutter
++ forge2d 0.14.2+1 (0.15.2 available)
++ leak_tracker 11.0.2
++ leak_tracker_flutter_testing 3.0.10
++ leak_tracker_testing 3.0.2
++ matcher 0.12.20
++ material_color_utilities 0.13.0 (0.13.1 available)
++ meta 1.19.0
++ path 1.9.1
++ sky_engine 0.0.0 from sdk flutter
++ source_span 1.10.2
++ stack_trace 1.12.2
++ stream_channel 2.1.4
++ string_scanner 1.4.1
++ term_glyph 1.2.2
++ test_api 0.7.12 (0.7.15 available)
++ vector_math 2.4.3
++ vm_service 15.3.0
++ web 1.1.1
+Changed 26 dependencies!
+3 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /private/tmp/tsukuyomi-riding-before/test/before_test.dart
+00:00 +0: first paint after mounted restart must not expose collision costumes
+00:00 +0 -1: first paint after mounted restart must not expose collision costumes [E]
+  Expected: <100>
+    Actual: <null>
+  Purple/black arrow costume becomes opaque before next frame.
+
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/before_test.dart 12:3                          main.<fn>
+
+00:00 +0 -1: script failure must not escape the frame callback
+00:00 +0 -2: script failure must not escape the frame callback [E]
+  Expected: return normally
+    Actual: <Closure: () => void>
+     Which: threw StateError:<Bad state: native callback failure>
+
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/before_test.dart 16:3                          main.<fn>
+
+00:00 +0 -2: Some tests failed.
+
+Failing tests:
+  /private/tmp/tsukuyomi-riding-before/test/before_test.dart: first paint after mounted restart must not expose collision costumes
+  /private/tmp/tsukuyomi-riding-before/test/before_test.dart: script failure must not escape the frame callback

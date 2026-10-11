@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,11 +8,13 @@ import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/features/game/kaguya_audio.dart';
+import 'package:tsukuyomi_space_app/features/game/kaguya_assets.dart';
 import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 
 import 'package:tsukuyomi_space_app/core/app_update_installer.dart';
 
 import '../test/support/live2d_render_probe.dart';
+import '../test/support/kaguya_riding_probe.dart';
 
 // Run this release entrypoint on devices, not only with the host test runner.
 Future<void> main() async {
@@ -143,6 +146,16 @@ Future<void> main() async {
     print(
       'TSUKUYOMI_LIVE2D_RENDER_OK bounded masks/tints/destination blends verified',
     );
+    final gameAssets = await KaguyaAssets.load();
+    final game = gameAssets.runtime(random: math.Random(7));
+    try {
+      final result = await probeKaguyaRidingPixels(game, gameAssets);
+      // ignore: avoid_print
+      print('TSUKUYOMI_GAME_RIDING_OK $result');
+    } finally {
+      game.dispose();
+      gameAssets.dispose();
+    }
     final frames = <FrameTiming>[];
     void record(List<FrameTiming> batch) => frames.addAll(batch);
     SchedulerBinding.instance.addTimingsCallback(record);

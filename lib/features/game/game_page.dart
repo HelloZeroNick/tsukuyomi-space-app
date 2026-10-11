@@ -90,9 +90,9 @@ class _GamePageState extends State<GamePage>
           }
         },
       )..configure(gain: session.volume, mute: session.muted);
-      _runtime!.greenFlag();
-      _runtime!.paused = _backgroundPause;
-      _audio!.pause(_backgroundPause);
+      _runtime!.restart();
+      _runtime!.paused = _backgroundPause || _runtime!.failure != null;
+      _audio!.pause(_runtime!.paused);
       setState(() => _loading = false);
     } catch (_) {
       if (mounted && ticket == _loadTicket) {
@@ -108,8 +108,18 @@ class _GamePageState extends State<GamePage>
     final dt = (elapsed - _elapsed).inMicroseconds / 1000000;
     _elapsed = elapsed;
     final runtime = _runtime;
-    if (runtime == null || dt <= 0 || runtime.paused) return;
+    if (_loading || runtime == null || dt <= 0 || runtime.paused) return;
     runtime.advance(dt);
+    if (runtime.failure != null) {
+      final failure = runtime.failure!;
+      debugPrint(
+        'Kaguya runtime failed: ${failure.sprite}/${failure.block} '
+        '${failure.error.runtimeType}',
+      );
+      _audio?.pause(true);
+      setState(() {});
+      return;
+    }
     session.updateScore(runtime.score);
     if (++_volumeTick % 15 == 0) _audio?.syncVolumes();
   }
@@ -128,7 +138,12 @@ class _GamePageState extends State<GamePage>
   void _restart() {
     unawaited(session.flushScore());
     _runtime?.restart();
-    _audio?.pause(false);
+    _audio?.pause(_runtime?.paused ?? false);
+    // Also recover a Ticker left active but unscheduled by an older callback
+    // exception; reset its elapsed baseline rather than catching up old time.
+    _ticker.stop();
+    _elapsed = Duration.zero;
+    _ticker.start();
     _focus.requestFocus();
     setState(() {});
   }
@@ -301,12 +316,14 @@ class _GamePageState extends State<GamePage>
     alignment: WrapAlignment.center,
     children: [
       OutlinedButton.icon(
-        onPressed: _runtime == null ? null : _pause,
+        onPressed: _runtime == null || _loading || _runtime!.failure != null
+            ? null
+            : _pause,
         icon: Icon(_runtime?.paused == true ? Icons.play_arrow : Icons.pause),
         label: SiteText(_runtime?.paused == true ? '继续' : '暂停'),
       ),
       OutlinedButton.icon(
-        onPressed: _runtime == null ? null : _restart,
+        onPressed: _runtime == null || _loading ? null : _restart,
         icon: const Icon(Icons.replay),
         label: const SiteText('重开'),
       ),
@@ -369,6 +386,22 @@ class _GamePageState extends State<GamePage>
                   )
                 : runtime == null
                 ? const SizedBox.shrink()
+                : runtime.failure != null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SiteText(
+                          '游戏运行异常，请重开这一局',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        TextButton(
+                          onPressed: _restart,
+                          child: const SiteText('重开'),
+                        ),
+                      ],
+                    ),
+                  )
                 : Focus(
                     focusNode: _focus,
                     onKeyEvent: _key,

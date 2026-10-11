@@ -181,6 +181,10 @@ class KaguyaRuntime extends ChangeNotifier {
   final unknownOpcodes = <String>{};
   final Set<String> executedOpcodes = {};
   bool running = false, paused = false, mouseDown = false, muted = false;
+  KaguyaRuntimeFailure? failure;
+  _Thread? _executing;
+  String? _executingBlock;
+  int _reporterDepth = 0;
   double mouseX = 0,
       mouseY = 0,
       time = 0,
@@ -234,7 +238,7 @@ class KaguyaRuntime extends ChangeNotifier {
     }
   }
 
-  void greenFlag({bool preserveCycle = false}) {
+  void greenFlag({bool preserveCycle = false, bool notify = true}) {
     onStopSounds?.call();
     _threads.clear();
     physics.reset();
@@ -244,6 +248,10 @@ class KaguyaRuntime extends ChangeNotifier {
     mouseDown = false;
     keys.clear();
     _simulated.clear();
+    failure = null;
+    _executing = null;
+    _executingBlock = null;
+    _reporterDepth = 0;
     if (!preserveCycle) {
       _cycleBase = 0;
       _cyclePhase = 'idle';
@@ -259,10 +267,36 @@ class KaguyaRuntime extends ChangeNotifier {
       s.physics = false;
     }
     _hats('event_whenflagclicked');
+    if (notify) notifyListeners();
+  }
+
+  /// A toolbar restart is a fresh run, including source-local state. Finish
+  /// the shipped reset broadcast before painting: clearing ghost effects on
+  /// their own exposes the purple/black collision costumes for a frame.
+  void restart() {
+    sprites.removeWhere((s) => s.isClone);
+    for (final sprite in sprites) {
+      sprite.restore();
+    }
+    physics.reset(resetSettings: true);
+    gravityX = 0;
+    gravityY = -10;
+    boxed = true;
+    _accumulator = 0;
+    _nextClone = 0;
+    greenFlag(notify: false);
+    setVariableByName('分数', 0);
+    _guarded(() {
+      // Hats created by a broadcast run in the following scheduler pass.
+      // The reset acknowledgement is after two zero-duration yields. Do not
+      // advance the game clock or replay a previous run's pending delta.
+      for (var pass = 0; pass < 3; pass++) {
+        _tick(advanceClock: false);
+      }
+    });
     notifyListeners();
   }
 
-  void restart() => greenFlag();
   void startGame() {
     final start = _find('开始游戏');
     if (start != null && start.visible) {
@@ -271,6 +305,7 @@ class KaguyaRuntime extends ChangeNotifier {
   }
 
   void togglePause() {
+    if (failure != null) return;
     paused = !paused;
     notifyListeners();
   }
@@ -345,21 +380,50 @@ class KaguyaRuntime extends ChangeNotifier {
 
   void advance(double seconds) {
     if (!running || paused) return;
-    _accumulator += seconds.clamp(0.0, .25);
-    while (_accumulator >= 1 / 30) {
-      _accumulator -= 1 / 30;
-      _tick();
-    }
+    _guarded(() {
+      _accumulator += seconds.clamp(0.0, .25);
+      while (_accumulator >= 1 / 30 && running) {
+        _accumulator -= 1 / 30;
+        _tick();
+      }
+    });
     notifyListeners();
   }
 
-  void _tick() {
-    time += 1 / 30;
+  void _guarded(VoidCallback operation) {
+    try {
+      operation();
+      _executing = null;
+      _executingBlock = null;
+    } catch (error, stack) {
+      failure = KaguyaRuntimeFailure(
+        error,
+        stack,
+        sprite: _executing?.sprite.name,
+        block: _executingBlock,
+      );
+      running = false;
+      paused = true;
+      keys.clear();
+      _simulated.clear();
+      mouseDown = false;
+      _threads.clear();
+      _accumulator = 0;
+      onStopSounds?.call();
+      // A thrown Ticker callback never schedules its next frame. Retain the
+      // failure for diagnostics and allow the UI to offer a fresh restart.
+    }
+  }
+
+  void _tick({bool advanceClock = true}) {
+    if (advanceClock) time += 1 / 30;
     _simulated.removeWhere((_, until) => until < time);
     final current = List<_Thread>.of(_threads);
     for (final thread in current) {
       if (!running) break;
       if (thread.dead || thread.sprite.deleted) continue;
+      _executing = thread;
+      _executingBlock = thread.pc;
       if (thread.until > time) continue;
       if (thread.waiting != null && thread.waiting!.any((t) => !t.dead)) {
         continue;
@@ -401,6 +465,7 @@ class KaguyaRuntime extends ChangeNotifier {
           thread.pc = null;
           continue;
         }
+        _executingBlock = thread.pc;
         if (_execute(thread, block)) break;
       }
     }
@@ -724,8 +789,16 @@ class KaguyaRuntime extends ChangeNotifier {
   }
 
   dynamic _input(KaguyaSprite s, Map b, String name) {
-    final source = (b['inputs'] as Map?)?[name];
-    return source is List && source.length > 1 ? _value(s, source[1]) : 0;
+    if (_reporterDepth >= 128) {
+      throw FormatException('游戏条件表达式循环或嵌套过深：${s.name}');
+    }
+    _reporterDepth++;
+    try {
+      final source = (b['inputs'] as Map?)?[name];
+      return source is List && source.length > 1 ? _value(s, source[1]) : 0;
+    } finally {
+      _reporterDepth--;
+    }
   }
 
   dynamic _value(KaguyaSprite s, dynamic source) {
@@ -999,8 +1072,19 @@ class KaguyaRuntime extends ChangeNotifier {
   }
 }
 
+class KaguyaRuntimeFailure {
+  const KaguyaRuntimeFailure(this.error, this.stack, {this.sprite, this.block});
+  final Object error;
+  final StackTrace stack;
+  final String? sprite, block;
+}
+
 class KaguyaSprite {
   KaguyaSprite(this.source, {this.cloneId = 0}) {
+    restore();
+  }
+
+  void restore() {
     variables = {
       for (final e in (source['variables'] as Map).entries)
         '${e.key}': List<dynamic>.of(e.value as List),
@@ -1018,7 +1102,20 @@ class KaguyaSprite {
     costume = (source['currentCostume'] as num?)?.toInt() ?? 0;
     layer = (source['layerOrder'] as num?)?.toInt() ?? 0;
     rotationStyle = '${source['rotationStyle'] ?? 'all around'}';
+    deleted = physics = false;
+    stretchX = stretchY = 100;
+    vx = vy = angularVelocity = 0;
+    restitution = .1;
+    effects.clear();
+    text = textAnimation = '';
+    font = 'Handwriting';
+    textColor = '#575e75';
+    outlineColor = '#000000';
+    fontSize = 24;
+    textWidth = 480;
+    outlineWidth = shake = textStarted = 0;
   }
+
   final Map<String, dynamic> source;
   final int cloneId;
   String get name => '${source['name']}';

@@ -1,0 +1,26 @@
+00:00 +0: loading /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart
+00:00 +0: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: shipped flight can mount Iroha and move both directions within the stage
+00:00 +1: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: cyclic reporters are rejected before the game frame loop
+00:00 +2: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: 200 postgame cycles preserve score/mood with acknowledged resets and bounded clones/speed
+00:02 +3: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: all opcode types in the independently shipped full project are supported
+00:02 +4: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: shipped project initializes, starts real running scripts, jumps and reaches game over
+00:02 +5: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: shipped sine tweens retain their independent in and out directions
+00:02 +6: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: original game-over text types at 15 Hz, blocks the script and shakes for .5 s
+00:02 +7: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: game restart cannot resurrect a sound waiting for the native platform
+00:02 +8: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: flight, rhythm, combat and 10000-point repeat execute shipped broadcast scripts
+00:03 +9: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: pause freezes simulation time, keys normalize and restart removes clones
+00:03 +10: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: pixel alpha collision respects holes, hidden sensors and clone masks
+00:03 +11: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: Box2D gravity uses original 50-unit scale and torque changes orientation
+00:03 +12: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: game score request uses actual contract, cooldown, paged leaderboard and scoped best
+00:03 +13: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: guest score is local and late score response cannot overwrite another account
+00:03 +14: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_native_test.dart: real bundled costumes load and paint a native 480×360 opening screen
+00:03 +15: loading /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_riding_regression_test.dart
+00:04 +15: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_riding_regression_test.dart: three complete collision-triggered rides, pause, dismount and restart
+00:04 +16: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_riding_regression_test.dart: restart restores sprite-local state, physics and fractional clock
+00:04 +17: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_riding_regression_test.dart: a riding script failure cannot stop the Flutter frame clock
+00:04 +18: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_riding_regression_test.dart: runtime reporter guard handles a graph changed after validation
+00:04 +19: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_riding_regression_test.dart: restart first paint matches a fresh opening after every riding stage
+00:05 +20: loading /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_page_recovery_test.dart
+00:06 +20: /Users/yxy/Desktop/codex/tsukuyomi-space-app/test/game_page_recovery_test.dart: game page shows a recoverable failure and its restart button resumes frames
+Kaguya runtime failed: Stage/j, StateError
+00:07 +21: All tests passed!
