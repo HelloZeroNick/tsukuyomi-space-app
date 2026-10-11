@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/features/game/kaguya_audio.dart';
+import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 
 import 'package:tsukuyomi_space_app/core/app_update_installer.dart';
 
@@ -50,12 +51,17 @@ Future<void> main() async {
         'TSUKUYOMI_UPDATE_OK abis=$abis platform=${installed.platform.name} version=${installed.version.value} private-cache=$cache',
       );
     }
-    final model = await loadLive2D();
+    final model = await loadLive2D(
+      maxTextureSize: Live2DSceneController.textureLimitFor('auto'),
+    );
     if (model.meshes.length < 10 || model.textures.isEmpty) {
       throw StateError('Cubism returned an empty model');
     }
     final painter = Live2DPainter(model)
-      ..rasterPixelBudget = 450000
+      ..rasterPixelBudget = Live2DSceneController.rasterBudgetFor(
+        'auto',
+        mobile: true,
+      )
       ..pixelRatio = WidgetsBinding
           .instance
           .platformDispatcher
@@ -93,6 +99,16 @@ Future<void> main() async {
     await Future<void>.delayed(const Duration(seconds: 2));
     final bounded = await probeLive2DBoundedPasses();
     final uvs = await probeLive2DShaderUvs();
+    final detail = await probeLive2DCroppedDetail();
+    if (detail['different_bytes'] != 0 ||
+        detail['after'][3] != 0 ||
+        model.textures.any((t) => t.width != 3072 || t.height != 3072)) {
+      throw StateError('Native character detail mismatch: $detail');
+    }
+    // ignore: avoid_print
+    print(
+      'TSUKUYOMI_LIVE2D_DETAIL_OK 3072px atlases, narrow viewport detail and deformed crop verified',
+    );
     for (var pixel = 0; pixel < 4; pixel++) {
       for (var channel = 0; channel < 4; channel++) {
         if ((uvs['shader']![pixel][channel] - uvs['image']![pixel][channel])

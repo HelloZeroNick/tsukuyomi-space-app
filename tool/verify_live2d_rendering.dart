@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
+import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 
 import '../test/support/live2d_render_probe.dart';
 
@@ -25,6 +26,7 @@ Future<void> main() async {
     final pixels = await probeLive2DOpacity();
     final bounded = await probeLive2DBoundedPasses();
     final uvs = await probeLive2DShaderUvs();
+    final detail = await probeLive2DCroppedDetail();
     var passed = true;
     for (var pixel = 0; pixel < 4; pixel++) {
       for (var channel = 0; channel < 4; channel++) {
@@ -36,6 +38,11 @@ Future<void> main() async {
       }
     }
     lines.add('${passed ? "PASS" : "FAIL"} shader UV and alpha mapping');
+    passed =
+        passed && detail['different_bytes'] == 0 && detail['after'][3] == 0;
+    lines.add(
+      '${detail['different_bytes'] == 0 ? "PASS" : "FAIL"} cropped character detail',
+    );
     for (final entry in expectedLive2DOpacity.entries) {
       final actual = pixels[entry.key]!;
       final ok = List.generate(
@@ -76,14 +83,20 @@ Future<void> main() async {
         'pixels': pixels,
         'expected': expectedLive2DOpacity,
         'bounded': bounded,
+        'cropped_detail': detail,
         'uvs': uvs,
       }),
     );
     try {
-      model = await loadLive2D();
+      model = await loadLive2D(
+        maxTextureSize: Live2DSceneController.textureLimitFor('auto'),
+      );
       painter = Live2DPainter(model)
         ..pixelRatio = 2
-        ..rasterPixelBudget = 450000;
+        ..rasterPixelBudget = Live2DSceneController.rasterBudgetFor(
+          'auto',
+          mobile: Platform.isAndroid || Platform.isIOS,
+        );
       // The second natural blink begins at ~5.608 s. Preserve all preceding
       // physics updates, then inspect the full reopen and settling period.
       for (var frame = 0; frame < 195; frame++) {
@@ -125,6 +138,7 @@ Future<void> main() async {
         'pixels': pixels,
         'expected': expectedLive2DOpacity,
         'bounded': bounded,
+        'cropped_detail': detail,
         'model_frames': frames.length,
         'model_bounded_passes': painter?.boundedPasses,
         'texture_rgba_bytes': model?.textures.fold<int>(

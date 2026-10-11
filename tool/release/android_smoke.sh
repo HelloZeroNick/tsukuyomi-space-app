@@ -10,6 +10,8 @@ for attempt in $(seq 1 30); do
     grep -q 'TSUKUYOMI_UPDATE_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep -q 'TSUKUYOMI_GAME_AUDIO_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep -q 'TSUKUYOMI_LIVE2D_RENDER_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep -q 'TSUKUYOMI_LIVE2D_DETAIL_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep 'TSUKUYOMI_LIVE2D_DETAIL_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_RENDER_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_TIMINGS' artifacts/android-smoke.log
     grep 'TSUKUYOMI_GAME_AUDIO_OK' artifacts/android-smoke.log

@@ -3,6 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/live2d_render_probe.dart';
 
 void main() {
+  testWidgets(
+    'transparent margins keep fine details sharp; crop follows deformed geometry',
+    (tester) async {
+      final result = (await tester.runAsync(probeLive2DCroppedDetail))!;
+      expect(result['passes'], [0, 1]);
+      expect(result['different_bytes'], 0);
+      expect(result['before'][3], 255);
+      expect(result['after'], [0, 0, 0, 0]);
+    },
+  );
   testWidgets('tint shader preserves UV mapping and premultiplied alpha', (
     tester,
   ) async {

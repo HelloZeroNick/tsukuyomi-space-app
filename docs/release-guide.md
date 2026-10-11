@@ -1,11 +1,11 @@
-# 月读空间 0.6.12 测试版
+# 月读空间 0.6.13 测试版
 
 ## 安装
 
 - Android：安装 `android-arm64-v8a.apk`（绝大多数手机）。x86_64 模拟器选择 x86_64。当前 Cubism SDK 已不提供 32 位 ARM 库，因此不发布 32 位 APK。允许安装来自浏览器或文件管理器的应用。所有 APK 使用同一持久发行密钥签名，可覆盖升级本测试版。
 - macOS：打开 DMG，将应用拖到 Applications。Universal 包同时支持 Apple Silicon 和 Intel。当前没有 Developer ID 签名和公证；首次启动可能需在“系统设置 → 隐私与安全性”允许打开此应用。无需关闭系统安全功能。
 - Windows 10/11 x64：运行 setup.exe。按当前用户安装，无需管理员权限；当前未使用商业代码签名，SmartScreen 可能显示未知发布者。安装程序包含经过微软签名验证的 WebView2 引导程序，缺少运行时会联网安装，以支持 QQ 登录。便携 ZIP 解压完整目录后也可运行，使用 QQ 前需运行包内的 `MicrosoftEdgeWebview2Setup.exe`。
-- Linux x64：使用 Ubuntu 22.04 构建，推荐 `sudo apt install ./tsukuyomi-space-0.6.12-linux-x64.deb` 自动安装该版本所需音视频运行库。需桌面登录会话及 Secret Service（如已解锁的 GNOME Keyring）保存密钥。其它发行版须具备相同运行库 ABI，尤其是构建时链接的 libmpv；tar.gz 为便携包，不包含系统 GTK、Secret Service、GStreamer、libmpv 和 libepoxy。DEB 的依赖根据实际安装包中全部 ELF 自动推导。
+- Linux x64：使用 Ubuntu 22.04 构建，推荐 `sudo apt install ./tsukuyomi-space-0.6.13-linux-x64.deb` 自动安装该版本所需音视频运行库。需桌面登录会话及 Secret Service（如已解锁的 GNOME Keyring）保存密钥。其它发行版须具备相同运行库 ABI，尤其是构建时链接的 libmpv；tar.gz 为便携包，不包含系统 GTK、Secret Service、GStreamer、libmpv 和 libepoxy。DEB 的依赖根据实际安装包中全部 ELF 自动推导。
 - iOS：下载 `ios-arm64-unsigned.ipa`，使用自签工具导入，并用自己的 Apple 账号或证书签名。签名器需重新签署 App 和所有内嵌 Framework，配置对应描述文件与 Keychain entitlement。IPA 是真实 iPhoneOS arm64 构建，不是模拟器包；未签名文件不能直接点击安装。签名有效期、设备数量与刷新方式取决于签名账号及工具。本版未做已签名 iPhone 真机验收。
 
 ## 配置真实模型和语音
@@ -44,6 +44,7 @@ Agent OS 保留原站独立部署的外部入口，其运行环境不随 Flutter
 
 ## Room 与房间设置
 
+- 0.6.13 提升手机、电脑及角色全屏的默认画质，关闭鼠标追踪。房间设置 → 角色与布局 → 角色画质，选择“自动（推荐）”兼顾清晰度与绘制预算；想保留原始细节可选“完整分辨率”，需要更低内存和显卡负载可选“省电”。升级会保留你已选的档位。呼吸、眨眼、口型、动作和隐藏暂停继续可用。
 - PC 使用角色舞台加聊天工作区，手机使用角色背景加底部对话；聊天、日记、资料、便签与网站入口对应。开场建议、主动开场、停止/重试、最后一轮编辑重发/重生成、分句气泡、图片消息、分享卡和公开链接撤销均可使用。
 - 图片在设备上压缩后发送，网站同步图片需要站点已配置对象存储。网络失败后保留完整回复和稳定消息 ID，重新登录或回到前台继续补传。
 - 结束会话会按选定人设生成日记；先本地保存、再同步网站，失败保留聊天和录制。重试复用已生成日记，避免再次消耗模型额度。日记支持阅读、删除、存档导入/导出/合并、清空和人设编辑；日记与人设使用网站相同账号数据。

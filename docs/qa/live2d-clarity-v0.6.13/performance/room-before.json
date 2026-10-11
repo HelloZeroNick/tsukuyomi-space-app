@@ -1,0 +1,75 @@
+{
+  "label": "v0613-before",
+  "scene": "1280x820 native macOS; 2000 turns, 200 image messages, streamed fragments, Live2D, three runs",
+  "runs": [
+    {
+      "run": 1,
+      "viewport": {
+        "width": 760.855462184874,
+        "height": 571.04,
+        "dpr": 2.0
+      },
+      "input_ready_ms": 91,
+      "frames": 657,
+      "ui_p95_ms": 9.6,
+      "raster_p95_ms": 6.655,
+      "frames_over_16_7_ms": 1,
+      "rss_bytes": 243597312,
+      "rss_after_navigation_bytes": 247103488,
+      "model_ticks": 542,
+      "model_update_cpu_percent": 3.1860843573563606,
+      "model_update_mean_ms": 0.5309944649446495,
+      "live2d_bounded_passes": 4,
+      "live2d_rasterized_pixels": 3595980,
+      "live2d_pixel_budget": 900000,
+      "live2d_texture_rgba_bytes": 33554432,
+      "hidden_model_ticks": 0
+    },
+    {
+      "run": 2,
+      "viewport": {
+        "width": 760.855462184874,
+        "height": 571.04,
+        "dpr": 2.0
+      },
+      "input_ready_ms": 58,
+      "frames": 657,
+      "ui_p95_ms": 9.5,
+      "raster_p95_ms": 6.484,
+      "frames_over_16_7_ms": 3,
+      "rss_bytes": 265715712,
+      "rss_after_navigation_bytes": 271859712,
+      "model_ticks": 542,
+      "model_update_cpu_percent": 3.1711834385032605,
+      "model_update_mean_ms": 0.5285110701107002,
+      "live2d_bounded_passes": 4,
+      "live2d_rasterized_pixels": 3595980,
+      "live2d_pixel_budget": 900000,
+      "live2d_texture_rgba_bytes": 33554432,
+      "hidden_model_ticks": 0
+    },
+    {
+      "run": 3,
+      "viewport": {
+        "width": 760.855462184874,
+        "height": 571.04,
+        "dpr": 2.0
+      },
+      "input_ready_ms": 60,
+      "frames": 656,
+      "ui_p95_ms": 9.472,
+      "raster_p95_ms": 6.594,
+      "frames_over_16_7_ms": 1,
+      "rss_bytes": 276332544,
+      "rss_after_navigation_bytes": 258244608,
+      "model_ticks": 542,
+      "model_update_cpu_percent": 3.1243440717369655,
+      "model_update_mean_ms": 0.5207047970479707,
+      "live2d_bounded_passes": 4,
+      "live2d_rasterized_pixels": 3595980,
+      "live2d_pixel_budget": 900000,
+      "live2d_texture_rgba_bytes": 33554432,
+      "hidden_model_ticks": 0
+    }
+  ]
+}

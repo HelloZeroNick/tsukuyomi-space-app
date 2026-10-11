@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
+import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 
 void main() {
   testWidgets('real Cubism model deforms and renders with native physics', (
@@ -69,4 +70,30 @@ void main() {
       model.dispose();
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
+  testWidgets(
+    'default character quality decodes sharper 3K atlases on both platforms',
+    (tester) async {
+      final model = (await tester.runAsync(
+        () => loadLive2D(
+          maxTextureSize: Live2DSceneController.textureLimitFor('auto'),
+        ),
+      ))!;
+      try {
+        expect(
+          model.textures.every((t) => t.width == 3072 && t.height == 3072),
+          true,
+        );
+        expect(
+          model.textures.fold<int>(
+            0,
+            (total, t) => total + t.width * t.height * 4,
+          ),
+          72 * 1024 * 1024,
+        );
+      } finally {
+        model.dispose();
+      }
+    },
+    skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'),
+  );
 }

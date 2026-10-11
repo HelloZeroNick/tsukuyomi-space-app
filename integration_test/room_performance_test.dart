@@ -10,6 +10,8 @@ import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/core/models.dart';
 import 'package:tsukuyomi_space_app/features/room/room_controller.dart';
 import 'package:tsukuyomi_space_app/main.dart';
+import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../test/support/fakes.dart';
 
@@ -19,6 +21,11 @@ void main() {
   testWidgets('Room 2000 messages, image, stream and native Live2D benchmark', (
     tester,
   ) async {
+    await windowManager.ensureInitialized();
+    await windowManager.setFullScreen(false);
+    await windowManager.setSize(const Size(1280, 820));
+    await windowManager.show();
+    await windowManager.focus();
     final runs = <Map<String, dynamic>>[];
     for (var repetition = 0; repetition < 3; repetition++) {
       final started = Stopwatch()..start();
@@ -70,7 +77,12 @@ void main() {
           controller: room,
           initialPath: '/room',
           modelLoader: () async {
-            model = await loadLive2D();
+            model = await loadLive2D(
+              maxTextureSize:
+                  const bool.hasEnvironment('BENCHMARK_TEXTURE_SIZE')
+                  ? const int.fromEnvironment('BENCHMARK_TEXTURE_SIZE')
+                  : Live2DSceneController.textureLimitFor('auto'),
+            );
             model!.addListener(() {
               ticks++;
               modelCpuMs += model!.updateMilliseconds;
@@ -128,7 +140,12 @@ void main() {
           .toList();
       expect(painters, hasLength(1));
       final painter = painters.single;
+      final viewport = tester.getSize(
+        find.byWidgetPredicate((w) => w is CustomPaint && w.painter == painter),
+      );
+      expect(await windowManager.isFocused(), true);
       final boundedPasses = painter.boundedPasses;
+      final downsampledPasses = painter.downsampledPasses;
       final boundedPixels = painter.rasterizedPixels;
       final rssBefore = ProcessInfo.currentRss;
       // Cover Room with another route and verify its model clock stops.
@@ -158,6 +175,11 @@ void main() {
           values.isEmpty ? 0 : values[((values.length - 1) * .95).round()];
       final run = <String, dynamic>{
         'run': repetition + 1,
+        'viewport': {
+          'width': viewport.width,
+          'height': viewport.height,
+          'dpr': tester.view.devicePixelRatio,
+        },
         'input_ready_ms': inputMs,
         'frames': frames.length,
         'ui_p95_ms': p95(ui),
@@ -178,6 +200,7 @@ void main() {
             ? 0
             : recordedModelMs / recordedTicks,
         'live2d_bounded_passes': boundedPasses,
+        'live2d_downsampled_passes': downsampledPasses,
         'live2d_rasterized_pixels': boundedPixels,
         'live2d_pixel_budget': painter.rasterPixelBudget,
         'live2d_texture_rgba_bytes': model!.textures.fold<int>(

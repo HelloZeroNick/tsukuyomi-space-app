@@ -77,14 +77,15 @@ class _CharacterStageState extends State<CharacterStage>
     _lightingTimer = Timer(nextRoomLightingDelay(date), _syncLighting);
   }
 
-  double _x = 0, _y = 0;
   bool _paused = false;
   bool _visible = true;
   DesktopWindowController? _window;
   String _expression = 'neutral';
   int _loadRevision = 0;
   int _textureLimit(RoomSettings settings) =>
-      settings.option('live2dRenderQuality', 'auto') == 'full' ? 0 : 2048;
+      Live2DSceneController.textureLimitFor(
+        settings.option('live2dRenderQuality', 'auto'),
+      );
   @override
   void initState() {
     super.initState();
@@ -104,8 +105,6 @@ class _CharacterStageState extends State<CharacterStage>
           seconds,
           delta.clamp(0, .05),
           mouth: widget.voice.mouth,
-          lookX: _x,
-          lookY: _y,
           expression: widget.animation?.current != null
               ? widget.animation!.expression
               : _expression,
@@ -232,8 +231,8 @@ class _CharacterStageState extends State<CharacterStage>
     ),
   );
 
-  Widget _character() => LayoutBuilder(
-    builder: (context, box) {
+  Widget _character() => Builder(
+    builder: (context) {
       _sceneController.configure(
         quality:
             widget.settings.options['live2dRenderQuality']?.toString() ??
@@ -241,50 +240,40 @@ class _CharacterStageState extends State<CharacterStage>
         frameLimit: widget.settings.number('live2dFrameRate', 0).toInt(),
         pixelRatio: MediaQuery.devicePixelRatioOf(context),
       );
-      return MouseRegion(
-        onHover: (e) {
-          _x = (e.localPosition.dx / box.maxWidth * 2 - 1).clamp(-1, 1);
-          _y = (1 - e.localPosition.dy / box.maxHeight * 2).clamp(-1, 1);
-        },
-        onExit: (_) {
-          _x = 0;
-          _y = 0;
-        },
-        child: Semantics(
-          label: '月见八千代',
-          image: true,
-          child: _model == null
-              ? Image.asset(
-                  'assets/images/yachiyo-hub-stand.png',
-                  fit: BoxFit.contain,
-                  excludeFromSemantics: true,
-                )
-              : AnimatedBuilder(
-                  animation: _model!,
-                  child: RepaintBoundary(
-                    child: CustomPaint(painter: _sceneController.painter),
-                  ),
-                  builder: (context, child) {
-                    final a = widget.animation;
-                    return Transform.translate(
-                      offset: Offset(
-                        widget.settings.number('modelX', 0) + (a?.x ?? 0),
-                        widget.settings.number('modelY', 0) + (a?.y ?? 0),
-                      ),
-                      child: Transform.rotate(
-                        angle: (a?.rotation ?? 0) * 3.141592653589793 / 180,
-                        child: Transform.scale(
-                          scale:
-                              widget.settings.number('modelScale', 100) /
-                              100 *
-                              (a?.scale ?? 1),
-                          child: child,
-                        ),
-                      ),
-                    );
-                  },
+      return Semantics(
+        label: '月见八千代',
+        image: true,
+        child: _model == null
+            ? Image.asset(
+                'assets/images/yachiyo-hub-stand.png',
+                fit: BoxFit.contain,
+                excludeFromSemantics: true,
+              )
+            : AnimatedBuilder(
+                animation: _model!,
+                child: RepaintBoundary(
+                  child: CustomPaint(painter: _sceneController.painter),
                 ),
-        ),
+                builder: (context, child) {
+                  final a = widget.animation;
+                  return Transform.translate(
+                    offset: Offset(
+                      widget.settings.number('modelX', 0) + (a?.x ?? 0),
+                      widget.settings.number('modelY', 0) + (a?.y ?? 0),
+                    ),
+                    child: Transform.rotate(
+                      angle: (a?.rotation ?? 0) * 3.141592653589793 / 180,
+                      child: Transform.scale(
+                        scale:
+                            widget.settings.number('modelScale', 100) /
+                            100 *
+                            (a?.scale ?? 1),
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+              ),
       );
     },
   );

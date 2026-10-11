@@ -100,6 +100,100 @@ const expectedLive2DOpacity = <String, List<int>>{
   'masked additive': [84, 94, 124, 255],
 };
 
+/// A narrow character in a wide viewport should retain native detail: empty
+/// margins must not force the atlas stripes through a low-resolution image.
+Future<Map<String, dynamic>> probeLive2DCroppedDetail() async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  for (var x = 0; x < 256; x++) {
+    canvas.drawRect(
+      Rect.fromLTWH(x.toDouble(), 0, 1, 256),
+      Paint()..color = x % 8 < 4 ? Colors.black : Colors.white,
+    );
+  }
+  final picture = recorder.endRecording();
+  final texture = await picture.toImage(256, 256);
+  picture.dispose();
+  final meshes = [
+    for (var i = 0; i < 12; i++)
+      LiveMesh(
+        positions: Float32List.fromList([0, 0, 10, 0, 10, 10, 0, 10]),
+        uvs: Float32List.fromList([0, 0, 1, 0, 1, 1, 0, 1]),
+        indices: Uint16List.fromList([0, 1, 2, 0, 2, 3]),
+        texture: 0,
+        order: i,
+        flags: 4,
+        visible: true,
+        opacity: 1,
+        masks: [],
+        multiply: [1, 1, 1, 1],
+        screen: [0, 0, 0, 0],
+        staticTopology: true,
+        geometryRevision: 0,
+      ),
+  ];
+  final model = _ProbeModel([texture], meshes);
+  final images = <Uint8List>[];
+  final painter = Live2DPainter(model)..pixelRatio = 3;
+  final passes = <int>[];
+  try {
+    for (final budget in [0, 150000]) {
+      painter.rasterPixelBudget = budget;
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder)..scale(3);
+      painter.paint(canvas, const Size(512, 128));
+      passes.add(painter.boundedPasses);
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(1536, 384);
+      images.add(
+        (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!.buffer
+            .asUint8List(),
+      );
+      image.dispose();
+      picture.dispose();
+    }
+    var different = 0;
+    for (var i = 0; i < images.first.length; i++) {
+      if (images.first[i] != images.last[i]) different++;
+    }
+    // Exercise cache invalidation with retained mutable native geometry.
+    painter.rasterPixelBudget = 4096;
+    final colors = <List<int>>[];
+    for (var moved = 0; moved < 2; moved++) {
+      for (final mesh in meshes) {
+        if (moved != 0) {
+          for (var i = 0; i < mesh.positions.length; i += 2) {
+            mesh.positions[i] += 6;
+          }
+          mesh.geometryRevision = 1;
+        }
+      }
+      final recorder = ui.PictureRecorder();
+      painter.paint(Canvas(recorder), const Size(128, 128));
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(128, 128);
+      final bytes = (await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!;
+      colors.add([
+        for (var c = 0; c < 4; c++) bytes.getUint8((64 * 128 + 32) * 4 + c),
+      ]);
+      image.dispose();
+      picture.dispose();
+    }
+    return {
+      'different_bytes': different,
+      'passes': passes,
+      'before': colors.first,
+      'after': colors.last,
+    };
+  } finally {
+    painter.dispose();
+    model.dispose();
+    texture.dispose();
+  }
+}
+
 Future<Map<String, List<List<int>>>> probeLive2DShaderUvs() async {
   final program = await loadLive2DTintProgram();
   final recorder = ui.PictureRecorder();

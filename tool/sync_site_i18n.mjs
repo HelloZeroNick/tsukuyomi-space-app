@@ -61,7 +61,7 @@ for (const language of ['zh','ja','en']) {
   extras[language].nativeLive2dQualityFull = {zh:'完整分辨率',ja:'フル解像度',en:'Full resolution'}[language];
   extras[language].nativeLive2dFrameRate = {zh:'角色帧率',ja:'キャラクターのフレームレート',en:'Character frame rate'}[language];
   extras[language].nativeLive2dFrameAuto = {zh:'自动（电脑 60 / 手机 30）',ja:'自動（PC 60 / モバイル 30）',en:'Automatic (desktop 60 / mobile 30)'}[language];
-  extras[language].nativeLive2dPerformanceHint = {zh:'自动模式限制大窗口的角色绘制分辨率；文字和页面保持清晰。省电模式更适合高分辨率屏幕。隐藏页面或最小化窗口会暂停角色。',ja:'自動モードでは大きなウィンドウのキャラクター解像度を調整します。文字やページの鮮明さは維持されます。高解像度画面には省電力モードがおすすめです。非表示や最小化時はキャラクターを停止します。',en:'Automatic mode limits character resolution in large windows while keeping text and pages sharp. Power saving suits high-resolution displays. Hidden pages and minimized windows pause the character.'}[language];
+  extras[language].nativeLive2dPerformanceHint = {zh:'自动模式使用高清纹理，绘制预算集中在角色区域；完整分辨率更清晰，但开销更高。省电模式可降低显卡负载。角色不跟随鼠标；隐藏页面或最小化窗口会暂停角色。',ja:'自動モードは高精細テクスチャを使用し、描画をキャラクター領域に集中します。フル解像度はより鮮明ですが負荷が増えます。省電力モードで GPU 負荷を軽減できます。マウス追従は無効です。非表示や最小化時はキャラクターを停止します。',en:'Automatic mode uses sharper textures and concentrates the drawing budget on the character. Full resolution adds detail at a higher cost; power saving reduces GPU load. Mouse tracking is disabled. Hidden pages and minimized windows pause the character.'}[language];
   extras[language].nativeAssetPagination = {zh:'{total} 项 · 第 {page} / {pages} 页',ja:'{total}件 · {page} / {pages}ページ',en:'{total} items · Page {page} / {pages}'}[language];
 }
 const literal = value => JSON.stringify(value).replaceAll('$', '\\$');

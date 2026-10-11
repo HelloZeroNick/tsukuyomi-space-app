@@ -1,0 +1,39 @@
+{
+  "version": "0.6.13+19",
+  "validated_at": "2026-10-11T08:35:32.867668+00:00",
+  "format": "passed",
+  "analysis": "no issues",
+  "flutter_regression": {
+    "passed": 803,
+    "skipped": 33,
+    "native_cubism_enabled": true,
+    "reason": "Optional backend/network/device/capture fixtures; release CI enables its backend fixture checks."
+  },
+  "focused_renderer_scene_texture_tests": 19,
+  "release_tool_tests": 38,
+  "agent_packaging_tests": 3,
+  "reference_device": {
+    "chip": "Apple M5",
+    "memory_bytes": 17179869184,
+    "os": "macOS 27.0.1",
+    "flutter": "3.47.5"
+  },
+  "native_sharpness": {
+    "passed": true,
+    "source": "sharpness-after.json",
+    "comparison": "detail-comparison.png",
+    "physical_mobile_device": false
+  },
+  "room_profile": {
+    "before": "performance/room-before.json",
+    "after": "performance/room-after.json",
+    "repetitions_each": 3,
+    "hidden_ticks_each": 0
+  },
+  "limits": [
+    "No Android physical phone or 9070/4060 graphics card available",
+    "Still-image mobile dimensions rendered on native macOS GPU",
+    "Higher default texture memory is an intentional detail tradeoff; economy retains 2048 textures",
+    "Profile fixtures use 1x1 PNG image messages, no live API or disk credentials"
+  ]
+}

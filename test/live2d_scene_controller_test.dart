@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/core/desktop_window.dart';
+import 'package:tsukuyomi_space_app/core/models.dart';
 import 'package:tsukuyomi_space_app/live2d/character_stage.dart';
 import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 
@@ -21,6 +22,7 @@ class _Clock implements TickerProvider {
 
 class _Model extends Live2DModel {
   int ticks = 0;
+  final gazes = <Offset>[];
   @override
   List<ui.Image> get textures => [];
   @override
@@ -41,6 +43,7 @@ class _Model extends Live2DModel {
     String expression = 'neutral',
   }) {
     ticks++;
+    gazes.add(Offset(lookX, lookY));
     notifyListeners();
   }
 }
@@ -90,6 +93,64 @@ void main() {
     scene.configure(quality: 'full');
     expect(scene.painter!.rasterPixelBudget, 0);
   });
+
+  for (final mobile in [true, false]) {
+    testWidgets(
+      'pointer does not steer ${mobile ? 'mobile' : 'desktop'} character, including fullscreen',
+      (tester) async {
+        tester.view.devicePixelRatio = mobile ? 3 : 2;
+        tester.view.physicalSize = mobile
+            ? const Size(1170, 2532)
+            : const Size(2560, 1640);
+        addTearDown(tester.view.reset);
+        final model = _Model();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CharacterStage(
+                mobile: mobile,
+                voice: SilentVoice(),
+                modelLoader: () async => model,
+                settings: const RoomSettings(),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        final mouse = await tester.createGesture(
+          kind: ui.PointerDeviceKind.mouse,
+        );
+        await mouse.addPointer();
+        Future<void> hover() async {
+          final rect = tester.getRect(
+            find.byKey(const Key('room-character-viewport')).last,
+          );
+          await mouse.moveTo(rect.topLeft + const Offset(20, 20));
+          await tester.pump(const Duration(milliseconds: 34));
+          await mouse.moveTo(rect.bottomRight - const Offset(20, 20));
+          await tester.pump(const Duration(milliseconds: 34));
+        }
+
+        await hover();
+        if (!mobile) {
+          await tester.tap(find.byTooltip('全屏角色舞台'));
+          await tester.pump(const Duration(milliseconds: 400));
+        }
+        await hover();
+        expect(model.gazes.length, greaterThan(3));
+        expect(model.gazes.every((gaze) => gaze == Offset.zero), true);
+        await mouse.removePointer();
+        if (!mobile) {
+          await tester.tap(find.byTooltip('退出全屏舞台'));
+          await tester.pump(const Duration(milliseconds: 400));
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+      variant: TargetPlatformVariant({
+        mobile ? TargetPlatform.android : TargetPlatform.windows,
+      }),
+    );
+  }
 
   testWidgets('desktop minimization suspends the Room model and restores it', (
     tester,

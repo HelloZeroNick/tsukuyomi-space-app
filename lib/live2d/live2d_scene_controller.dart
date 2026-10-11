@@ -5,6 +5,19 @@ import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 
 /// Owns the single clock/model/painter shared by the embedded and full scene.
 class Live2DSceneController {
+  // Keep more of the source atlas in the default mode without the 128 MiB
+  // RGBA footprint of the two original 4096px textures. Economy stays at 2K.
+  static int textureLimitFor(String quality) => switch (quality) {
+    'full' => 0,
+    'economy' => 2048,
+    _ => 3072,
+  };
+  static int rasterBudgetFor(String quality, {required bool mobile}) =>
+      switch (quality) {
+        'full' => 0,
+        'economy' => mobile ? 225000 : 450000,
+        _ => 900000,
+      };
   Live2DSceneController({
     required TickerProvider vsync,
     required this.mobile,
@@ -43,11 +56,7 @@ class Live2DSceneController {
     _frameLimit = const [30, 60].contains(frameLimit) ? frameLimit : 0;
     painter
       ?..pixelRatio = _pixelRatio
-      ..rasterPixelBudget = switch (_quality) {
-        'full' => 0,
-        'economy' => mobile ? 225000 : 450000,
-        _ => mobile ? 450000 : 900000,
-      };
+      ..rasterPixelBudget = rasterBudgetFor(_quality, mobile: mobile);
   }
 
   void attach(Live2DModel value) {

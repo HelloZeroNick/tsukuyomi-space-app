@@ -13,14 +13,14 @@ class Live2DPainter extends CustomPainter {
   Live2DPainter(this.model) : super(repaint: model);
   final Live2DModel model;
   // Zero keeps the direct path (probes and full-resolution mode). Large native
-  // viewports bound the normal-compositing passes, preserving blend order.
+  // viewports bound only occupied character pixels, preserving blend order.
   int rasterPixelBudget = 0;
   double pixelRatio = 1;
   final _buffers = <int, _MeshBuffer>{};
   List<int> _sorted = [], _orders = [];
   List<int> _flags = [];
   List<List<int>> _groups = [];
-  int boundedPasses = 0, rasterizedPixels = 0;
+  int boundedPasses = 0, downsampledPasses = 0, rasterizedPixels = 0;
   final _imagePaint = Paint()..filterQuality = FilterQuality.low;
   final _layerPaint = Paint();
   final _maskLayerPaint = Paint();
@@ -48,19 +48,28 @@ class Live2DPainter extends CustomPainter {
   ];
   // A full-character saveLayer for each eyelash/eye mesh is extremely costly.
   // Clip to the actual drawable while retaining a pixel gutter for filtering.
-  Rect _meshBounds(LiveMesh mesh, double scale) {
-    var left = double.infinity,
-        top = double.infinity,
-        right = -double.infinity,
-        bottom = -double.infinity;
-    for (var i = 0; i < mesh.positions.length; i += 2) {
-      final x = mesh.positions[i], y = -mesh.positions[i + 1];
-      left = math.min(left, x);
-      right = math.max(right, x);
-      top = math.min(top, y);
-      bottom = math.max(bottom, y);
+  Rect _meshBounds(int index) =>
+      _buffers.putIfAbsent(index, _MeshBuffer.new).bounds(model.meshes[index]);
+
+  Rect _groupBounds(List<int> group, Size size, double scale) {
+    Rect? occupied;
+    for (final i in group) {
+      final mesh = model.meshes[i];
+      if (!mesh.visible || mesh.opacity <= 0 || mesh.indices.isEmpty) continue;
+      final rect = _meshBounds(i);
+      if (!rect.isEmpty) occupied = occupied?.expandToInclude(rect) ?? rect;
     }
-    return Rect.fromLTRB(left, top, right, bottom).inflate(2 / scale);
+    if (occupied == null) return Rect.zero;
+    final origin = Offset(
+      size.width / 2 - model.bounds.center.dx * scale,
+      size.height / 2 - model.bounds.center.dy * scale,
+    );
+    return Rect.fromLTRB(
+      occupied.left * scale + origin.dx,
+      occupied.top * scale + origin.dy,
+      occupied.right * scale + origin.dx,
+      occupied.bottom * scale + origin.dy,
+    ).inflate(2).intersect(Offset.zero & size);
   }
 
   static final _identity = Float64List.fromList([
@@ -89,6 +98,7 @@ class Live2DPainter extends CustomPainter {
     final scale =
         .94 * (size.width / bounds.width).clamp(0, size.height / bounds.height);
     boundedPasses = 0;
+    downsampledPasses = 0;
     rasterizedPixels = 0;
     if (_orders.length != model.meshes.length) {
       for (final buffer in _buffers.values) {
@@ -126,14 +136,14 @@ class Live2DPainter extends CustomPainter {
         _groups.last.add(index);
       }
     }
-    final pixels = size.width * size.height * pixelRatio * pixelRatio;
-    final bounded = rasterPixelBudget > 0 && pixels > rasterPixelBudget * 1.2;
     for (final group in _groups) {
       // SrcOver is associative, so a normal pass can be composed on transparent
       // pixels first. Add/multiply must still see the real destination beneath.
       // Combining them into one transparent image changes highlights and alpha.
-      final useImage =
-          bounded &&
+      final candidate =
+          rasterPixelBudget > 0 &&
+          size.width * size.height * pixelRatio * pixelRatio >
+              rasterPixelBudget * 1.2 &&
           _blend(model.meshes[group.first]) == BlendMode.srcOver &&
           group
                   .where(
@@ -142,13 +152,42 @@ class Live2DPainter extends CustomPainter {
                   )
                   .length >=
               12;
-      if (useImage) {
-        final ratio = math.sqrt(rasterPixelBudget / (size.width * size.height));
-        final width = math.max(1, (size.width * ratio).floor());
-        final height = math.max(1, (size.height * ratio).floor());
+      var crop = candidate ? _groupBounds(group, size, scale) : Rect.zero;
+      if (candidate) {
+        if (crop.isEmpty) continue;
+        // Transparent viewport margins consumed most of the old pixel budget.
+        // Crop before resampling so facial details receive those pixels instead.
+        // Native-density offscreen composition also avoids painting hundreds of
+        // overlapping meshes against the full window. It must not resample fine
+        // lines merely because the transparent viewport itself is large.
+        var ratio = math.min(
+          pixelRatio,
+          math.sqrt(rasterPixelBudget / (crop.width * crop.height)),
+        );
+        final occupied = crop;
+        late int width, height;
+        for (var attempt = 0; ; attempt++) {
+          final left = (occupied.left * ratio).floor();
+          final top = (occupied.top * ratio).floor();
+          final right = (occupied.right * ratio).ceil();
+          final bottom = (occupied.bottom * ratio).ceil();
+          width = math.max(1, right - left);
+          height = math.max(1, bottom - top);
+          crop = Rect.fromLTWH(
+            left / ratio,
+            top / ratio,
+            width / ratio,
+            height / ratio,
+          );
+          if (width * height <= rasterPixelBudget) break;
+          ratio *= attempt >= 3
+              ? .5
+              : math.sqrt(rasterPixelBudget / (width * height)) * .999;
+        }
         final recorder = ui.PictureRecorder();
         final target = Canvas(recorder)
-          ..scale(width / size.width, height / size.height);
+          ..scale(ratio)
+          ..translate(-crop.left, -crop.top);
         _paintGroup(target, size, scale, group);
         final picture = recorder.endRecording();
         final image = picture.toImageSync(width, height);
@@ -156,7 +195,7 @@ class Live2DPainter extends CustomPainter {
           canvas.drawImageRect(
             image,
             Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
-            Offset.zero & size,
+            crop,
             _imagePaint,
           );
         } finally {
@@ -164,6 +203,7 @@ class Live2DPainter extends CustomPainter {
           picture.dispose();
         }
         boundedPasses++;
+        if (ratio < pixelRatio * .999) downsampledPasses++;
         rasterizedPixels += width * height;
       } else {
         _paintGroup(canvas, size, scale, group);
@@ -192,7 +232,7 @@ class Live2DPainter extends CustomPainter {
       if (mesh.masks.isEmpty) {
         _draw(canvas, i, mesh, blend);
       } else {
-        final clipBounds = _meshBounds(mesh, scale);
+        final clipBounds = _meshBounds(i).inflate(2 / scale);
         canvas.save();
         canvas.clipRect(clipBounds);
         canvas.saveLayer(clipBounds, _layerPaint..blendMode = blend);
@@ -268,6 +308,34 @@ class Live2DPainter extends CustomPainter {
 }
 
 class _MeshBuffer {
+  LiveMesh? _boundsSource;
+  int? _boundsRevision;
+  Rect _bounds = Rect.zero;
+  Rect bounds(LiveMesh mesh) {
+    if (identical(_boundsSource, mesh) &&
+        mesh.staticTopology &&
+        mesh.geometryRevision != null &&
+        _boundsRevision == mesh.geometryRevision) {
+      return _bounds;
+    }
+    var left = double.infinity,
+        top = double.infinity,
+        right = -double.infinity,
+        bottom = -double.infinity;
+    for (var i = 0; i < mesh.positions.length; i += 2) {
+      final x = mesh.positions[i], y = -mesh.positions[i + 1];
+      left = math.min(left, x);
+      right = math.max(right, x);
+      top = math.min(top, y);
+      bottom = math.max(bottom, y);
+    }
+    _boundsSource = mesh;
+    _boundsRevision = mesh.geometryRevision;
+    return _bounds = mesh.positions.isEmpty
+        ? Rect.zero
+        : Rect.fromLTRB(left, top, right, bottom);
+  }
+
   Float32List positions = Float32List(0), uvs = Float32List(0);
   Uint16List indices = Uint16List(0);
   ui.Vertices? vertices;
