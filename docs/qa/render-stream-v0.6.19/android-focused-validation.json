@@ -1,0 +1,17 @@
+{
+  "run_id": 38277802756,
+  "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38277802756",
+  "source_commit": "d8be2c83ef0f389ad3450a1e35e9e1775f5788c1",
+  "conclusion": "success",
+  "markers": [
+    "2026-10-12T16:38:44.4477516Z I/flutter ( 2459): TSUKUYOMI_ROOM_IME_OK cycles=3 actual_keyboard=true stable_editor=true stable_viewport=true",
+    "2026-10-12T16:38:44.4493166Z I/flutter ( 2459): TSUKUYOMI_LIVE2D_BATCH_OK synthetic_max_delta=0 native={max_channel_delta: 0, runs: [{direct_calls: 455, batch_calls: 226, batched_meshes: 268, retained_bytes: 441172}, {direct_calls: 455, batch_calls: 226, batched_meshes: 268, retained_bytes: 441172}, {direct_calls: 455, batch_calls: 329, batched_meshes: 152, retained_bytes: 272046}]}",
+    "2026-10-12T16:38:44.4510120Z I/flutter ( 2459): TSUKUYOMI_LIVE2D_DETAIL_OK 2048px atlases, narrow viewport detail and deformed crop verified",
+    "2026-10-12T16:38:44.4528317Z I/flutter ( 2459): TSUKUYOMI_LIVE2D_RENDER_OK bounded masks/tints/destination blends verified",
+    "2026-10-12T16:38:44.4548502Z I/flutter ( 2459): TSUKUYOMI_LIVE2D_TIMINGS frames=12 ui_p95_ms=5.714 raster_p95_ms=630.037 bounded_passes=0 pixels=0",
+    "2026-10-12T16:38:44.4566302Z I/flutter ( 2459): TSUKUYOMI_GAME_AUDIO_OK BGM+SFX mixed, pause/resume verified",
+    "2026-10-12T16:38:44.4585698Z I/flutter ( 2459): TSUKUYOMI_GAME_RIDING_OK {phases: 19, restart_different_bytes: [0, 0, 0, 0, 0, 0, 0, 0, 0]}",
+    "2026-10-12T16:38:44.4607176Z I/flutter ( 2459): TSUKUYOMI_UPDATE_OK abis=[x86_64, arm64-v8a] platform=androidX64 version=v0.6.19-beta.1 private-cache=Directory: '/data/user/0/space.tsukuyomi.tsukuyomi_space_app/cache'",
+    "2026-10-12T16:38:44.4630253Z I/flutter ( 2459): TSUKUYOMI_LIVE2D_OK meshes=409 textures=2"
+  ]
+}

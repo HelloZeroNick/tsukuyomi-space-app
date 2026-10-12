@@ -1,0 +1,85 @@
+{
+  "tag": "v0.6.19-beta.1",
+  "source_commit": "d8be2c83ef0f389ad3450a1e35e9e1775f5788c1",
+  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.19-beta.1",
+  "assets": [
+    {
+      "name": "INSTALL.md",
+      "bytes": 15183,
+      "sha256": "26194aebbef1ade0b79d891b94da47bbb6346ba6d027370cd5fde8411c08a3a8",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 1031,
+      "sha256": "ea2e1e111810ff24303ce248fe97b961643731e9a9b069adfa6c788aaee42893",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "bytes": 5916,
+      "sha256": "304220508653e5faa775601640d47fb75550bb8b3278fd6fe5b3755a57148747",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-android-arm64-v8a.apk",
+      "bytes": 155256892,
+      "sha256": "cd5900b746de3d82fe69ca672c55e6b94a55e5acb5cb1db1da22a1e8336c7711",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-android-x86_64.apk",
+      "bytes": 160372623,
+      "sha256": "a73e6a80e4602483655c0875ef4cd34c53299c41e2d230ebbf8737632aa0ab92",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-ios-arm64-unsigned.ipa",
+      "bytes": 127665124,
+      "sha256": "7fc838a13e36a1f6f47e110b7eed1e57ceb201f58adb29a3a7b53f8963c65508",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-linux-x64.deb",
+      "bytes": 261733560,
+      "sha256": "7b0c7b2775522ea367d16f68ff5bd468a6e8e8d7135f2b2448d9aca5500b8703",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-linux-x64.tar.gz",
+      "bytes": 320003344,
+      "sha256": "e055888d17765ed1d0ba18b7735f30927eb737289ed0caf405e3eb875affc5c1",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-macos-universal.dmg",
+      "bytes": 550803010,
+      "sha256": "d0dd5c5f69491512d05cad830cffb28bd34d1640553e199762bef58d3a4c309b",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-windows-x64-setup.exe",
+      "bytes": 268858605,
+      "sha256": "665ab40d92e6c58970dadcb332fb5ff0e97a4e7cae095bf68bd5657866f68ce8",
+      "verified": true,
+      "cached": false
+    },
+    {
+      "name": "tsukuyomi-space-0.6.19-windows-x64.zip",
+      "bytes": 363861259,
+      "sha256": "64755e9ea74c8370c67129239b9de8ba4fc514c88368e5843e222145684d9bde",
+      "verified": true,
+      "cached": false
+    }
+  ],
+  "all_sha256_verified": true
+}

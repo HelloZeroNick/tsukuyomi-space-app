@@ -31,22 +31,50 @@
     "guards_retained": true
   },
   "physical_k90_connected": false,
-  "android_native_gate": "retry required; pending CI",
-  "release": "pending CI",
+  "android_native_gate": {
+    "conclusion": "passed",
+    "run_id": 38277802756,
+    "synthetic_max_channel_delta": 0,
+    "native_max_channel_delta": 0,
+    "native_direct_calls": [
+      455,
+      455,
+      455
+    ],
+    "native_batch_calls": [
+      226,
+      226,
+      329
+    ],
+    "actual_ime_cycles": 3,
+    "texture_cap": 2048,
+    "renderer": "SwiftShader emulator; functional evidence, not physical phone FPS"
+  },
+  "release": {
+    "tag": "v0.6.19-beta.1",
+    "source_commit": "d8be2c83ef0f389ad3450a1e35e9e1775f5788c1",
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.19-beta.1",
+    "published": true,
+    "prerelease": true,
+    "asset_count": 11,
+    "downloaded_bytes": 2208576547,
+    "all_sha256_verified": true,
+    "notes": "this version only"
+  },
   "date": "2026-10-13",
   "format_files": 248,
   "release_tool_tests": 38,
   "repository_branches": [
     "main"
   ],
-  "source_commit": "53a5164cfb6fc344dcf06cf15ae7033cf3909419",
+  "source_commit": "d8be2c83ef0f389ad3450a1e35e9e1775f5788c1",
   "ci_regression": {
     "passed": 907,
     "skipped": 19,
     "real_backend_fixture": true,
     "native_cubism": true,
-    "run_id": 38274668593,
-    "source_commit": "53a5164cfb6fc344dcf06cf15ae7033cf3909419"
+    "run_id": 38278977949,
+    "source_commit": "d8be2c83ef0f389ad3450a1e35e9e1775f5788c1"
   },
   "android_initial_gate": {
     "run_id": 38274668593,
@@ -56,5 +84,44 @@
     "fix": "batch only fully opaque normal paints; keep original per-mesh path for partial opacity and destination blends",
     "pixel_tolerance_unchanged": 2,
     "local_regression_after_fix": 9
+  },
+  "ci": {
+    "run_id": 38278977949,
+    "source_commit": "d8be2c83ef0f389ad3450a1e35e9e1775f5788c1",
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38278977949",
+    "conclusion": "success",
+    "jobs": 9,
+    "build_platforms": [
+      "android",
+      "ios",
+      "macos",
+      "windows",
+      "linux"
+    ],
+    "desktop_window_updater_tests_per_platform": 117,
+    "packaged_agent_tests_per_platform": 113,
+    "desktop_platforms": [
+      "macos",
+      "windows",
+      "linux"
+    ],
+    "ios_signing": "unsigned, for self-signing"
+  },
+  "updater": {
+    "date": "2026-10-13",
+    "service": "production AppUpdateService.check/download/verify",
+    "installed_version": "v0.6.18-beta.1",
+    "detected_version": "v0.6.19-beta.1",
+    "platform": "androidArm64",
+    "previews": true,
+    "download_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.19-beta.1/tsukuyomi-space-0.6.19-android-arm64-v8a.apk",
+    "asset": "tsukuyomi-space-0.6.19-android-arm64-v8a.apk",
+    "downloaded_bytes": 155256892,
+    "sha256": "cd5900b746de3d82fe69ca672c55e6b94a55e5acb5cb1db1da22a1e8336c7711",
+    "real_github_download": true,
+    "service_verification_passed": true,
+    "independent_sha256_verified": true,
+    "installation_attempted": false,
+    "test_setup_correction": "Initial fixture incorrectly supplied installed v0.6.19; no update was correctly returned. Re-run with installed v0.6.18 passed."
   }
 }
