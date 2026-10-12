@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
@@ -21,11 +22,32 @@ void main() {
   testWidgets('Room 2000 messages, image, stream and native Live2D benchmark', (
     tester,
   ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: Text('Preparing image workload…')),
+      ),
+    );
+    await tester.pump();
     await tester.runAsync(() async {
       await windowManager.ensureInitialized();
       await windowManager.setFullScreen(false);
       await windowManager.setSize(const Size(1280, 820));
     });
+    final imageData = (await tester.runAsync(
+      () => rootBundle.load('assets/images/yachiyo-portrait.webp'),
+    ))!;
+    final imageBytes = imageData.buffer.asUint8List(
+      imageData.offsetInBytes,
+      imageData.lengthInBytes,
+    );
+    final image = (await tester.runAsync(
+      () => instantiateImageCodec(imageBytes),
+    ))!;
+    final decoded = (await tester.runAsync(image.getNextFrame))!.image;
+    final imageWidth = decoded.width, imageHeight = decoded.height;
+    decoded.dispose();
+    image.dispose();
+    final imageUrl = 'data:image/webp;base64,${base64Encode(imageBytes)}';
     final runs = <Map<String, dynamic>>[];
     for (var repetition = 0; repetition < 3; repetition++) {
       await tester.runAsync(() async {
@@ -41,6 +63,8 @@ void main() {
           demo: false,
           model: 'benchmark',
           options: {
+            if (bool.fromEnvironment('BENCHMARK_BASELINE'))
+              'live2dRenderQuality': 'full',
             'siteFeedEnabled': false,
             'knowledgeEnabled': false,
             'memoryEnabled': false,
@@ -61,11 +85,7 @@ void main() {
           user: '消息 $i · 这是一段用于复现滚动负载的中文问题。',
           assistant: '回复 $i · 使用同样的消息长度比较帧耗时。\n\n第二段说明与第一段组成完整的对话。',
           createdAt: DateTime(2026, 9, 29).add(Duration(seconds: i)),
-          image: i % 10 == 0
-              ? {
-                  'dataUrl': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg==',
-                }
-              : null,
+          image: i % 10 == 0 ? {'dataUrl': imageUrl} : null,
         ),
       );
       // Scope names changed with old revisions; seed after reading its value.
@@ -132,6 +152,11 @@ void main() {
       sample.stop();
       final recordedTicks = ticks;
       expect(
+        find.text('图片暂不可用'),
+        findsNothing,
+        reason: 'Image load failures must not silently turn the workload into placeholders',
+      );
+      expect(
         recordedTicks,
         greaterThan(120),
         reason: 'Benchmark must run with a visible, actively updating model',
@@ -179,6 +204,14 @@ void main() {
           values.isEmpty ? 0 : values[((values.length - 1) * .95).round()];
       final run = <String, dynamic>{
         'run': repetition + 1,
+        'image_fixture': {
+          'asset': 'assets/images/yachiyo-portrait.webp',
+          'width': imageWidth,
+          'height': imageHeight,
+          'encoded_bytes': imageBytes.length,
+          'messages': 200,
+          'visible_decode_errors': 0,
+        },
         'viewport': {
           'width': viewport.width,
           'height': viewport.height,
@@ -227,7 +260,7 @@ void main() {
         'BENCHMARK_LABEL',
         defaultValue: 'after',
       ),
-      'scene': '1280x820 native macOS; 2000 turns, 200 image messages, streamed fragments, Live2D, three runs',
+      'scene': '1280x820 native macOS; 2000 turns, 200 valid bundled portrait image messages, streamed fragments, Live2D, three runs',
       'runs': runs,
     };
   }, timeout: const Timeout(Duration(minutes: 10)));

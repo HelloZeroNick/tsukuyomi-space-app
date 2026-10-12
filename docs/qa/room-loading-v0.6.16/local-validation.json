@@ -1,0 +1,20 @@
+{
+  "version": "0.6.16+22",
+  "validated_at": "2026-10-12T09:08:32.783864+00:00",
+  "analysis": "no issues",
+  "format": "passed",
+  "room_and_loading_tests": 45,
+  "native_cubism_and_background_motion_tests": 8,
+  "native_cubism_enabled": true,
+  "physical_android_connected": false,
+  "desktop_9070_4060_connected": false,
+  "new_checks": [
+    "loading without poster",
+    "fullscreen loading without poster",
+    "failure and retry on mobile/desktop",
+    "chat before model ready and after failure"
+  ],
+  "prior_release": "v0.6.15-beta.1",
+  "prior_release_all_11_assets_sha256_verified": true,
+  "old_performance_png_fixture_valid": false
+}

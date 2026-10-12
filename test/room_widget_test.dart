@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -5,12 +6,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/features/room/room_controller.dart';
 import 'package:tsukuyomi_space_app/main.dart';
 
 import 'support/fakes.dart';
 
 void main() {
+  testWidgets('chat remains usable while the native model is still loading', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final pending = Completer<Live2DModel>();
+    final room = RoomController(
+      storage: MemoryStorage(),
+      chat: FakeChat(),
+      site: FakeSite(),
+      voice: SilentVoice(),
+    );
+    await room.initialize();
+    addTearDown(room.dispose);
+    await tester.pumpWidget(
+      TsukuyomiApp(controller: room, modelLoader: () => pending.future),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('room-character-pending')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('message-input')),
+      '模型加载期间继续聊天',
+    );
+    await tester.pump();
+    await tester.tap(find.byTooltip('发送'));
+    await tester.pumpAndSettle();
+    expect(room.turns.single.user, '模型加载期间继续聊天');
+    expect(find.text('这是完整回复。'), findsOneWidget);
+    pending.completeError(StateError('fixture native load failure'));
+    await tester.pumpAndSettle();
+    expect(room.turns.single.user, '模型加载期间继续聊天');
+    expect(find.byKey(const Key('live2d-retry')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
   Future<RoomController> mount(WidgetTester tester, Size size) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;

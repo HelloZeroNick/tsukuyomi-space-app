@@ -256,13 +256,9 @@ class _CharacterStageState extends State<CharacterStage>
       );
       return Semantics(
         label: '月见八千代',
-        image: true,
+        image: _model != null,
         child: _model == null
-            ? Image.asset(
-                'assets/images/yachiyo-hub-stand.png',
-                fit: BoxFit.contain,
-                excludeFromSemantics: true,
-              )
+            ? const SizedBox.expand(key: Key('room-character-pending'))
             : AnimatedBuilder(
                 // The painter listens directly to the model. Idle breathing
                 // and blinking do not need to rebuild the transform widgets.
@@ -437,7 +433,14 @@ class _CharacterStageState extends State<CharacterStage>
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _model == null ? '角色预览' : '正在听你说',
+                          _model == null
+                              ? siteTr(
+                                  context,
+                                  _failure == null
+                                      ? 'nativeLive2dLoading'
+                                      : 'nativeLive2dLoadFailed',
+                                )
+                              : siteTranslate(context, '正在听你说'),
                           style: const TextStyle(
                             fontSize: 11,
                             color: Color(0xffe1dcea),
@@ -511,10 +514,13 @@ class _CharacterStageState extends State<CharacterStage>
                       const SizedBox(height: 7),
                       Text(
                         _model == null
-                            ? (_failure == null
-                                  ? '正在载入 Live2D…'
-                                  : 'Live2D 载入失败')
-                            : '在这里，陪着你',
+                            ? siteTr(
+                                context,
+                                _failure == null
+                                    ? 'nativeLive2dLoading'
+                                    : 'nativeLive2dLoadFailed',
+                              )
+                            : siteTranslate(context, '在这里，陪着你'),
                         style: const TextStyle(
                           fontSize: 10,
                           color: Color(0xfff5f1fa),
@@ -523,6 +529,12 @@ class _CharacterStageState extends State<CharacterStage>
                           ],
                         ),
                       ),
+                      if (_model == null && _failure != null)
+                        TextButton(
+                          key: const Key('live2d-retry'),
+                          onPressed: _load,
+                          child: Text(siteTr(context, 'nativeLive2dRetry')),
+                        ),
                     ],
                   ],
                 ),
@@ -532,9 +544,15 @@ class _CharacterStageState extends State<CharacterStage>
                 right: 26,
                 top: 68,
                 child: TextButton(
+                  key: const Key('live2d-retry'),
                   onPressed: _failure == null ? null : _load,
                   child: Text(
-                    _failure == null ? 'Live2D 载入中…' : '载入失败 · 重试',
+                    siteTr(
+                      context,
+                      _failure == null
+                          ? 'nativeLive2dLoading'
+                          : 'nativeLive2dRetry',
+                    ),
                     style: const TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ),

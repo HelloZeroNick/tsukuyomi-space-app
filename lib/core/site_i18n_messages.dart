@@ -985,6 +985,9 @@ const nativeSiteMessages = <String, Map<String, String>>{
 };
 const nativeSiteSupplementalMessages = <String, Map<String, String>>{
   "zh": {
+    "nativeLive2dLoading": "正在载入 Live2D…",
+    "nativeLive2dLoadFailed": "Live2D 载入失败",
+    "nativeLive2dRetry": "重试",
     "nativeLive2dQuality": "角色画质",
     "nativeLive2dQualityAuto": "自动（推荐）",
     "nativeLive2dQualityEconomy": "省电 · 降低显卡负载",
@@ -4025,6 +4028,9 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeAssetPagination": "{total} 项 · 第 {page} / {pages} 页",
   },
   "ja": {
+    "nativeLive2dLoading": "Live2D を読み込み中…",
+    "nativeLive2dLoadFailed": "Live2D の読み込みに失敗",
+    "nativeLive2dRetry": "再試行",
     "nativeLive2dQuality": "キャラクター画質",
     "nativeLive2dQualityAuto": "自動（推奨）",
     "nativeLive2dQualityEconomy": "省電力 · GPU 負荷を軽減",
@@ -7083,6 +7089,9 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeAssetPagination": "{total}件 · {page} / {pages}ページ",
   },
   "en": {
+    "nativeLive2dLoading": "Loading Live2D…",
+    "nativeLive2dLoadFailed": "Live2D could not load",
+    "nativeLive2dRetry": "Try again",
     "nativeLive2dQuality": "Character quality",
     "nativeLive2dQualityAuto": "Automatic (recommended)",
     "nativeLive2dQualityEconomy": "Power saving · Lower GPU load",

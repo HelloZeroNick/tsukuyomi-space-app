@@ -12,6 +12,8 @@
 
 ## 同机性能比较
 
+后续补查：该1×1 PNG测试数据的IDAT校验错误，200条图片消息实际显示失败占位。本表保留原始采样，只能代表占位消息负载，不能作为实际图片解码负载证据。修正用例和有效图片采样见 [0.6.16记录](native-room-loading-v0.6.16.md)。
+
 Apple M5 / 16GiB / macOS27.0.1，Flutter3.47.5 Profile。1280×820窗口，角色视口760.855×571.04、DPR2；2,000条消息、200条1×1 PNG图片fixture、240段流式回复和滚动，前后各三轮。基线恢复v0.6.14的场景控制器、角色舞台和renderer，其他界面及fixture保持同一套。每轮实际模型更新542次，并通过窗口焦点检查；中断或失焦的尝试不计入记录。
 
 | 轮次 | UI P95 前 → 后(ms) | Raster P95 前 → 后(ms) | 超过16.7ms帧 前 → 后 | RSS 前 → 后(MiB) |
@@ -47,4 +49,4 @@ flutter run --release -d macos -t tool/verify_mobile_live2d.dart
 
 Android真机与用户的9070 / 4060未连接；本机Profile和Android软件GPU模拟器不能证明其实际帧率、发热或GPU占用。移动端默认模型30fps，页面滚动仍跟随屏幕刷新；可在设置选择模型60fps。iOS包仍需自签。升级保留账号、聊天、草稿、模型配置和游戏记录。
 
-发布完成后，补充完整CI、官方附件和更新器联网校验记录。
+[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38217178615)通过861项测试、五平台构建和Android原生探针。v0.6.15-beta.1指向生产代码3d058198696c1ccab9769ada69d3e6e03953e5cb；全部11个发布附件、2,207,741,379字节已实际下载，匹配GitHub摘要及SHA256SUMS。[CI记录](qa/room-update-v0.6.15/ci-validation.json)、[附件记录](qa/room-update-v0.6.15/release-validation.json)。

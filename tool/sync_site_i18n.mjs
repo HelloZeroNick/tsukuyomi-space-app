@@ -56,6 +56,9 @@ for (const language of ['zh','ja','en']) {
   extras[language].nativeEditorPreviewEmpty = {zh:'写下内容，这里会显示文章效果。',ja:'本文を書くと、ここに記事のプレビューが表示されます。',en:'Start writing to see your article here.'}[language];
   extras[language].nativeAuthResendSeconds = {zh:'{count}s 后重发',ja:'{count}秒後に再送',en:'Resend in {count}s'}[language];
   extras[language].nativeLive2DAudienceQueue = {zh:'{count} 条留言等待回应',ja:'{count}件のメッセージが返答待ち',en:'{count} messages waiting for a response'}[language];
+  extras[language].nativeLive2dLoading = {"zh": "正在载入 Live2D…", "ja": "Live2D を読み込み中…", "en": "Loading Live2D…"}[language];
+  extras[language].nativeLive2dLoadFailed = {"zh": "Live2D 载入失败", "ja": "Live2D の読み込みに失敗", "en": "Live2D could not load"}[language];
+  extras[language].nativeLive2dRetry = {"zh": "重试", "ja": "再試行", "en": "Try again"}[language];
   extras[language].nativeLive2dQuality = {zh:'角色画质',ja:'キャラクター画質',en:'Character quality'}[language];
   extras[language].nativeLive2dQualityAuto = {zh:'自动（推荐）',ja:'自動（推奨）',en:'Automatic (recommended)'}[language];
   extras[language].nativeLive2dQualityEconomy = {zh:'省电 · 降低显卡负载',ja:'省電力 · GPU 負荷を軽減',en:'Power saving · Lower GPU load'}[language];

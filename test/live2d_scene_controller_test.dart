@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -51,6 +52,96 @@ class _Model extends Live2DModel {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  for (final mobile in [true, false]) {
+    testWidgets(
+      'loading has no poster before the native ${mobile ? 'mobile' : 'desktop'} model is ready',
+      (tester) async {
+        final pending = Completer<Live2DModel>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CharacterStage(
+                mobile: mobile,
+                voice: SilentVoice(),
+                modelLoader: () => pending.future,
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        Finder poster() => find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.image is AssetImage &&
+              (w.image as AssetImage).assetName ==
+                  'assets/images/yachiyo-hub-stand.png',
+        );
+        expect(poster(), findsNothing);
+        expect(find.byKey(const Key('room-character-pending')), findsOneWidget);
+        expect(find.byKey(const Key('room-backdrop')), findsOneWidget);
+        final viewport = tester.getRect(
+          find.byKey(const Key('room-character-viewport')),
+        );
+        if (!mobile) {
+          await tester.tap(find.byTooltip('全屏角色舞台'));
+          await tester.pump(const Duration(seconds: 1));
+          expect(poster(), findsNothing);
+        }
+        pending.complete(_Model());
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 34));
+        expect(find.byKey(const Key('room-character-pending')), findsNothing);
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is CustomPaint && w.painter is Live2DPainter,
+          ),
+          findsOneWidget,
+        );
+        expect(poster(), findsNothing);
+        if (!mobile) {
+          await tester.tap(find.byTooltip('退出全屏舞台'));
+          await tester.pump();
+          await tester.pump(const Duration(seconds: 1));
+          await tester.pump();
+        }
+        expect(
+          tester.getRect(find.byKey(const Key('room-character-viewport'))),
+          viewport,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+    testWidgets(
+      'failed ${mobile ? 'mobile' : 'desktop'} model retries without a poster',
+      (tester) async {
+        final pending = Completer<Live2DModel>();
+        var attempts = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CharacterStage(
+                mobile: mobile,
+                voice: SilentVoice(),
+                modelLoader: () =>
+                    ++attempts == 1 ? pending.future : Future.value(_Model()),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        pending.completeError(StateError('fixture load failure'));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('room-character-pending')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('live2d-retry')));
+        await tester.pump();
+        expect(attempts, 2);
+        expect(find.byKey(const Key('room-character-pending')), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
   testWidgets(
     'idle model updates keep transforms stable; actions still move the character',
     (tester) async {
