@@ -11,7 +11,11 @@
       "timed_out": 1,
       "case": "existing large SVG SSE load under concurrent full-suite execution"
     },
-    "targeted_retest": "64 passed including the SVG case and four model protocols"
+    "targeted_retest": "64 passed including the SVG case and four model protocols",
+    "remote_state": "merged",
+    "merged_at": "2026-10-12T16:01:06Z",
+    "remote_merge_commit": "2c48adcb23b74ff374ad01b4b66f239490d7d765",
+    "open_prs_remaining": 0
   },
   "pixels": {
     "tests_passed": 9,
@@ -27,9 +31,30 @@
     "guards_retained": true
   },
   "physical_k90_connected": false,
-  "android_native_gate": "mesh pixel checks and actual IME required before publication; pending CI",
+  "android_native_gate": "retry required; pending CI",
   "release": "pending CI",
   "date": "2026-10-13",
   "format_files": 248,
-  "release_tool_tests": 38
+  "release_tool_tests": 38,
+  "repository_branches": [
+    "main"
+  ],
+  "source_commit": "53a5164cfb6fc344dcf06cf15ae7033cf3909419",
+  "ci_regression": {
+    "passed": 907,
+    "skipped": 19,
+    "real_backend_fixture": true,
+    "native_cubism": true,
+    "run_id": 38274668593,
+    "source_commit": "53a5164cfb6fc344dcf06cf15ae7033cf3909419"
+  },
+  "android_initial_gate": {
+    "run_id": 38274668593,
+    "conclusion": "failed; blocked publication",
+    "reason": "partial-opacity/advanced blend mesh batches changed pixels",
+    "max_channel_delta": 27,
+    "fix": "batch only fully opaque normal paints; keep original per-mesh path for partial opacity and destination blends",
+    "pixel_tolerance_unchanged": 2,
+    "local_regression_after_fix": 9
+  }
 }

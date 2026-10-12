@@ -3,9 +3,9 @@
   "runs": [
     {
       "direct_calls": 455,
-      "batch_calls": 225,
-      "batched_meshes": 270,
-      "retained_bytes": 444858
+      "batch_calls": 226,
+      "batched_meshes": 268,
+      "retained_bytes": 441172
     },
     {
       "direct_calls": 455,
@@ -15,9 +15,9 @@
     },
     {
       "direct_calls": 455,
-      "batch_calls": 225,
-      "batched_meshes": 270,
-      "retained_bytes": 444858
+      "batch_calls": 226,
+      "batched_meshes": 268,
+      "retained_bytes": 441172
     }
   ]
 }

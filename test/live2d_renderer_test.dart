@@ -23,6 +23,10 @@ void main() {
         expect(run['batch_calls'], lessThan(run['direct_calls'] as int));
         expect(run['batched_meshes'], greaterThan(12));
       }
+      for (final run in runs.where((r) => r['phase'] >= 3)) {
+        expect(run['batch_calls'], run['direct_calls']);
+        expect(run['batched_meshes'], 0);
+      }
       for (final run in runs.where((r) => r['phase'] == 6)) {
         expect(run['batch_calls'], 0);
         expect(run['retained_bytes'], 0);

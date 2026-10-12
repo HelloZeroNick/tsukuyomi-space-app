@@ -335,7 +335,11 @@ class Live2DPainter extends CustomPainter {
 
   bool _batchable(LiveMesh mesh) =>
       mesh.visible &&
-      mesh.opacity > 0 &&
+      // Some backends apply paint opacity/advanced destination blending to
+      // the whole draw, rather than independently to overlapping primitives.
+      // Texture alpha remains per fragment; only opaque normal paints batch.
+      mesh.opacity == 1 &&
+      _blend(mesh) == BlendMode.srcOver &&
       mesh.masks.isEmpty &&
       mesh.indices.isNotEmpty &&
       mesh.positions.isNotEmpty &&

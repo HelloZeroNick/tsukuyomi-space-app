@@ -69,7 +69,11 @@ Future<Map<String, dynamic>> probeLive2DBatching() async {
     order: i,
     flags: flags,
     visible: i != 0,
-    opacity: i == 0 ? 0 : .75,
+    opacity: i == 0
+        ? 0
+        : i < 15
+        ? 1
+        : .75,
     masks: List.of(masks),
     multiply: [1, 1, 1, 1],
     screen: [0, 0, 0, 0],
