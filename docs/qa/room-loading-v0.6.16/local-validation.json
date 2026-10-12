@@ -16,5 +16,35 @@
   ],
   "prior_release": "v0.6.15-beta.1",
   "prior_release_all_11_assets_sha256_verified": true,
-  "old_performance_png_fixture_valid": false
+  "old_performance_png_fixture_valid": false,
+  "full_regression": {
+    "passed": 851,
+    "skipped": 34,
+    "native_cubism_enabled": true
+  },
+  "macos_release": {
+    "version": "0.6.16+22",
+    "verified_assets": 419,
+    "packaged_architectures": [
+      "arm64",
+      "x64"
+    ],
+    "deep_strict_signature": "passed"
+  },
+  "valid_image_profile": {
+    "before_runs": 3,
+    "after_runs": 3,
+    "decoded_image_dimensions": [
+      1440,
+      1800
+    ],
+    "image_decode_errors": 0,
+    "hidden_updates": 0
+  },
+  "resolved_ci_failure": {
+    "run_id": 38228129175,
+    "reason": "old fullscreen assertion still expected removed preview/loading labels",
+    "test_updated": "issue_ui_regression_test.dart",
+    "published": false
+  }
 }

@@ -8,7 +8,7 @@ Room 和全屏舞台加载模型时使用空的角色区域，保留房间背景
 
 ## 检查
 
-本地45项Room与场景回归通过，静态分析、格式检查通过。新增模型延迟时的移动／桌面背景、无兜底图片、加载完成和全屏布局检查；失败后重试，以及模型仍在加载或加载失败时完成聊天的检查。真实Cubism和五平台验证继续使用原有发布流程。
+本地完整回归851项通过、34项可选检查跳过，45项Room与场景检查及8项真实Cubism／背景动作检查通过，静态分析、格式检查通过。新增模型延迟时的移动／桌面背景、无兜底图片、加载完成和全屏布局检查；失败后重试，以及模型仍在加载或加载失败时完成聊天的检查。真实Cubism和五平台验证继续使用原有发布流程。
 
 ## 性能用例校正
 
@@ -22,4 +22,18 @@ flutter drive --profile -d macos --driver=test_driver/performance_driver.dart --
 flutter drive --profile -d macos --driver=test_driver/performance_driver.dart --target=integration_test/room_performance_test.dart --dart-define=BENCHMARK_LABEL=valid-images-after
 ```
 
-完整有效图片对比、CI与发布附件校验记录在完成后补充。
+## 有效图片同机复测
+
+Apple M5 / 16GiB / macOS27.0.1、Flutter3.47.5 Profile，窗口1280×820，角色视口760.855×571.04、DPR2；2,000条消息、200条有效内置WebP图片消息（1440×1800，182,610字节）及240段流式回复和滚动。先验证Flutter能解码素材，采样后检查可见图片失败占位为0。基线保持本版UI、使用3072／900,000绘制参数，随后使用本版2048／600,000；各三轮。
+
+| 轮次 | UI P95 前 → 后(ms) | Raster P95 前 → 后(ms) | 超过16.7ms帧 前 → 后 | RSS 前 → 后(MiB) |
+| --- | --- | --- | --- | --- |
+| 1 | 9.015 → 8.832 | 7.995 → 7.438 | 3 → 0 | 239.9 → 226.2 |
+| 2 | 8.634 → 9.041 | 7.750 → 7.273 | 2 → 0 | 202.3 → 242.3 |
+| 3 | 9.210 → 8.842 | 8.222 → 7.326 | 0 → 2 | 212.4 → 226.7 |
+
+本版UI / Raster P95均值8.905 / 7.346ms；各轮都在16.7ms预算内，仍可能出现个别超预算帧。这是本机有限采样，不等同于Android或9070／4060的帧率。纹理RGBA8数据72 → 32MiB，整个进程RSS不能按此比例解释。双方各轮隐藏更新均为0，模型实际更新约540次／轮。
+
+[有效图片基线](qa/room-loading-v0.6.16/room-valid-images-before.json)、[本版](qa/room-loading-v0.6.16/room-valid-images-after.json)。
+
+完整CI和发布附件校验记录在完成后补充。

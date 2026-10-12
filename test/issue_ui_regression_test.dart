@@ -169,14 +169,20 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('全屏角色舞台'));
       await tester.pumpAndSettle();
-      expect(_fullscreen(find.text('Live2D 载入中…')), findsOneWidget);
-      expect(_fullscreen(find.text('角色预览')), findsOneWidget);
+      expect(
+        _fullscreen(find.byKey(const Key('room-character-pending'))),
+        findsOneWidget,
+      );
+      expect(_fullscreen(find.text('正在载入 Live2D…')), findsWidgets);
       final model = _CountingModel();
       loading.complete(model);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
-      expect(_fullscreen(find.text('Live2D 载入中…')), findsNothing);
-      expect(_fullscreen(find.text('角色预览')), findsNothing);
+      expect(
+        _fullscreen(find.byKey(const Key('room-character-pending'))),
+        findsNothing,
+      );
+      expect(_fullscreen(find.text('正在载入 Live2D…')), findsNothing);
       expect(_fullscreen(find.text('正在听你说')), findsOneWidget);
       expect(
         tester
