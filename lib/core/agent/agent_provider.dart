@@ -54,7 +54,8 @@ class AgentProviderBridge {
     required bool stream,
   }) {
     final runtime = ModelRuntime(settings)..require('text');
-    final protocol = roomProtocol(roomChatEndpoint(settings.llmUrl));
+    final endpoint = roomChatEndpoint(settings.llmUrl),
+        protocol = roomProtocol(endpoint);
     final raw = (input['messages'] as List).cast<Map>();
     final lastUser = raw.lastIndexWhere((m) => m['role'] == 'user');
     final messages = <Map<String, dynamic>>[],
@@ -257,7 +258,13 @@ class AgentProviderBridge {
       body.addAll({
         'system': systems.join('\n'),
         'messages': merged,
-        'max_tokens': input['max_tokens'] ?? 8192,
+        // The agent leaves Messages sampling to the provider on every host.
+        ...roomMessagesOptions(
+          endpoint,
+          settings.model,
+          maxTokens: (input['max_tokens'] as num?)?.toInt() ?? 8192,
+          temperature: null,
+        ),
         if (tools.isNotEmpty)
           'tools': [
             for (final t in tools)

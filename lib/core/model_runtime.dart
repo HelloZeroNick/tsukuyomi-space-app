@@ -23,7 +23,11 @@ const _fields = {
     'max_output_tokens',
     'options.num_predict',
   ],
-  'reasoningEffort': ['reasoning_effort', 'reasoning.effort'],
+  'reasoningEffort': [
+    'reasoning_effort',
+    'reasoning.effort',
+    'output_config.effort',
+  ],
   'reasoningEnabled': ['think', 'enable_thinking'],
 };
 
@@ -131,12 +135,18 @@ class ModelRuntime {
           'max_output_tokens',
           'reasoning.effort',
         ].contains(field),
-        'anthropic' => ['temperature', 'top_p', 'max_tokens'].contains(field),
+        'anthropic' => [
+          'temperature',
+          'top_p',
+          'max_tokens',
+          'output_config.effort',
+        ].contains(field),
         _ =>
           !field.startsWith('options.') &&
               ![
                 'max_output_tokens',
                 'reasoning.effort',
+                'output_config.effort',
                 'think',
               ].contains(field),
       },
@@ -167,11 +177,19 @@ class ModelRuntime {
       };
     }
     if (protocol == 'anthropic') {
+      // Current Claude models reject sampling fields; effort is their reasoning
+      // control, but Haiku 4.5, Sonnet 4.5 and older models reject it.
+      final claude = endpoint.host == 'api.anthropic.com';
+      final effort =
+          claude &&
+          RegExp(
+            r'^claude-(?:(?:fable|mythos)-|opus-(?:4-[5-9]|[5-9])|sonnet-(?:4-[6-9]|[5-9])|haiku-[5-9])',
+          ).hasMatch(settings.model);
       return {
-        'temperature': 'temperature',
-        'topP': 'top_p',
+        'temperature': claude ? 'omit' : 'temperature',
+        'topP': claude ? 'omit' : 'top_p',
         'maxOutputTokens': 'max_tokens',
-        'reasoningEffort': 'omit',
+        'reasoningEffort': effort ? 'output_config.effort' : 'omit',
         'reasoningEnabled': 'omit',
       };
     }
@@ -235,6 +253,17 @@ class ModelRuntime {
         'streaming': true,
       });
     }
+    // Every Claude model family served by the Claude API accepts these.
+    if (endpoint.host == 'api.anthropic.com' &&
+        RegExp(r'^claude-(?:fable|mythos|opus|sonnet|haiku)-\d')
+            .hasMatch(settings.model)) {
+      builtin.addAll({
+        'text': true,
+        'image': true,
+        'tools': true,
+        'streaming': true,
+      });
+    }
     if (endpoint.host == 'api.minimaxi.com' && protocol == 'anthropic') {
       builtin['image'] = false;
     }
@@ -285,6 +314,8 @@ class ModelRuntime {
       ...payload,
       if (payload['options'] is Map) 'options': _map(payload['options']),
       if (payload['reasoning'] is Map) 'reasoning': _map(payload['reasoning']),
+      if (payload['output_config'] is Map)
+        'output_config': _map(payload['output_config']),
     };
     dynamic read(String path) {
       dynamic current = result;

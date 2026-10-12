@@ -651,7 +651,19 @@ void main() {
                       headers: {'content-type': 'application/json'},
                     );
                   }
-                  expect(body['tools'], isNull);
+                  if (protocol == 'anthropic') {
+                    // Messages history with tool_use still needs definitions;
+                    // the final round keeps used tools but forbids new calls.
+                    expect(body['tools'].map((t) => t['name']), ['web_search']);
+                    expect(body['tool_choice'], {'type': 'none'});
+                    expect(
+                      body['messages'].last['content'].first['type'],
+                      'tool_result',
+                    );
+                  } else {
+                    expect(body['tools'], isNull);
+                    expect(body['tool_choice'], isNull);
+                  }
                   return http.Response(
                     jsonEncode(switch (protocol) {
                       'responses' => {
@@ -710,6 +722,62 @@ void main() {
       },
     );
   }
+  test(
+    'Anthropic final round never sends tool_choice none without definitions',
+    () async {
+      var requests = 0;
+      final client =
+          LlmClient(
+              clientFactory: () => MockClient((req) async {
+                final body = jsonDecode(req.body);
+                requests++;
+                if (requests < 3) {
+                  // The model only names a tool that was never enabled.
+                  return http.Response(
+                    jsonEncode(
+                      fixture(
+                        'anthropic',
+                        id: 'read$requests',
+                        name: 'fetch_page',
+                      ),
+                    ),
+                    200,
+                    headers: {'content-type': 'application/json'},
+                  );
+                }
+                expect(body['tools'].map((t) => t['name']), ['web_search']);
+                expect(body['tool_choice'], {'type': 'none'});
+                return http.Response(
+                  jsonEncode({
+                    'content': [
+                      {'type': 'text', 'text': '已核对。'},
+                    ],
+                    'stop_reason': 'end_turn',
+                  }),
+                  200,
+                  headers: {'content-type': 'application/json'},
+                );
+              }),
+            )
+            ..tools = [roomReadTools.first]
+            ..executeTool = (call) async => {
+              'content': 'unused',
+              'isError': false,
+            };
+      final reply = await client
+          .reply(
+            const RoomSettings(
+              model: 'fixture',
+              llmUrl: 'https://models.example/messages',
+            ),
+            [],
+            '核对',
+          )
+          .join();
+      expect(reply, endsWith('已核对。'));
+      expect(requests, 3);
+    },
+  );
   test('OpenRouter Claude uses endpoint protocol; Anthropic compatible roots use native credentials', () {
     expect(
       roomProtocol(
@@ -756,6 +824,220 @@ void main() {
     );
     expect(events.last.completion!.reply, '开始完成');
   });
+  test(
+    'Claude refusal fails the turn while max_tokens stays incomplete',
+    () async {
+      final refused = throwsA(
+        isA<ApiFailure>()
+            .having((e) => e is ModelIncompleteFailure, 'retryable', false)
+            .having((e) => e.message, 'message', contains('拒绝')),
+      );
+      final partial = [
+        {'type': 'text', 'text': '半句'},
+      ];
+      expect(
+        () => ModelCompletion.json({
+          'content': partial,
+          'stop_reason': 'refusal',
+        }, 'anthropic'),
+        refused,
+      );
+      expect(
+        () => ModelCompletion.json({
+          'content': partial,
+          'stop_reason': 'max_tokens',
+        }, 'anthropic'),
+        throwsA(isA<ModelIncompleteFailure>()),
+      );
+      await expectLater(
+        decodeModelStream(
+          fragmented(
+            [
+              sse({
+                'type': 'content_block_start',
+                'index': 0,
+                'content_block': {'type': 'text', 'text': ''},
+              }),
+              sse({
+                'type': 'content_block_delta',
+                'index': 0,
+                'delta': {'type': 'text_delta', 'text': '半句'},
+              }),
+              sse({
+                'type': 'message_delta',
+                'delta': {
+                  'stop_reason': 'refusal',
+                  'stop_details': {'type': 'refusal', 'category': null},
+                },
+              }),
+              sse({'type': 'message_stop'}),
+            ].join(),
+          ),
+          'anthropic',
+        ).toList(),
+        refused,
+      );
+    },
+  );
+  test(
+    'Claude fallback boundary keeps only the declined attempt text',
+    () async {
+      final fallback = {
+        'type': 'fallback',
+        'from': {'model': 'claude-opus-5-5'},
+        'to': {'model': 'claude-opus-4-8'},
+      };
+      final value = ModelCompletion.json(
+        {
+          'content': [
+            {
+              'type': 'thinking',
+              'thinking': 'declined',
+              'signature': privateState,
+            },
+            {'type': 'text', 'text': '先说'},
+            // Calls before the boundary are ignored, even malformed ones.
+            {
+              'type': 'tool_use',
+              'id': 'declined id',
+              'name': 'web_search',
+              'input': {},
+            },
+            fallback,
+            {'type': 'thinking', 'thinking': 'served', 'signature': 'served'},
+            {'type': 'text', 'text': '再说'},
+            {
+              'type': 'tool_use',
+              'id': 'toolu_1',
+              'name': 'web_search',
+              'input': {'query': '今天'},
+            },
+          ],
+          'stop_reason': 'tool_use',
+        },
+        'anthropic',
+        allowTools: true,
+      );
+      expect(value.reply, '先说再说');
+      expect(value.calls.map((c) => c.id), ['toolu_1']);
+      expect(value.items.map((p) => p['type']), [
+        'text',
+        'thinking',
+        'text',
+        'tool_use',
+      ]);
+      expect(jsonEncode(value.items), isNot(contains(privateState)));
+      expect(
+        ModelCompletion.json({
+          'content': [
+            {'type': 'tool_use', 'id': 'toolu_0', 'name': 'web_search'},
+            fallback,
+            {'type': 'text', 'text': '你好呀'},
+          ],
+          'stop_reason': 'end_turn',
+        }, 'anthropic').reply,
+        '你好呀',
+      );
+
+      Future<ModelCompletion> stream(List<Map> frames) async =>
+          (await decodeModelStream(
+            fragmented(frames.map(sse).join()),
+            'anthropic',
+            allowTools: true,
+          ).last).completion!;
+      final served = await stream([
+        {
+          'type': 'message_start',
+          'message': {'model': 'claude-opus-5-5'},
+        },
+        {
+          'type': 'content_block_start',
+          'index': 0,
+          'content_block': {
+            'type': 'thinking',
+            'thinking': '',
+            'signature': privateState,
+          },
+        },
+        {
+          'type': 'content_block_start',
+          'index': 1,
+          'content_block': {'type': 'text', 'text': ''},
+        },
+        {
+          'type': 'content_block_delta',
+          'index': 1,
+          'delta': {'type': 'text_delta', 'text': '先说'},
+        },
+        {'type': 'content_block_start', 'index': 2, 'content_block': fallback},
+        {
+          'type': 'content_block_start',
+          'index': 3,
+          'content_block': {
+            'type': 'tool_use',
+            'id': 'toolu_1',
+            'name': 'web_search',
+            'input': {},
+          },
+        },
+        {
+          'type': 'content_block_delta',
+          'index': 3,
+          'delta': {
+            'type': 'input_json_delta',
+            'partial_json': '{"query":"今天"}',
+          },
+        },
+        {
+          'type': 'message_delta',
+          'delta': {'stop_reason': 'tool_use'},
+        },
+        {'type': 'message_stop'},
+      ]);
+      expect(served.items.map((p) => p['type']), ['text', 'tool_use']);
+      expect(served.calls.single.toJson(), {
+        'id': 'toolu_1',
+        'name': 'web_search',
+        'arguments': '{"query":"今天"}',
+      });
+      // A declined attempt can stop mid tool input; it is never JSON-parsed.
+      final cut = await stream([
+        {
+          'type': 'content_block_start',
+          'index': 0,
+          'content_block': {
+            'type': 'tool_use',
+            'id': 'toolu_0',
+            'name': 'web_search',
+            'input': {},
+          },
+        },
+        {
+          'type': 'content_block_delta',
+          'index': 0,
+          'delta': {'type': 'input_json_delta', 'partial_json': '{"query":"今'},
+        },
+        {'type': 'content_block_start', 'index': 1, 'content_block': fallback},
+        {
+          'type': 'content_block_start',
+          'index': 2,
+          'content_block': {'type': 'text', 'text': ''},
+        },
+        {
+          'type': 'content_block_delta',
+          'index': 2,
+          'delta': {'type': 'text_delta', 'text': '你好呀'},
+        },
+        {
+          'type': 'message_delta',
+          'delta': {'stop_reason': 'end_turn'},
+        },
+        {'type': 'message_stop'},
+      ]);
+      expect(cut.reply, '你好呀');
+      expect(cut.calls, isEmpty);
+    },
+  );
   test('unterminated SSE is bounded before JSON parsing', () async {
     await expectLater(
       modelFrames(fragmented('data: ${'月' * 3000}'), eventBytes: 100).toList(),

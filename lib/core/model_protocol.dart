@@ -58,6 +58,11 @@ void modelStatus(Map data) {
       ['incomplete', 'failed'].contains(data['status'])) {
     throw const ModelIncompleteFailure('模型回复未完整结束，请重试');
   }
+  // Claude reports policy declines as a normal stop; partial text is not a
+  // reply. Not an incomplete reply either: the same wording is declined again.
+  if (reasons.contains('refusal')) {
+    throw const ApiFailure('模型拒绝了本次请求，回复未保存，请换个说法再试');
+  }
   if (data['error'] != null ||
       data['type'] == 'error' ||
       data['success'] == false) {
@@ -146,8 +151,15 @@ class ModelCompletion {
       }
       if (reply.isEmpty) reply = data['output_text'] as String? ?? '';
     } else if (protocol == 'anthropic') {
-      for (final raw in data['content'] as List? ?? []) {
-        final item = Map<String, dynamic>.from(raw as Map);
+      // After a server-side fallback only the declined attempt's text is
+      // context; its thinking and tool calls must not be echoed back.
+      final content = [
+        for (final raw in data['content'] as List? ?? [])
+          Map<String, dynamic>.from(raw as Map),
+      ];
+      final cut = content.lastIndexWhere((p) => p['type'] == 'fallback');
+      for (final (index, item) in content.indexed) {
+        if (index == cut || index < cut && item['type'] != 'text') continue;
         items.add(item);
         if (item['type'] == 'text') reply += item['text'] as String? ?? '';
         if (item['type'] == 'tool_use') {
@@ -500,10 +512,15 @@ class _ModelDecoder {
     if (value == null) {
       final data = <String, dynamic>{'model': model, 'usage': usage};
       if (protocol == 'anthropic') {
-        data['content'] = blocks.values.map((b) {
-          final item = Map<String, dynamic>.from(b);
+        // A declined attempt can stop mid tool input; the JSON decoder drops
+        // blocks before the last fallback, so their partial input is not parsed.
+        final ordered = blocks.values.toList();
+        final cut = ordered.lastIndexWhere((b) => b['type'] == 'fallback');
+        data['content'] = ordered.indexed.map((entry) {
+          final (index, block) = entry;
+          final item = Map<String, dynamic>.from(block);
           final partial = item.remove('partial');
-          if (partial is String && partial.isNotEmpty) {
+          if (index > cut && partial is String && partial.isNotEmpty) {
             item['input'] = jsonDecode(partial);
           }
           return item;

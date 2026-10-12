@@ -32,13 +32,73 @@ String roomProtocol(Uri uri) => uri.path.endsWith('/responses')
     : uri.path.endsWith('/api/chat')
     ? 'ollama'
     : 'openai';
+
+// Claude on the official Messages API. Current Claude models reject sampling
+// fields and think before answering (thinking counts toward max_tokens), so
+// only compatible gateways such as MiniMax keep their temperature. Models with
+// server-side refusal fallback let the API reroute a declined turn instead of
+// ending it.
+const claudeMinOutputTokens = 16000;
+final _claudeFallbackModels = RegExp(
+  r'^claude-(?:fable-5-1|opus-5(?:-5)?|sonnet-5-5)$',
+);
+bool claudeApi(Uri endpoint) => endpoint.host == 'api.anthropic.com';
+bool _claudeFallback(Uri endpoint, String model) =>
+    claudeApi(endpoint) && _claudeFallbackModels.hasMatch(model.trim());
+
+/// Messages body fields; a null [temperature] leaves sampling to the provider.
+Map<String, dynamic> roomMessagesOptions(
+  Uri endpoint,
+  String model, {
+  int? maxTokens,
+  num? temperature = 1,
+}) {
+  final claude = claudeApi(endpoint);
+  return {
+    if (maxTokens != null)
+      'max_tokens': claude && maxTokens < claudeMinOutputTokens
+          ? claudeMinOutputTokens
+          : maxTokens,
+    if (!claude && temperature != null) 'temperature': temperature,
+    if (_claudeFallback(endpoint, model)) 'fallbacks': 'default',
+  };
+}
+
+/// Keys that are not scoped to a workspace must name one on every request.
+/// Values in any other format are never sent.
+String claudeWorkspaceId(String? value) {
+  final id = (value ?? '').trim();
+  return RegExp(r'^wrkspc_[\w-]{1,120}$').hasMatch(id) ? id : '';
+}
+
+/// Messages credentials. Native requests never need the browser CORS opt-in.
+Map<String, String> roomMessagesHeaders(
+  Uri endpoint,
+  String apiKey,
+  String model, {
+  String workspaceId = '',
+}) {
+  final workspace = claudeApi(endpoint) ? claudeWorkspaceId(workspaceId) : '';
+  return {
+    if (apiKey.isNotEmpty) 'x-api-key': apiKey,
+    'anthropic-version': '2023-06-01',
+    if (workspace.isNotEmpty) 'anthropic-workspace-id': workspace,
+    if (_claudeFallback(endpoint, model))
+      'anthropic-beta': 'server-side-fallback-2026-07-01',
+  };
+}
+
 Map<String, String> roomChatHeaders(RoomSettings s, Uri uri) => {
   'Content-Type': 'application/json',
   'Accept': 'text/event-stream',
-  if (roomProtocol(uri) == 'anthropic') ...{
-    'anthropic-version': '2023-06-01',
-    if (s.apiKey.isNotEmpty) 'x-api-key': s.apiKey,
-  } else if (s.apiKey.isNotEmpty)
+  if (roomProtocol(uri) == 'anthropic')
+    ...roomMessagesHeaders(
+      uri,
+      s.apiKey,
+      s.model,
+      workspaceId: s.option('anthropicWorkspaceId'),
+    )
+  else if (s.apiKey.isNotEmpty)
     'Authorization': 'Bearer ${s.apiKey}',
   if (uri.host == 'openrouter.ai') ...{
     'HTTP-Referer': endpointUri(s.siteUrl).origin,
@@ -78,7 +138,8 @@ Map<String, dynamic> _roomChatBody(
   bool stream = true,
   bool jsonObject = false,
 }) {
-  final protocol = roomProtocol(roomChatEndpoint(s.llmUrl));
+  final endpoint = roomChatEndpoint(s.llmUrl),
+      protocol = roomProtocol(endpoint);
   final dataUrl = image?['dataUrl'] as String?;
   final data = dataUrl?.split(',').last;
   if (text.isEmpty && dataUrl != null) text = '请描述这张图片。';
@@ -126,7 +187,7 @@ Map<String, dynamic> _roomChatBody(
       'model': s.model,
       'system': system,
       'max_tokens': 16384,
-      'temperature': 1,
+      ...roomMessagesOptions(endpoint, s.model),
       'stream': stream,
       'messages': [
         ...history,
@@ -152,7 +213,7 @@ Map<String, dynamic> _roomChatBody(
     'model': s.model,
     'stream': stream,
     if (jsonObject) 'response_format': {'type': 'json_object'},
-    ...roomChatOptions(roomChatEndpoint(s.llmUrl), s.model),
+    ...roomChatOptions(endpoint, s.model),
     'messages': [
       {'role': 'system', 'content': system},
       ...history,
@@ -218,6 +279,10 @@ void validateCompletion(Map p) {
       ['response.failed', 'response.incomplete'].contains(p['type']) ||
       ['failed', 'incomplete'].contains(p['status'])) {
     throw const ModelIncompleteFailure('模型回复未完整结束，请重试');
+  }
+  // Claude reports policy declines as a normal stop; partial text is not a reply.
+  if (reasons.contains('refusal')) {
+    throw const ApiFailure('模型拒绝了本次请求，回复未保存，请换个说法再试');
   }
 }
 

@@ -12,6 +12,8 @@ const _maxModels = 2000, _maxBytes = 2 * 1024 * 1024;
 final _workspaceHost = RegExp(
   r'^[a-z0-9][a-z0-9-]{0,63}\.(cn-beijing|us-east-1|ap-southeast-1|ap-northeast-1|eu-central-1|cn-hongkong)\.maas\.aliyuncs\.com$',
 );
+// Claude keys that are not scoped to a workspace must name one.
+final _claudeWorkspace = RegExp(r'^wrkspc_[\w-]{1,120}$');
 
 String catalogProvider(String value) {
   final uri = Uri.tryParse(value);
@@ -33,6 +35,12 @@ String catalogProvider(String value) {
   }
   return 'custom';
 }
+
+/// Each provider keeps its own workspace ID; only the selected one is used.
+String catalogWorkspaceId(RoomSettings settings) =>
+    catalogProvider(settings.llmUrl) == 'anthropic'
+    ? settings.option('anthropicWorkspaceId').trim()
+    : settings.option('aliyunWorkspaceId');
 
 ({String provider, Uri url, Map<String, String> headers}) catalogPlan(
   RoomSettings settings, {
@@ -58,6 +66,10 @@ String catalogProvider(String value) {
   }
   if (key.isEmpty && provider != 'openrouter') {
     throw const ApiFailure('填写当前服务商的 API 密钥后可更新模型列表。');
+  }
+  final workspace = provider == 'anthropic' ? catalogWorkspaceId(settings) : '';
+  if (workspace.isNotEmpty && !_claudeWorkspace.hasMatch(workspace)) {
+    throw const ApiFailure('Anthropic 工作区 ID 格式无效，应以 wrkspc_ 开头。');
   }
   if (cursor.length > 1024 || RegExp(r'[\x00-\x1f\x7f]').hasMatch(cursor)) {
     throw const ApiFailure('模型列表分页游标无效。');
@@ -102,6 +114,11 @@ String catalogProvider(String value) {
         throw const ApiFailure('模型列表分页游标无效。');
       }
       query.addAll({'offset': cursor.isEmpty ? '0' : cursor, 'limit': '500'});
+    case 'anthropic':
+      if (cursor.isNotEmpty && !RegExp(r'^[\w.-]{1,240}$').hasMatch(cursor)) {
+        throw const ApiFailure('模型列表分页游标无效。');
+      }
+      if (cursor.isNotEmpty) query['after_id'] = cursor;
     default:
       if (cursor.isNotEmpty) throw const ApiFailure('此服务商不支持该分页游标。');
   }
@@ -110,7 +127,11 @@ String catalogProvider(String value) {
     url: Uri.https(host, path, query.isEmpty ? null : query),
     headers: {
       'Accept': 'application/json',
-      if (key.isNotEmpty)
+      if (provider == 'anthropic') ...{
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        if (workspace.isNotEmpty) 'anthropic-workspace-id': workspace,
+      } else if (key.isNotEmpty)
         provider == 'gemini' ? 'x-goog-api-key' : 'Authorization':
             provider == 'gemini' ? key : 'Bearer $key',
     },
@@ -135,6 +156,8 @@ Map<String, bool> catalogCapabilities(Map row) {
       'streaming': 'streaming',
     }.entries)
       if (c[entry.key] is bool) entry.value: c[entry.key] as bool,
+    if (c['image_input'] is Map && c['image_input']['supported'] is bool)
+      'image': c['image_input']['supported'] as bool,
     if (row['supported_parameters'] is List)
       'tools': (row['supported_parameters'] as List).contains('tools'),
   };
@@ -205,6 +228,13 @@ Map<String, bool> catalogCapabilities(Map row) {
     ).hasMatch(id)) {
       continue;
     }
+    final created = num.tryParse('${row['created'] ?? ''}') ?? 0,
+        published = '${row['published_time'] ?? ''}',
+        time = DateTime.tryParse(
+          published.isNotEmpty
+              ? '${published.replaceFirst(' ', 'T')}+08:00'
+              : '${row['created_at'] ?? ''}',
+        );
     result.add({
       'id': id,
       'nativeId': id,
@@ -223,8 +253,12 @@ Map<String, bool> catalogCapabilities(Map row) {
           row['context_window'] ??
           row['max_context_length'] ??
           row['inputTokenLimit'] ??
+          row['max_input_tokens'] ??
           row['model_info']?['max_input_tokens'] ??
           0,
+      'created': created.isFinite && created != 0
+          ? created
+          : (time?.millisecondsSinceEpoch ?? 0) ~/ 1000,
     });
   }
   final next = provider == 'gemini'
@@ -235,6 +269,8 @@ Map<String, bool> catalogCapabilities(Map row) {
       ? '${(int.tryParse(cursor) ?? 1) + 1}'
       : provider == 'openrouter' && rows.length == 500
       ? '${(int.tryParse(cursor) ?? 0) + 500}'
+      : provider == 'anthropic' && payload['has_more'] == true
+      ? '${payload['last_id'] ?? ''}'
       : '';
   if (next.length > 1024) throw const ApiFailure('服务商返回了无效的分页游标。');
   return (models: result, cursor: next);
@@ -260,7 +296,7 @@ class ModelCatalog {
     final cacheId = sha256
         .convert(
           utf8.encode(
-            '$_salt|${settings.llmUrl}|${settings.apiKey}|${settings.option('aliyunWorkspaceId')}',
+            '$_salt|${settings.llmUrl}|${settings.apiKey}|${catalogWorkspaceId(settings)}',
           ),
         )
         .toString();
@@ -288,6 +324,12 @@ class ModelCatalog {
           milliseconds: 15000 - clock.elapsedMilliseconds,
         );
         final response = await _client.send(request).timeout(timeout);
+        if (plan.provider == 'anthropic' && response.statusCode == 400) {
+          throw const ApiFailure(
+            'Claude 拒绝了模型列表请求；如果密钥未绑定工作区，请在高级连接设置填写 Anthropic 工作区 ID（wrkspc_…）。',
+            status: 400,
+          );
+        }
         if (response.statusCode != 200) {
           throw providerFailure('模型列表', response.statusCode);
         }
