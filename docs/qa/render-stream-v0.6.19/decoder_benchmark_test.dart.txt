@@ -1,0 +1,43 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tsukuyomi_space_app/core/model_protocol.dart' as after;
+import 'model_protocol_before.dart' as before;
+
+void main() {
+  test('same-process protocol decoder comparison, three paired repetitions', () async {
+    const piece = '中文流式回复，小片段。0123456789\n';
+    final textWire = [
+      for (var i = 0; i < 3000; i++) utf8.encode('data: ${jsonEncode({'choices':[{'index':0,'delta':{'content':piece}}]})}\n\n'),
+      utf8.encode('data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n'),
+    ];
+    final args = jsonEncode({'content': List.filled(12000, '<p/>\n').join()});
+    final toolWire = [
+      for (var i = 0; i < args.length; i += 64) utf8.encode('data: ${jsonEncode({'choices':[{'index':0,'delta':{'tool_calls':[{'index':0,'id':'bench','function':{'name':'fs_write','arguments':args.substring(i,i+64 < args.length ? i+64 : args.length)}}]}}]})}\n\n'),
+      utf8.encode('data: {"choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}\n\ndata: [DONE]\n\n'),
+    ];
+    Future<dynamic> old(List<List<int>> wire) async => (await before.decodeModelStream(Stream.fromIterable(wire), 'openai', allowTools:true, limits:const before.ModelLimits(argumentBytes:524288)).last).completion;
+    Future<dynamic> current(List<List<int>> wire) async => (await after.decodeModelStream(Stream.fromIterable(wire), 'openai', allowTools:true, limits:const after.ModelLimits(argumentBytes:524288)).last).completion;
+    Map summary(dynamic completion) => {'reply':completion.reply, 'calls':[for(final call in completion.calls) call.toJson()], 'continuation':completion.continuation};
+    final report = <String,dynamic>{'engine':'Flutter tester JIT, macOS; decoder only; no HTTP, UI or GPU', 'baseline_commit':'2c48adc', 'runs':<Map>[]};
+    for (final fixture in {'text':textWire,'tools':toolWire}.entries) {
+      final expected = summary(await old(fixture.value));
+      expect(summary(await current(fixture.value)), expected);
+      for (var run = 0; run < 3; run++) {
+        final times = <String,double>{};
+        for (final mode in run.isOdd ? ['after','before'] : ['before','after']) {
+          final clock = Stopwatch()..start();
+          final result = await (mode=='before' ? old(fixture.value) : current(fixture.value));
+          clock.stop();
+          expect(summary(result), expected);
+          times[mode] = clock.elapsedMicroseconds/1000;
+        }
+        (report['runs'] as List).add({'fixture':fixture.key,'run':run+1,'fragments':fixture.value.length-1,...times});
+      }
+    }
+    final file = File('artifacts/performance/model-stream-buffer-comparison.json');
+    await file.parent.create(recursive:true);
+    await file.writeAsString('${const JsonEncoder.withIndent('  ').convert(report)}\n');
+    print('MODEL_DECODER_BENCHMARK ${jsonEncode(report)}');
+  }, timeout:const Timeout(Duration(minutes:3)));
+}

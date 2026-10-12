@@ -1,0 +1,35 @@
+{
+  "version": "0.6.19+25",
+  "pr": {
+    "number": 7,
+    "head": "a86840a64d8c0c14aa3d925f7fc9ba50e5e20fc0",
+    "local_merge_commit": "2c48adcb23b74ff374ad01b4b66f239490d7d765",
+    "protocol_review": "official Anthropic docs checked; no live provider credentials used",
+    "initial_full_tests": {
+      "passed": 887,
+      "skipped": 34,
+      "timed_out": 1,
+      "case": "existing large SVG SSE load under concurrent full-suite execution"
+    },
+    "targeted_retest": "64 passed including the SVG case and four model protocols"
+  },
+  "pixels": {
+    "tests_passed": 9,
+    "native_cubism": true,
+    "max_channel_delta": 0,
+    "vertex_index_limit_test": true
+  },
+  "analysis": "no issues",
+  "room_profile": {
+    "accepted_runs": 0,
+    "discarded_attempts": 3,
+    "reason": "native foreground/focus unavailable; nested Profile code signature repaired but focus guard still failed",
+    "guards_retained": true
+  },
+  "physical_k90_connected": false,
+  "android_native_gate": "mesh pixel checks and actual IME required before publication; pending CI",
+  "release": "pending CI",
+  "date": "2026-10-13",
+  "format_files": 248,
+  "release_tool_tests": 38
+}

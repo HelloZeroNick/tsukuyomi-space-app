@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
+
+import 'support/live2d_render_probe.dart';
 
 void main() {
   testWidgets('real Cubism model deforms and renders with native physics', (
@@ -34,6 +37,21 @@ void main() {
         scene.meshes.expand((m) => m.positions).toList(),
         isNot(equals(before)),
       );
+      final batching = (await tester.runAsync(
+        () => probeNativeLive2DBatching(scene),
+      ))!;
+      expect(batching['max_channel_delta'], lessThanOrEqualTo(2));
+      for (final run in (batching['runs'] as List).cast<Map>()) {
+        expect(run['batch_calls'], lessThan(run['direct_calls'] as int));
+        expect(run['batched_meshes'], greaterThan(0));
+      }
+      await tester.runAsync(() async {
+        final output = File('artifacts/performance/live2d-batch-pixels.json');
+        await output.parent.create(recursive: true);
+        await output.writeAsString(
+          '${const JsonEncoder.withIndent('  ').convert(batching)}\n',
+        );
+      });
       await tester.runAsync(() async {
         final recorder = ui.PictureRecorder();
         final canvas = Canvas(recorder);

@@ -14,7 +14,9 @@ for attempt in $(seq 1 60); do
     grep -q 'TSUKUYOMI_LIVE2D_RENDER_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep -q 'TSUKUYOMI_LIVE2D_DETAIL_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep -q 'TSUKUYOMI_ROOM_IME_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep -q 'TSUKUYOMI_LIVE2D_BATCH_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep 'TSUKUYOMI_ROOM_IME_OK' artifacts/android-smoke.log
+    grep 'TSUKUYOMI_LIVE2D_BATCH_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_DETAIL_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_RENDER_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_TIMINGS' artifacts/android-smoke.log

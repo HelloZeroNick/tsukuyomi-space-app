@@ -3,6 +3,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/live2d_render_probe.dart';
 
 void main() {
+  testWidgets('combined vertices split before overflowing 16-bit indices', (
+    tester,
+  ) async {
+    final result = (await tester.runAsync(probeLive2DBatchIndexLimit))!;
+    expect(result['different_bytes'], 0);
+    expect(result['direct_calls'], 3);
+    expect(result['batch_calls'], 2);
+    expect(result['batched_meshes'], 2);
+  });
+  testWidgets(
+    'mesh batches preserve pixels and release changing material runs',
+    (tester) async {
+      final result = (await tester.runAsync(probeLive2DBatching))!;
+      expect(result['max_channel_delta'], lessThanOrEqualTo(2));
+      expect(result['changed_bytes'], greaterThan(0));
+      final runs = (result['runs'] as List).cast<Map>();
+      for (final run in runs.where((r) => r['phase'] == 0)) {
+        expect(run['batch_calls'], lessThan(run['direct_calls'] as int));
+        expect(run['batched_meshes'], greaterThan(12));
+      }
+      for (final run in runs.where((r) => r['phase'] == 6)) {
+        expect(run['batch_calls'], 0);
+        expect(run['retained_bytes'], 0);
+      }
+    },
+  );
   testWidgets(
     'transparent margins keep fine details sharp; crop follows deformed geometry',
     (tester) async {

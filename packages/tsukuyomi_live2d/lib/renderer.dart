@@ -16,7 +16,19 @@ class Live2DPainter extends CustomPainter {
   // viewports bound only occupied character pixels, preserving blend order.
   int rasterPixelBudget = 0;
   double pixelRatio = 1;
+  bool batchMeshes = true;
   final _buffers = <int, _MeshBuffer>{};
+  final _batches = <int, _BatchBuffer>{};
+  int paintCount = 0, drawCalls = 0, batchedMeshes = 0;
+  int totalDrawCalls = 0, totalBatchedMeshes = 0;
+  int get retainedBatchBytes => _batches.values.fold(
+    0,
+    (sum, b) =>
+        sum +
+        b.positions.lengthInBytes +
+        b.uvs.lengthInBytes +
+        b.indices.lengthInBytes,
+  );
   List<int> _sorted = [], _orders = [];
   List<int> _flags = [];
   List<List<int>> _groups = [];
@@ -24,6 +36,7 @@ class Live2DPainter extends CustomPainter {
   final _imagePaint = Paint()..filterQuality = FilterQuality.low;
   final _layerPaint = Paint();
   final _maskLayerPaint = Paint();
+  final _batchPaint = Paint();
 
   void dispose() {
     for (final buffer in _buffers.values) {
@@ -31,6 +44,10 @@ class Live2DPainter extends CustomPainter {
       buffer.tintShader?.dispose();
     }
     _buffers.clear();
+    for (final batch in _batches.values) {
+      batch.dispose();
+    }
+    _batches.clear();
     for (final shader in _shaders) {
       shader.dispose();
     }
@@ -95,6 +112,8 @@ class Live2DPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final bounds = model.bounds;
     if (bounds.isEmpty || size.isEmpty || model.meshes.isEmpty) return;
+    paintCount++;
+    drawCalls = batchedMeshes = 0;
     final scale =
         .94 * (size.width / bounds.width).clamp(0, size.height / bounds.height);
     boundedPasses = 0;
@@ -209,6 +228,13 @@ class Live2DPainter extends CustomPainter {
         _paintGroup(canvas, size, scale, group);
       }
     }
+    // Keep only the current frame's runs: changing visibility/opacity cannot
+    // retain an ever-growing collection of alternative vertex buffers.
+    _batches.removeWhere((_, batch) {
+      if (batch.lastPaint == paintCount) return false;
+      batch.dispose();
+      return true;
+    });
   }
 
   BlendMode _blend(LiveMesh mesh) => mesh.flags & 1 != 0
@@ -225,11 +251,55 @@ class Live2DPainter extends CustomPainter {
       size.height / 2 - bounds.center.dy * scale,
     );
     canvas.scale(scale);
-    for (final i in group) {
+    for (var cursor = 0; cursor < group.length; cursor++) {
+      final i = group[cursor];
       final mesh = model.meshes[i];
       if (!mesh.visible || mesh.opacity <= 0 || mesh.indices.isEmpty) continue;
       final blend = _blend(mesh);
       if (mesh.masks.isEmpty) {
+        if (batchMeshes && _batchable(mesh)) {
+          var end = cursor + 1, vertices = mesh.positions.length ~/ 2;
+          while (end < group.length) {
+            final next = model.meshes[group[end]];
+            if (!_batchable(next) ||
+                next.texture != mesh.texture ||
+                next.opacity != mesh.opacity ||
+                _blend(next) != blend ||
+                vertices + next.positions.length ~/ 2 > 65535) {
+              break;
+            }
+            vertices += next.positions.length ~/ 2;
+            end++;
+          }
+          if (end - cursor > 1) {
+            final image = model.textures[mesh.texture];
+            final batch = _batches.putIfAbsent(i, _BatchBuffer.new)
+              ..lastPaint = paintCount;
+            final vertices = batch.update(
+              model.meshes,
+              group,
+              cursor,
+              end,
+              image.width,
+              image.height,
+            );
+            canvas.drawVertices(
+              vertices,
+              BlendMode.srcOver,
+              _batchPaint
+                ..isAntiAlias = true
+                ..blendMode = blend
+                ..color = Colors.white.withValues(alpha: mesh.opacity)
+                ..shader = _shaders[mesh.texture],
+            );
+            drawCalls++;
+            totalDrawCalls++;
+            batchedMeshes += end - cursor;
+            totalBatchedMeshes += end - cursor;
+            cursor = end - 1;
+            continue;
+          }
+        }
         _draw(canvas, i, mesh, blend);
       } else {
         final clipBounds = _meshBounds(i).inflate(2 / scale);
@@ -262,6 +332,21 @@ class Live2DPainter extends CustomPainter {
     }
     canvas.restore();
   }
+
+  bool _batchable(LiveMesh mesh) =>
+      mesh.visible &&
+      mesh.opacity > 0 &&
+      mesh.masks.isEmpty &&
+      mesh.indices.isNotEmpty &&
+      mesh.positions.isNotEmpty &&
+      mesh.texture >= 0 &&
+      mesh.texture < model.textures.length &&
+      mesh.multiply[0] == 1 &&
+      mesh.multiply[1] == 1 &&
+      mesh.multiply[2] == 1 &&
+      mesh.screen[0] == 0 &&
+      mesh.screen[1] == 0 &&
+      mesh.screen[2] == 0;
 
   void _draw(
     Canvas canvas,
@@ -300,11 +385,118 @@ class Live2DPainter extends CustomPainter {
       }
     }
     canvas.drawVertices(vertices, BlendMode.srcOver, paint);
+    drawCalls++;
+    totalDrawCalls++;
   }
 
   @override
   bool shouldRepaint(covariant Live2DPainter oldDelegate) =>
       oldDelegate.model != model;
+}
+
+/// Adjacent identical materials preserve triangle/render order in one draw.
+/// Native revisions retain static UV/index data; foreign mutable meshes still
+/// compare their contents, matching the individual-mesh path.
+class _BatchBuffer {
+  int lastPaint = 0, _width = 0, _height = 0;
+  Float32List positions = Float32List(0), uvs = Float32List(0);
+  Uint16List indices = Uint16List(0);
+  List<LiveMesh?> _sources = [];
+  List<int?> _revisions = [];
+  List<int> _positionCounts = [], _indexCounts = [];
+  ui.Vertices? _vertices;
+  void dispose() {
+    _vertices?.dispose();
+    _vertices = null;
+  }
+
+  ui.Vertices update(
+    List<LiveMesh> meshes,
+    List<int> group,
+    int start,
+    int end,
+    int width,
+    int height,
+  ) {
+    var coordinates = 0, triangles = 0;
+    var topology = _sources.length != end - start;
+    for (var i = start; i < end; i++) {
+      final m = meshes[group[i]], slot = i - start;
+      coordinates += m.positions.length;
+      triangles += m.indices.length;
+      if (!topology &&
+          (!identical(_sources[slot], m) ||
+              _positionCounts[slot] != m.positions.length ||
+              _indexCounts[slot] != m.indices.length)) {
+        topology = true;
+      }
+    }
+    var changed = _vertices == null || topology;
+    if (positions.length != coordinates || indices.length != triangles) {
+      positions = Float32List(coordinates);
+      uvs = Float32List(coordinates);
+      indices = Uint16List(triangles);
+      changed = topology = true;
+    }
+    if (_sources.length != end - start) {
+      _sources = List.filled(end - start, null);
+      _revisions = List.filled(end - start, null);
+      _positionCounts = List.filled(end - start, 0);
+      _indexCounts = List.filled(end - start, 0);
+    }
+    final resizedTexture = _width != width || _height != height;
+    var at = 0, indexAt = 0;
+    for (var i = start; i < end; i++) {
+      final m = meshes[group[i]], slot = i - start;
+      final retained =
+          !topology && identical(_sources[slot], m) && m.staticTopology;
+      if (!retained ||
+          m.geometryRevision == null ||
+          _revisions[slot] != m.geometryRevision) {
+        for (var p = 0; p < m.positions.length; p += 2) {
+          final x = m.positions[p], y = -m.positions[p + 1];
+          if (positions[at + p] != x || positions[at + p + 1] != y) {
+            changed = true;
+          }
+          positions[at + p] = x;
+          positions[at + p + 1] = y;
+        }
+      }
+      if (!retained || resizedTexture) {
+        for (var p = 0; p < m.uvs.length; p += 2) {
+          final u = m.uvs[p] * width, v = (1 - m.uvs[p + 1]) * height;
+          if (uvs[at + p] != u || uvs[at + p + 1] != v) changed = true;
+          uvs[at + p] = u;
+          uvs[at + p + 1] = v;
+        }
+      }
+      if (!retained) {
+        for (var p = 0; p < m.indices.length; p++) {
+          final index = m.indices[p] + at ~/ 2;
+          if (indices[indexAt + p] != index) changed = true;
+          indices[indexAt + p] = index;
+        }
+      }
+      _sources[slot] = m;
+      _revisions[slot] = m.geometryRevision;
+      _positionCounts[slot] = m.positions.length;
+      _indexCounts[slot] = m.indices.length;
+      at += m.positions.length;
+      indexAt += m.indices.length;
+    }
+    _width = width;
+    _height = height;
+    if (changed) {
+      _vertices?.dispose();
+      _vertices = ui.Vertices.raw(
+        ui.VertexMode.triangles,
+        positions,
+        textureCoordinates: uvs,
+        indices: indices,
+      );
+    }
+    return _vertices!;
+  }
 }
 
 class _MeshBuffer {

@@ -1,0 +1,23 @@
+{
+  "max_channel_delta": 0,
+  "runs": [
+    {
+      "direct_calls": 455,
+      "batch_calls": 225,
+      "batched_meshes": 270,
+      "retained_bytes": 444858
+    },
+    {
+      "direct_calls": 455,
+      "batch_calls": 441,
+      "batched_meshes": 26,
+      "retained_bytes": 88538
+    },
+    {
+      "direct_calls": 455,
+      "batch_calls": 225,
+      "batched_meshes": 270,
+      "retained_bytes": 444858
+    }
+  ]
+}

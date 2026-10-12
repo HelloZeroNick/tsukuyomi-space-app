@@ -1,0 +1,48 @@
+{
+  "engine": "Flutter tester JIT, macOS; decoder only; no HTTP, UI or GPU",
+  "baseline_commit": "2c48adc",
+  "runs": [
+    {
+      "fixture": "text",
+      "run": 1,
+      "fragments": 3000,
+      "before": 1182.931,
+      "after": 413.749
+    },
+    {
+      "fixture": "text",
+      "run": 2,
+      "fragments": 3000,
+      "after": 443.689,
+      "before": 1569.225
+    },
+    {
+      "fixture": "text",
+      "run": 3,
+      "fragments": 3000,
+      "before": 1255.536,
+      "after": 330.897
+    },
+    {
+      "fixture": "tools",
+      "run": 1,
+      "fragments": 1126,
+      "before": 257.556,
+      "after": 129.245
+    },
+    {
+      "fixture": "tools",
+      "run": 2,
+      "fragments": 1126,
+      "after": 117.173,
+      "before": 358.792
+    },
+    {
+      "fixture": "tools",
+      "run": 3,
+      "fragments": 1126,
+      "before": 666.951,
+      "after": 241.109
+    }
+  ]
+}

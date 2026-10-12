@@ -104,6 +104,21 @@ Future<void> main() async {
     final bounded = await probeLive2DBoundedPasses();
     final uvs = await probeLive2DShaderUvs();
     final detail = await probeLive2DCroppedDetail();
+    final batches = await probeLive2DBatching();
+    final nativeBatches = await probeNativeLive2DBatching(model);
+    if (batches['max_channel_delta'] > 2 ||
+        nativeBatches['max_channel_delta'] > 2 ||
+        (nativeBatches['runs'] as List).cast<Map>().any(
+          (r) => r['batch_calls'] >= r['direct_calls'],
+        )) {
+      throw StateError(
+        'Native mesh batching changed pixels or failed to reduce calls: $batches $nativeBatches',
+      );
+    }
+    // ignore: avoid_print
+    print(
+      'TSUKUYOMI_LIVE2D_BATCH_OK synthetic_max_delta=${batches['max_channel_delta']} native=$nativeBatches',
+    );
     if (detail['different_bytes'] != 0 ||
         detail['after'][3] != 0 ||
         model.textures.any((t) => t.width != 2048 || t.height != 2048)) {

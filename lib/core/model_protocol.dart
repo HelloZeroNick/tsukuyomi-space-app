@@ -306,13 +306,57 @@ Stream<WireFrame> modelFrames(
   }
 }
 
+/// Checks only new UTF-8 content instead of re-encoding the entire reply/tool
+/// input for every token. Surrogates split across JSON deltas count as one pair.
+class _WireText {
+  final _parts = StringBuffer();
+  int _bytes = 0, _lastUnit = -1;
+  void add(String value, int limit) {
+    if (value.isEmpty) return;
+    var bytes = utf8.encode(value).length;
+    final first = value.codeUnitAt(0);
+    if (_lastUnit >= 0xd800 &&
+        _lastUnit <= 0xdbff &&
+        first >= 0xdc00 &&
+        first <= 0xdfff) {
+      bytes -= 2;
+    }
+    _bytes += bytes;
+    if (_bytes > limit) throw const ApiFailure('模型协议内容超过安全上限');
+    _parts.write(value);
+    _lastUnit = value.codeUnitAt(value.length - 1);
+  }
+
+  @override
+  String toString() => _parts.toString();
+}
+
+Map<String, dynamic> _wireStrings(Map value) => {
+  for (final entry in value.entries)
+    entry.key as String: entry.value is _WireText
+        ? entry.value.toString()
+        : entry.value,
+};
+
+void _appendWire(Map target, String key, String value, int limit) {
+  final old = target[key];
+  final buffer = old is _WireText
+      ? old
+      : (_WireText()..add('${old ?? ''}', limit));
+  buffer.add(value, limit);
+  target[key] = buffer;
+}
+
 class _ModelDecoder {
   _ModelDecoder(this.protocol, this.limits, this.allowTools, this.callPrefix);
   final String protocol, callPrefix;
   final ModelLimits limits;
   final bool allowTools;
   bool completed = false, terminal = false;
-  String reply = '', reasoning = '', model = '';
+  final _reply = _WireText(), _reasoning = _WireText();
+  String get reply => _reply.toString();
+  String get reasoning => _reasoning.toString();
+  String model = '';
   final usage = <String, dynamic>{},
       calls = <int, Map<String, dynamic>>{},
       blocks = <int, Map<String, dynamic>>{};
@@ -335,8 +379,7 @@ class _ModelDecoder {
     final events = <ModelWireEvent>[];
     void text(String value) {
       if (value.isEmpty) return;
-      reply += value;
-      modelBound(reply, limits.textBytes);
+      _reply.add(value, limits.textBytes);
       events.add(ModelWireEvent('text', text: value));
     }
 
@@ -374,15 +417,19 @@ class _ModelDecoder {
         if (type == 'response.function_call_arguments.delta') {
           final item = output[p['output_index'] as int? ?? 0];
           if (item == null) throw const ApiFailure('模型工具参数没有对应输出项');
-          item['arguments'] = '${item['arguments'] ?? ''}${p['delta'] ?? ''}';
-          modelBound(item['arguments'], limits.argumentBytes);
+          _appendWire(
+            item,
+            'arguments',
+            '${p['delta'] ?? ''}',
+            limits.argumentBytes,
+          );
           activity('tools');
         }
         if (type == 'response.completed') {
           final data = Map<String, dynamic>.from((p['response'] ?? p) as Map);
           modelStatus(data);
           if ((data['output'] as List? ?? []).isEmpty && output.isNotEmpty) {
-            data['output'] = output.values.toList();
+            data['output'] = output.values.map(_wireStrings).toList();
           }
           if ((data['output'] as List? ?? []).isEmpty && reply.isNotEmpty) {
             data['output_text'] = reply;
@@ -410,13 +457,21 @@ class _ModelDecoder {
             case 'text_delta':
               text(delta['text'] as String? ?? '');
               if (block != null) {
-                block['text'] = '${block['text'] ?? ''}${delta['text'] ?? ''}';
+                _appendWire(
+                  block,
+                  'text',
+                  '${delta['text'] ?? ''}',
+                  limits.textBytes,
+                );
               }
             case 'input_json_delta':
               if (block == null) throw const ApiFailure('模型工具参数没有对应内容块');
-              block['partial'] =
-                  '${block['partial'] ?? ''}${delta['partial_json'] ?? ''}';
-              modelBound(block['partial'], limits.argumentBytes);
+              _appendWire(
+                block,
+                'partial',
+                '${delta['partial_json'] ?? ''}',
+                limits.argumentBytes,
+              );
               activity('tools');
             case 'thinking_delta':
             case 'signature_delta':
@@ -424,8 +479,12 @@ class _ModelDecoder {
                   ? 'thinking'
                   : 'signature';
               if (block != null) {
-                block[key] = '${block[key] ?? ''}${delta[key] ?? ''}';
-                modelBound(block[key], limits.privateBytes);
+                _appendWire(
+                  block,
+                  key,
+                  '${delta[key] ?? ''}',
+                  limits.privateBytes,
+                );
               }
               activity('reasoning');
           }
@@ -436,8 +495,10 @@ class _ModelDecoder {
       case 'ollama':
         text(modelText(p['message']?['content'] ?? p['response']));
         if (p['message']?['thinking'] is String) {
-          reasoning += p['message']['thinking'] as String;
-          modelBound(reasoning, limits.privateBytes);
+          _reasoning.add(
+            p['message']['thinking'] as String,
+            limits.privateBytes,
+          );
           activity('reasoning');
         }
         if (p['message']?['tool_calls'] is List) {
@@ -464,8 +525,10 @@ class _ModelDecoder {
         final delta = choice?['delta'] as Map? ?? {};
         text(modelText(delta['content'] ?? delta['text']));
         if (delta['reasoning_content'] is String) {
-          reasoning += delta['reasoning_content'] as String;
-          modelBound(reasoning, limits.privateBytes);
+          _reasoning.add(
+            delta['reasoning_content'] as String,
+            limits.privateBytes,
+          );
           activity('reasoning');
         }
         var i = 0;
@@ -476,7 +539,7 @@ class _ModelDecoder {
             index,
             () => {
               'id': '',
-              'function': {'name': '', 'arguments': ''},
+              'function': <String, dynamic>{'name': '', 'arguments': ''},
             },
           );
           if (call['id'] != null) {
@@ -487,12 +550,15 @@ class _ModelDecoder {
           }
           final f = old['function'] as Map,
               update = call['function'] as Map? ?? {};
-          if (update['name'] != f['name']) {
-            f['name'] = '${f['name']}${update['name'] ?? ''}';
+          if (update['name'] != f['name'].toString()) {
+            _appendWire(f, 'name', '${update['name'] ?? ''}', 80);
           }
-          f['arguments'] = '${f['arguments']}${update['arguments'] ?? ''}';
-          modelBound(f['name'], 80);
-          modelBound(f['arguments'], limits.argumentBytes);
+          _appendWire(
+            f,
+            'arguments',
+            '${update['arguments'] ?? ''}',
+            limits.argumentBytes,
+          );
           activity('tools');
         }
         if (choice?['usage'] is Map) {
@@ -518,7 +584,7 @@ class _ModelDecoder {
         final cut = ordered.lastIndexWhere((b) => b['type'] == 'fallback');
         data['content'] = ordered.indexed.map((entry) {
           final (index, block) = entry;
-          final item = Map<String, dynamic>.from(block);
+          final item = _wireStrings(block);
           final partial = item.remove('partial');
           if (index > cut && partial is String && partial.isNotEmpty) {
             item['input'] = jsonDecode(partial);
@@ -537,7 +603,15 @@ class _ModelDecoder {
           if (reasoning.isNotEmpty)
             (protocol == 'ollama' ? 'thinking' : 'reasoning_content'):
                 reasoning,
-          if (calls.isNotEmpty) 'tool_calls': calls.values.toList(),
+          if (calls.isNotEmpty)
+            'tool_calls': [
+              for (final call in calls.values)
+                {
+                  ...call,
+                  if (call['function'] is Map)
+                    'function': _wireStrings(call['function'] as Map),
+                },
+            ],
         };
       }
       value = ModelCompletion.json(

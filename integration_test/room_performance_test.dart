@@ -17,6 +17,16 @@ import 'package:window_manager/window_manager.dart';
 
 import '../test/support/fakes.dart';
 
+Future<void> focusBenchmarkWindow() async {
+  for (var attempt = 0; attempt < 15; attempt++) {
+    await windowManager.show();
+    await windowManager.focus();
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    if (await windowManager.isFocused()) return;
+  }
+  throw StateError('Native benchmark window could not obtain focus');
+}
+
 void main() {
   const ime = bool.fromEnvironment('BENCHMARK_IME');
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized()
@@ -57,11 +67,7 @@ void main() {
     final imageUrl = 'data:image/webp;base64,${base64Encode(imageBytes)}';
     final runs = <Map<String, dynamic>>[];
     for (var repetition = 0; repetition < 3; repetition++) {
-      await tester.runAsync(() async {
-        await windowManager.show();
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-        await windowManager.focus();
-      });
+      await tester.runAsync(focusBenchmarkWindow);
       final started = Stopwatch()..start();
       final frames = <FrameTiming>[];
       void timings(List<FrameTiming> batch) => frames.addAll(batch);
@@ -160,13 +166,19 @@ void main() {
       }
       expect(model, isNotNull);
       await tester.pump(const Duration(seconds: 1));
-      await tester.runAsync(() async {
-        await windowManager.show();
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-        await windowManager.focus();
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-      });
+      await tester.runAsync(focusBenchmarkWindow);
       expect(await windowManager.isFocused(), true);
+      final measuredPainter = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((w) => w.painter)
+          .whereType<Live2DPainter>()
+          .single;
+      measuredPainter.batchMeshes = !const bool.fromEnvironment(
+        'BENCHMARK_NO_BATCH',
+      );
+      final paintStart = measuredPainter.paintCount;
+      final drawStart = measuredPainter.totalDrawCalls;
+      final batchStart = measuredPainter.totalBatchedMeshes;
       frames.clear();
       ticks = 0;
       modelCpuMs = 0;
@@ -323,6 +335,10 @@ void main() {
       final boundedPasses = painter.boundedPasses;
       final downsampledPasses = painter.downsampledPasses;
       final boundedPixels = painter.rasterizedPixels;
+      final sampledPaints = painter.paintCount - paintStart;
+      final sampledDraws = painter.totalDrawCalls - drawStart;
+      final sampledBatches = painter.totalBatchedMeshes - batchStart;
+      final retainedBatchBytes = painter.retainedBatchBytes;
       final rssBefore = ProcessInfo.currentRss;
       // Cover Room with another route and verify its model clock stops.
       Navigator.of(tester.element(find.byType(Scaffold).first)).push(
@@ -396,6 +412,11 @@ void main() {
         'live2d_downsampled_passes': downsampledPasses,
         'live2d_rasterized_pixels': boundedPixels,
         'live2d_pixel_budget': painter.rasterPixelBudget,
+        'live2d_mesh_batching': painter.batchMeshes,
+        'live2d_paints': sampledPaints,
+        'live2d_draw_calls': sampledDraws,
+        'live2d_batched_meshes': sampledBatches,
+        'live2d_retained_batch_bytes': retainedBatchBytes,
         'live2d_texture_rgba_bytes': model!.textures.fold<int>(
           0,
           (sum, image) => sum + image.width * image.height * 4,
