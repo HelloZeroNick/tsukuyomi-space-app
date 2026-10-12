@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-12",
+  "version": "0.6.18+24",
+  "baseline_source_commit": "4b01a262c780628fdc309d6d73eb3ad622451310",
+  "analysis": "no issues",
+  "format_files": 245,
+  "release_tool_tests": 38,
+  "focused_tests": 52,
+  "full_regression": {
+    "passed": 870,
+    "skipped": 34,
+    "native_cubism_enabled": true
+  },
+  "pre_fix_ime_regressions_failed": 4,
+  "profile": {
+    "engine": "native macOS Flutter Profile",
+    "layout": "390x844 in 1280x900 window",
+    "keyboard": "simulated insets and mocked platform input",
+    "before_runs": 3,
+    "after_runs": 3,
+    "after_editor_replacements": 0,
+    "after_composing_resets": 0,
+    "after_viewport_changes": 0,
+    "ui_raster_time_improvement_observed": false,
+    "discarded_early_attempts": "focus lost or model not actively updating"
+  },
+  "physical_k90_connected": false,
+  "mobile_adaptation": {
+    "display_refresh_budget": true,
+    "slow_raster_frames_before_step": 8,
+    "budget_factors": [
+      1,
+      0.75,
+      0.5
+    ],
+    "healthy_frames_before_recovery": 180,
+    "texture_cap": 2048,
+    "isolated_ui_spikes_reduce_pixels": false
+  },
+  "android_actual_ime_probe": "required before publication; pending CI"
+}

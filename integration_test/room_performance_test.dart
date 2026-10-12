@@ -12,16 +12,19 @@ import 'package:tsukuyomi_space_app/core/models.dart';
 import 'package:tsukuyomi_space_app/features/room/room_controller.dart';
 import 'package:tsukuyomi_space_app/main.dart';
 import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
+import 'package:tsukuyomi_space_app/live2d/character_stage.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../test/support/fakes.dart';
 
 void main() {
+  const ime = bool.fromEnvironment('BENCHMARK_IME');
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized()
     ..framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
   testWidgets('Room 2000 messages, image, stream and native Live2D benchmark', (
     tester,
   ) async {
+    if (ime) binding.testTextInput.register();
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(body: Text('Preparing image workload…')),
@@ -123,18 +126,28 @@ void main() {
           return model!;
         },
       );
+      final keyboard = ValueNotifier<double>(0);
       await tester.pumpWidget(
         const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT')
             ? Center(
                 child: SizedBox(
                   width: 390,
                   height: 844,
-                  child: MediaQuery(
-                    data: MediaQueryData(
-                      size: const Size(390, 844),
-                      devicePixelRatio: tester.view.devicePixelRatio,
-                    ),
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: keyboard,
                     child: app,
+                    builder: (context, inset, child) => MediaQuery(
+                      data: MediaQueryData(
+                        size: const Size(390, 844),
+                        devicePixelRatio: tester.view.devicePixelRatio,
+                        padding: EdgeInsets.only(
+                          bottom: ime && inset == 0 ? 24 : 0,
+                        ),
+                        viewPadding: EdgeInsets.only(bottom: ime ? 24 : 0),
+                        viewInsets: EdgeInsets.only(bottom: inset),
+                      ),
+                      child: child!,
+                    ),
                   ),
                 ),
               )
@@ -158,35 +171,133 @@ void main() {
       ticks = 0;
       modelCpuMs = 0;
       final sample = Stopwatch()..start();
-      final sending = room.send('并行流式性能测试');
-      for (var i = 0; chat.stream == null && i < 100; i++) {
-        await tester.pump(const Duration(milliseconds: 10));
-      }
-      expect(chat.stream, isNotNull);
-      final list = find
-          .descendant(
-            of: find.byType(CustomScrollView),
-            matching: find.byType(Scrollable),
-          )
-          .first;
-      for (var step = 0; step < 240; step++) {
-        chat.stream!.add('片段 $step，');
-        if (step % 6 == 0) {
-          await tester.drag(
-            list,
-            Offset(
-              0,
-              const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL') ? 360 : 180,
-            ),
+      final sending = ime ? Future<void>.value() : room.send('并行流式性能测试');
+      var editorReplacements = 0,
+          stageRebuilds = 0,
+          viewportChanges = 0,
+          composingResets = 0;
+      if (ime) {
+        final input = find.byKey(const Key('message-input'));
+        final editable = find.descendant(
+          of: input,
+          matching: find.byType(EditableText),
+        );
+        await tester.tap(input);
+        await tester.pump();
+        await tester.runAsync(() async {
+          await windowManager.show();
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          await windowManager.focus();
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+        });
+        expect(await windowManager.isFocused(), true);
+        var editor = tester.state(editable);
+        Widget? previousStage;
+        Rect? previousViewport;
+        for (var step = 0; step < 120; step++) {
+          if (step % 12 == 0) {
+            await tester.runAsync(() async {
+              await windowManager.show();
+              await Future<void>.delayed(const Duration(milliseconds: 200));
+              await windowManager.focus();
+            });
+          }
+          keyboard.value = const [
+            0.0,
+            40.0,
+            90.0,
+            160.0,
+            240.0,
+            330.0,
+            280.0,
+            210.0,
+            140.0,
+            70.0,
+            30.0,
+            0.0,
+          ][step % 12];
+          if (step % 12 == 4 || step % 12 == 9) {
+            room.error = step % 12 == 4 ? 'fixture sync status' : '';
+            room.workspace.changed();
+          }
+          await tester.pump(const Duration(milliseconds: 32));
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 32)),
           );
+          final current = tester.state(editable);
+          if (!identical(current, editor)) editorReplacements++;
+          editor = current;
+          final field = tester.widget<TextField>(input);
+          if (step > 0 && !field.controller!.value.composing.isValid) {
+            composingResets++;
+          }
+          field.focusNode!.requestFocus();
+          field.controller!.value = TextEditingValue(
+            text: '中文输入 $step',
+            selection: TextSelection.collapsed(offset: '中文输入 $step'.length),
+            composing: TextRange(start: 0, end: '中文输入 $step'.length),
+          );
+          await room.saveComposerDraft(field.controller!.text);
+          final stage = tester.widget(find.byType(CharacterStage));
+          final viewport = tester.getRect(
+            find.byKey(const Key('room-character-viewport')),
+          );
+          if (previousStage != null && !identical(stage, previousStage)) {
+            stageRebuilds++;
+          }
+          if (previousViewport != null && previousViewport != viewport) {
+            viewportChanges++;
+          }
+          previousStage = stage;
+          previousViewport = viewport;
         }
-        await tester.pump(const Duration(milliseconds: 16));
+        if (const bool.fromEnvironment('BENCHMARK_ASSERT_IME')) {
+          expect(editorReplacements, 0);
+          expect(viewportChanges, 0);
+          expect(composingResets, 0);
+        }
+        await tester.runAsync(() async {
+          await windowManager.show();
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          await windowManager.focus();
+        });
       }
-      await chat.stream!.close();
+      if (!ime) {
+        for (var i = 0; chat.stream == null && i < 100; i++) {
+          await tester.pump(const Duration(milliseconds: 10));
+        }
+        expect(chat.stream, isNotNull);
+        final list = find
+            .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        for (var step = 0; step < 240; step++) {
+          chat.stream!.add('片段 $step，');
+          if (step % 6 == 0) {
+            await tester.drag(
+              list,
+              Offset(
+                0,
+                const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL') ? 360 : 180,
+              ),
+            );
+          }
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        await chat.stream!.close();
+      }
       await sending;
       await tester.pump(const Duration(seconds: 1));
       sample.stop();
       final recordedTicks = ticks;
+      if (ime) {
+        // ignore: avoid_print
+        print(
+          'IME_SAMPLE ticks=$recordedTicks elapsed_ms=${sample.elapsedMilliseconds} lifecycle=${WidgetsBinding.instance.lifecycleState} focus=${await windowManager.isFocused()} replacements=$editorReplacements viewport_changes=$viewportChanges',
+        );
+      }
       expect(
         find.text('图片暂不可用'),
         findsNothing,
@@ -244,6 +355,11 @@ void main() {
           'BENCHMARK_CHAT_SCROLL',
         ),
         'mobile_layout': const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT'),
+        'simulated_ime': ime,
+        'editor_replacements': editorReplacements,
+        'stage_widget_changes': stageRebuilds,
+        'viewport_changes': viewportChanges,
+        'composing_resets': composingResets,
         'image_fixture': {
           'asset': 'assets/images/yachiyo-portrait.webp',
           'width': imageWidth,
@@ -294,6 +410,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       room.dispose();
       await tester.pump(const Duration(milliseconds: 500));
+      keyboard.dispose();
     }
     binding.reportData = {
       'label': const String.fromEnvironment(
@@ -301,7 +418,7 @@ void main() {
         defaultValue: 'after',
       ),
       'scene':
-          '${const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT') ? '390x844 mobile layout' : '1280x820 desktop layout'} native macOS; 2000 turns, 200 valid bundled portrait image messages, streamed fragments, Live2D, three runs; mixed Markdown/long replies=${const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL')}',
+          '${const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT') ? '390x844 mobile layout' : '1280x820 desktop layout'} native macOS; 2000 turns, 200 valid bundled portrait image messages, ${ime ? "simulated keyboard insets and typing" : "streamed fragments"}, Live2D, three runs; mixed Markdown/long replies=${const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL')}',
       'runs': runs,
     };
   }, timeout: const Timeout(Duration(minutes: 10)));

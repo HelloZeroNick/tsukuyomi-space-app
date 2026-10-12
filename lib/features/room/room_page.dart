@@ -62,6 +62,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   final _stageKey = GlobalKey();
   final _conversationCenter = GlobalKey();
   final _messages = RoomMessageCache();
+  Object? _stageStamp;
+  Widget? _stageWidget;
   List<ChatTurn>? _lastTurnSource;
   bool _wasGenerating = false;
   DateTime _openedAt = DateTime.now();
@@ -186,7 +188,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     if (_lastScope != c.scope ||
         _lastDraft != c.draft ||
         (!c.generating && _input.text.isEmpty && c.draft.isNotEmpty)) {
-      if (!c.generating) _input.text = c.draft;
+      if (!c.generating && (_lastScope != c.scope || _input.text != c.draft)) {
+        _input.value = TextEditingValue(
+          text: c.draft,
+          selection: TextSelection.collapsed(offset: c.draft.length),
+        );
+      }
       _lastScope = c.scope;
       _lastDraft = c.draft;
     }
@@ -345,6 +352,86 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
   }
 
+  Widget _characterStage({required bool mobile, required bool keyboardOpen}) {
+    final stamp = (
+      c.scope,
+      c.settings,
+      c.voice,
+      c.animation,
+      c.workspace.currentWorld['city'],
+      widget.loadNative,
+      widget.modelLoader,
+      mobile,
+      keyboardOpen,
+      _roomMusic.index,
+      _roomMusic.playing,
+      _roomMusic.loading,
+    );
+    if (_stageStamp != stamp) {
+      _stageStamp = stamp;
+      _stageWidget = CharacterStage(
+        key: _stageKey,
+        voice: c.voice,
+        settings: c.settings,
+        animation: c.animation,
+        world: c.workspace.currentWorld,
+        onWorld: () => unawaited(
+          showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const SiteText('房间环境'),
+              content: AnimatedBuilder(
+                animation: c.workspace,
+                builder: (context, _) => Text(
+                  '${c.workspace.currentWorld["city"] ?? "月读空间"}  ${c.workspace.currentWorld["temperature"] ?? ""}°\n${c.workspace.worldStatus}',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => c.workspace.refreshWorld(),
+                  child: const SiteText('刷新'),
+                ),
+                TextButton(
+                  onPressed: () => c.workspace.refreshWorld(locate: true),
+                  child: const SiteText('使用当前位置'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const SiteText('关闭'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        loadNative: widget.loadNative,
+        modelLoader: widget.modelLoader,
+        mobile: mobile,
+        keyboardOpen: keyboardOpen,
+        onSettings: _settings,
+        onVoiceSettings: () => showRoomSettings(
+          context,
+          c,
+          section: 'tts',
+          onTheme: widget.onToggleTheme,
+        ),
+        onMusic: _music,
+        musicTitle: '${_roomMusic.tracks[_roomMusic.index]['title']}',
+        musicPlaying: _roomMusic.playing,
+        musicLoading: _roomMusic.loading,
+        onMusicToggle: () async {
+          await _roomMusic.toggle();
+          if (mounted && _roomMusic.error.isNotEmpty) {
+            _notice(_roomMusic.error);
+          }
+        },
+        onReady: (value) {
+          if (mounted) setState(() => _ready = value);
+        },
+      );
+    }
+    return _stageWidget!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
@@ -356,6 +443,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         body: SafeArea(
+          maintainBottomViewPadding: true,
           child: LayoutBuilder(
             builder: (context, box) {
               final mobile = box.maxWidth <= RoomStyle.breakpoint;
@@ -366,65 +454,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     24,
               );
               final landscape = mobile && box.maxHeight < 500 && keyboard == 0;
-              final stage = CharacterStage(
-                key: _stageKey,
-                voice: c.voice,
-                settings: c.settings,
-                animation: c.animation,
-                world: c.workspace.currentWorld,
-                onWorld: () => unawaited(
-                  showDialog<void>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const SiteText('房间环境'),
-                      content: AnimatedBuilder(
-                        animation: c.workspace,
-                        builder: (context, _) => Text(
-                          '${c.workspace.currentWorld["city"] ?? "月读空间"}  ${c.workspace.currentWorld["temperature"] ?? ""}°\n${c.workspace.worldStatus}',
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => c.workspace.refreshWorld(),
-                          child: const SiteText('刷新'),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              c.workspace.refreshWorld(locate: true),
-                          child: const SiteText('使用当前位置'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const SiteText('关闭'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                loadNative: widget.loadNative,
-                modelLoader: widget.modelLoader,
+              final compactKeyboard =
+                  mobile && keyboard > 0 && box.maxHeight - keyboard < 240;
+              final stage = _characterStage(
                 mobile: mobile,
                 keyboardOpen: keyboard > 0,
-                onSettings: _settings,
-                onVoiceSettings: () => showRoomSettings(
-                  context,
-                  c,
-                  section: 'tts',
-                  onTheme: widget.onToggleTheme,
-                ),
-                onMusic: _music,
-                musicTitle: '${_roomMusic.tracks[_roomMusic.index]['title']}',
-                musicPlaying: _roomMusic.playing,
-                musicLoading: _roomMusic.loading,
-                onMusicToggle: () async {
-                  await _roomMusic.toggle();
-                  if (mounted && _roomMusic.error.isNotEmpty) {
-                    _notice(_roomMusic.error);
-                  }
-                },
-                onReady: (value) {
-                  if (mounted) setState(() => _ready = value);
-                },
               );
               return Stack(
                 fit: StackFit.expand,
@@ -448,24 +482,28 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     ),
                   ] else ...[
                     Positioned.fill(child: stage),
-                    Positioned(
-                      top: headerHeight + 22,
-                      left: 16,
-                      child: _mobileTools(),
-                    ),
-                    Positioned(
-                      top: headerHeight + 22,
-                      right: 16,
-                      child: _roundButton(
-                        '房间设置',
-                        CupertinoIcons.gear_alt,
-                        _settings,
+                    if (!compactKeyboard)
+                      Positioned(
+                        top: headerHeight + 22,
+                        left: 16,
+                        child: _mobileTools(),
                       ),
-                    ),
+                    if (!compactKeyboard)
+                      Positioned(
+                        top: headerHeight + 22,
+                        right: 16,
+                        child: _roundButton(
+                          '房间设置',
+                          CupertinoIcons.gear_alt,
+                          _settings,
+                        ),
+                      ),
                     if (!_quiet)
                       Positioned(
                         key: const Key('mobile-conversation'),
-                        top: keyboard > 0
+                        top: compactKeyboard
+                            ? 8
+                            : keyboard > 0
                             ? math.min(
                                 math.max(134, (box.maxHeight - keyboard) * .24),
                                 math.max(84, box.maxHeight - keyboard - 100),
@@ -485,29 +523,33 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                             : _mobilePanel(),
                       ),
                   ],
-                  Positioned(
-                    top: mobile ? 10 : 16,
-                    left: mobile ? 12 : math.max(24, (box.maxWidth - 1320) / 2),
-                    right: mobile
-                        ? 12
-                        : math.max(24, (box.maxWidth - 1320) / 2),
-                    height: headerHeight,
-                    child: RoomNavigation(
-                      mobile: mobile,
-                      width: box.maxWidth,
-                      onGo: (path) =>
-                          path == '/room' ? _selectPanel('聊天') : _website(path),
-                      onSearch: _search,
-                      onSettings: _settings,
-                      onTheme: widget.onToggleTheme,
-                      onAccount: c.loading || c.busy || c.generating
-                          ? null
-                          : _account,
-                      accountLabel: c.sessionExpired
-                          ? '重新登录'
-                          : c.account?.displayName ?? '登录',
+                  if (!compactKeyboard)
+                    Positioned(
+                      top: mobile ? 10 : 16,
+                      left: mobile
+                          ? 12
+                          : math.max(24, (box.maxWidth - 1320) / 2),
+                      right: mobile
+                          ? 12
+                          : math.max(24, (box.maxWidth - 1320) / 2),
+                      height: headerHeight,
+                      child: RoomNavigation(
+                        mobile: mobile,
+                        width: box.maxWidth,
+                        onGo: (path) => path == '/room'
+                            ? _selectPanel('聊天')
+                            : _website(path),
+                        onSearch: _search,
+                        onSettings: _settings,
+                        onTheme: widget.onToggleTheme,
+                        onAccount: c.loading || c.busy || c.generating
+                            ? null
+                            : _account,
+                        accountLabel: c.sessionExpired
+                            ? '重新登录'
+                            : c.account?.displayName ?? '登录',
+                      ),
                     ),
-                  ),
                 ],
               );
             },
@@ -869,6 +911,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             ),
           ),
         Padding(
+          key: const ValueKey('room-composer-slot'),
           padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 0),
           child: AnimatedBuilder(
             animation: _input,

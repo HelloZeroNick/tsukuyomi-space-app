@@ -2,9 +2,10 @@
 set -euo pipefail
 mkdir -p artifacts
 adb install -r build/app/outputs/flutter-apk/app-release.apk
+adb shell settings put secure show_ime_with_hard_keyboard 1
 adb logcat -c || true
 adb shell am start -n space.tsukuyomi.tsukuyomi_space_app/.MainActivity
-for attempt in $(seq 1 30); do
+for attempt in $(seq 1 60); do
   adb logcat -d -b main -v brief > artifacts/android-smoke.log 2>&1 || true
   if grep -q 'TSUKUYOMI_LIVE2D_OK' artifacts/android-smoke.log; then
     grep -q 'TSUKUYOMI_UPDATE_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
@@ -12,6 +13,8 @@ for attempt in $(seq 1 30); do
     grep -q 'TSUKUYOMI_GAME_RIDING_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep -q 'TSUKUYOMI_LIVE2D_RENDER_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
     grep -q 'TSUKUYOMI_LIVE2D_DETAIL_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep -q 'TSUKUYOMI_ROOM_IME_OK' artifacts/android-smoke.log || { cat artifacts/android-smoke.log; exit 1; }
+    grep 'TSUKUYOMI_ROOM_IME_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_DETAIL_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_RENDER_OK' artifacts/android-smoke.log
     grep 'TSUKUYOMI_LIVE2D_TIMINGS' artifacts/android-smoke.log

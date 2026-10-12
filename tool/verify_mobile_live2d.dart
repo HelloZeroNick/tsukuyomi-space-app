@@ -15,6 +15,7 @@ import 'package:tsukuyomi_space_app/core/app_update_installer.dart';
 
 import '../test/support/live2d_render_probe.dart';
 import '../test/support/kaguya_riding_probe.dart';
+import 'probe_room_keyboard.dart';
 
 // Run this release entrypoint on devices, not only with the host test runner.
 Future<void> main() async {
@@ -177,10 +178,13 @@ Future<void> main() async {
     print(
       'TSUKUYOMI_LIVE2D_TIMINGS frames=${frames.length} ui_p95_ms=${p95(frames.map((f) => f.buildDuration.inMicroseconds))} raster_p95_ms=${p95(frames.map((f) => f.rasterDuration.inMicroseconds))} bounded_passes=${painter.boundedPasses} pixels=${painter.rasterizedPixels}',
     );
+    final meshCount = model.meshes.length, textureCount = model.textures.length;
+    if (Platform.isAndroid) {
+      await probeAndroidRoomKeyboard(model);
+      painter.dispose();
+    }
     // ignore: avoid_print
-    print(
-      'TSUKUYOMI_LIVE2D_OK meshes=${model.meshes.length} textures=${model.textures.length}',
-    );
+    print('TSUKUYOMI_LIVE2D_OK meshes=$meshCount textures=$textureCount');
   } catch (e, st) {
     // ignore: avoid_print
     print('TSUKUYOMI_LIVE2D_FAILED $e\n$st');

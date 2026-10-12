@@ -52,6 +52,96 @@ class _Model extends Live2DModel {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  void reportFrames({
+    required int rasterMicros,
+    int buildMicros = 1000,
+    int count = 8,
+  }) {
+    WidgetsBinding.instance.platformDispatcher.onReportTimings!(
+      List.generate(
+        count,
+        (_) => ui.FrameTiming(
+          vsyncStart: 0,
+          buildStart: 0,
+          buildFinish: buildMicros,
+          rasterStart: buildMicros,
+          rasterFinish: buildMicros + rasterMicros,
+          rasterFinishWallTime: buildMicros + rasterMicros,
+        ),
+      ),
+    );
+  }
+
+  for (final quality in ['auto', 'full', 'economy']) {
+    test(
+      '120Hz mobile compositing adapts and recovers without changing the texture cap: $quality',
+      () {
+        final scene = Live2DSceneController(
+          vsync: _Clock(),
+          mobile: true,
+          onTick: (_, _) {},
+        );
+        addTearDown(scene.dispose);
+        scene.configure(quality: quality, refreshRate: 120);
+        scene.attach(_Model());
+        scene.active = true;
+        final base = Live2DSceneController.rasterBudgetFor(
+          quality,
+          mobile: true,
+        );
+        expect(scene.painter!.rasterPixelBudget, base);
+        reportFrames(rasterMicros: 12000);
+        expect(scene.effectiveRasterBudget, (base * .75).round());
+        expect(scene.painter!.rasterPixelBudget, scene.effectiveRasterBudget);
+        reportFrames(rasterMicros: 12000, count: 80);
+        expect(scene.effectiveRasterBudget, (base * .5).round());
+        expect(scene.fps, 30);
+        expect(Live2DSceneController.textureLimitFor(quality), 2048);
+        scene.active = false;
+        reportFrames(rasterMicros: 1000, count: 400);
+        expect(scene.effectiveRasterBudget, (base * .5).round());
+        scene.active = true;
+        reportFrames(rasterMicros: 1000, count: 180);
+        expect(scene.effectiveRasterBudget, (base * .75).round());
+        reportFrames(rasterMicros: 1000, count: 180);
+        expect(scene.effectiveRasterBudget, base);
+      },
+    );
+  }
+  test(
+    'mobile quality reacts to raster load rather than an isolated UI spike',
+    () {
+      final scene = Live2DSceneController(
+        vsync: _Clock(),
+        mobile: true,
+        onTick: (_, _) {},
+      );
+      addTearDown(scene.dispose);
+      scene.configure(refreshRate: 120);
+      scene.attach(_Model());
+      scene.active = true;
+      reportFrames(rasterMicros: 1000, buildMicros: 40000, count: 30);
+      expect(scene.effectiveRasterBudget, 450000);
+      reportFrames(rasterMicros: 12000);
+      scene.configure(quality: 'full');
+      expect(scene.effectiveRasterBudget, 900000);
+      expect(scene.painter!.rasterPixelBudget, 900000);
+    },
+  );
+  test('desktop compositing retains the configured quality budget', () {
+    final scene = Live2DSceneController(
+      vsync: _Clock(),
+      mobile: false,
+      onTick: (_, _) {},
+    );
+    addTearDown(scene.dispose);
+    scene.configure(refreshRate: 144);
+    scene.attach(_Model());
+    scene.active = true;
+    reportFrames(rasterMicros: 40000, count: 30);
+    expect(scene.effectiveRasterBudget, 600000);
+    expect(scene.painter!.rasterPixelBudget, 600000);
+  });
   for (final mobile in [true, false]) {
     testWidgets(
       'loading has no poster before the native ${mobile ? 'mobile' : 'desktop'} model is ready',

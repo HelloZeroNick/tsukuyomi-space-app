@@ -253,6 +253,7 @@ class _CharacterStageState extends State<CharacterStage>
             'auto',
         frameLimit: widget.settings.number('live2dFrameRate', 0).toInt(),
         pixelRatio: MediaQuery.devicePixelRatioOf(context),
+        refreshRate: View.of(context).display.refreshRate,
       );
       return Semantics(
         label: '月见八千代',

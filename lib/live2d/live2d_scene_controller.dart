@@ -34,7 +34,14 @@ class Live2DSceneController {
   double _pixelRatio = 1;
   double _seconds = 0;
   int _slow = 0, _good = 0;
+  int _rasterSlow = 0, _rasterGood = 0, _budgetStep = 0;
+  double _refreshRate = 60;
   bool _active = false;
+  int get effectiveRasterBudget {
+    final base = rasterBudgetFor(_quality, mobile: mobile);
+    return mobile ? (base * const [1.0, .75, .5][_budgetStep]).round() : base;
+  }
+
   int get fps {
     final limit = _frameLimit == 0 ? (mobile ? 30 : 60) : _frameLimit;
     return _slow >= 12 ? math.min(limit, mobile ? 20 : 30) : limit;
@@ -44,15 +51,22 @@ class Live2DSceneController {
     String quality = 'auto',
     int frameLimit = 0,
     double? pixelRatio,
+    double? refreshRate,
   }) {
+    if (_quality != quality) {
+      _budgetStep = _rasterSlow = _rasterGood = 0;
+    }
     _quality = quality;
     if (pixelRatio != null && pixelRatio.isFinite && pixelRatio > 0) {
       _pixelRatio = pixelRatio;
     }
     _frameLimit = const [30, 60].contains(frameLimit) ? frameLimit : 0;
+    if (refreshRate != null && refreshRate.isFinite && refreshRate > 0) {
+      _refreshRate = refreshRate.clamp(30, 240);
+    }
     painter
       ?..pixelRatio = _pixelRatio
-      ..rasterPixelBudget = rasterBudgetFor(_quality, mobile: mobile);
+      ..rasterPixelBudget = effectiveRasterBudget;
   }
 
   void attach(Live2DModel value) {
@@ -68,6 +82,7 @@ class Live2DSceneController {
     _active = value;
     _last = null;
     _nextFrame = null;
+    _rasterSlow = _rasterGood = 0;
     if (value && model != null) {
       ticker.start();
     } else {
@@ -103,6 +118,28 @@ class Live2DSceneController {
   void _timings(List<FrameTiming> timings) {
     if (!_active) return;
     for (final frame in timings) {
+      if (mobile) {
+        // Chat/IME animations use the display cadence even while the model is
+        // capped at 30fps. Reduce compositing work, keeping both atlases at 2K.
+        final budget = 1000000 / _refreshRate;
+        final raster = frame.rasterDuration.inMicroseconds;
+        if (raster > budget * 1.1) {
+          _rasterGood = 0;
+          if (++_rasterSlow >= 8) {
+            _rasterSlow = 0;
+            _budgetStep = math.min(2, _budgetStep + 1);
+            painter?.rasterPixelBudget = effectiveRasterBudget;
+          }
+        } else if (raster < budget * .7) {
+          if (++_rasterGood >= 180) {
+            _rasterGood = _rasterSlow = 0;
+            _budgetStep = math.max(0, _budgetStep - 1);
+            painter?.rasterPixelBudget = effectiveRasterBudget;
+          }
+        } else {
+          _rasterGood = 0;
+        }
+      }
       final work = math.max(
         frame.buildDuration.inMicroseconds,
         frame.rasterDuration.inMicroseconds,
