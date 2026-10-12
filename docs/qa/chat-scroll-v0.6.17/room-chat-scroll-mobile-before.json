@@ -1,0 +1,108 @@
+{
+  "label": "chat-scroll-mobile-before",
+  "scene": "390x844 mobile layout native macOS; 2000 turns, 200 valid bundled portrait image messages, streamed fragments, Live2D, three runs; mixed Markdown/long replies=true",
+  "runs": [
+    {
+      "run": 1,
+      "chat_scroll_workload": true,
+      "mobile_layout": true,
+      "image_fixture": {
+        "asset": "assets/images/yachiyo-portrait.webp",
+        "width": 1440,
+        "height": 1800,
+        "encoded_bytes": 182610,
+        "messages": 200,
+        "visible_decode_errors": 0
+      },
+      "viewport": {
+        "width": 585.0,
+        "height": 717.3000000000001,
+        "dpr": 2.0
+      },
+      "input_ready_ms": 85,
+      "frames": 656,
+      "ui_p95_ms": 9.692,
+      "raster_p95_ms": 3.971,
+      "frames_over_16_7_ms": 1,
+      "rss_bytes": 241713152,
+      "rss_after_navigation_bytes": 251133952,
+      "model_ticks": 544,
+      "model_update_cpu_percent": 2.8231720786392756,
+      "model_update_mean_ms": 0.4698713235294118,
+      "live2d_bounded_passes": 4,
+      "live2d_downsampled_passes": 1,
+      "live2d_rasterized_pixels": 836640,
+      "live2d_pixel_budget": 600000,
+      "live2d_texture_rgba_bytes": 33554432,
+      "hidden_model_ticks": 0
+    },
+    {
+      "run": 2,
+      "chat_scroll_workload": true,
+      "mobile_layout": true,
+      "image_fixture": {
+        "asset": "assets/images/yachiyo-portrait.webp",
+        "width": 1440,
+        "height": 1800,
+        "encoded_bytes": 182610,
+        "messages": 200,
+        "visible_decode_errors": 0
+      },
+      "viewport": {
+        "width": 585.0,
+        "height": 717.3000000000001,
+        "dpr": 2.0
+      },
+      "input_ready_ms": 51,
+      "frames": 655,
+      "ui_p95_ms": 8.566,
+      "raster_p95_ms": 3.942,
+      "frames_over_16_7_ms": 1,
+      "rss_bytes": 227377152,
+      "rss_after_navigation_bytes": 223428608,
+      "model_ticks": 543,
+      "model_update_cpu_percent": 3.0202898550724666,
+      "model_update_mean_ms": 0.5027697974217316,
+      "live2d_bounded_passes": 4,
+      "live2d_downsampled_passes": 1,
+      "live2d_rasterized_pixels": 837307,
+      "live2d_pixel_budget": 600000,
+      "live2d_texture_rgba_bytes": 33554432,
+      "hidden_model_ticks": 0
+    },
+    {
+      "run": 3,
+      "chat_scroll_workload": true,
+      "mobile_layout": true,
+      "image_fixture": {
+        "asset": "assets/images/yachiyo-portrait.webp",
+        "width": 1440,
+        "height": 1800,
+        "encoded_bytes": 182610,
+        "messages": 200,
+        "visible_decode_errors": 0
+      },
+      "viewport": {
+        "width": 585.0,
+        "height": 717.3000000000001,
+        "dpr": 2.0
+      },
+      "input_ready_ms": 54,
+      "frames": 655,
+      "ui_p95_ms": 9.408,
+      "raster_p95_ms": 3.909,
+      "frames_over_16_7_ms": 1,
+      "rss_bytes": 246857728,
+      "rss_after_navigation_bytes": 239484928,
+      "model_ticks": 543,
+      "model_update_cpu_percent": 3.0723752627503047,
+      "model_update_mean_ms": 0.5114401473296502,
+      "live2d_bounded_passes": 4,
+      "live2d_downsampled_passes": 1,
+      "live2d_rasterized_pixels": 838119,
+      "live2d_pixel_budget": 600000,
+      "live2d_texture_rgba_bytes": 33554432,
+      "hidden_model_ticks": 0
+    }
+  ]
+}

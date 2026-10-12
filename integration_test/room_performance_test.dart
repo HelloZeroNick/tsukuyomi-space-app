@@ -31,7 +31,11 @@ void main() {
     await tester.runAsync(() async {
       await windowManager.ensureInitialized();
       await windowManager.setFullScreen(false);
-      await windowManager.setSize(const Size(1280, 820));
+      await windowManager.setSize(
+        const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT')
+            ? const Size(1280, 900)
+            : const Size(1280, 820),
+      );
     });
     final imageData = (await tester.runAsync(
       () => rootBundle.load('assets/images/yachiyo-portrait.webp'),
@@ -52,6 +56,7 @@ void main() {
     for (var repetition = 0; repetition < 3; repetition++) {
       await tester.runAsync(() async {
         await windowManager.show();
+        await Future<void>.delayed(const Duration(milliseconds: 200));
         await windowManager.focus();
       });
       final started = Stopwatch()..start();
@@ -83,7 +88,13 @@ void main() {
         (i) => ChatTurn(
           id: 'benchmark-$i',
           user: '消息 $i · 这是一段用于复现滚动负载的中文问题。',
-          assistant: '回复 $i · 使用同样的消息长度比较帧耗时。\n\n第二段说明与第一段组成完整的对话。',
+          assistant: const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL')
+              ? i % 5 == 0
+                    ? '## 回复 $i\n\n**滚动测试**，保留文字选区、链接和代码格式。\n\n'
+                          '${List.generate(6, (j) => '### 第$j段\n\n这里是较长的中文解释，滚动中不应测量文章目录。[网站](https://yachiyo.hk)\n\n').join()}'
+                          '```dart\nfinal message = $i;\n```'
+                    : '回复 $i · ${List.filled(8, '这是一段完整的中文解释，保留原来的聊天分句。查看 https://yachiyo.hk/room 和 3.14 等内容。').join()}'
+              : '回复 $i · 使用同样的消息长度比较帧耗时。\n\n第二段说明与第一段组成完整的对话。',
           createdAt: DateTime(2026, 9, 29).add(Duration(seconds: i)),
           image: i % 10 == 0 ? {'dataUrl': imageUrl} : null,
         ),
@@ -95,25 +106,39 @@ void main() {
       var ticks = 0;
       var modelCpuMs = 0.0;
       Live2DModel? model;
+      final app = TsukuyomiApp(
+        key: ValueKey(repetition),
+        controller: room,
+        initialPath: '/room',
+        modelLoader: () async {
+          model = await loadLive2D(
+            maxTextureSize: const bool.hasEnvironment('BENCHMARK_TEXTURE_SIZE')
+                ? const int.fromEnvironment('BENCHMARK_TEXTURE_SIZE')
+                : Live2DSceneController.textureLimitFor('auto'),
+          );
+          model!.addListener(() {
+            ticks++;
+            modelCpuMs += model!.updateMilliseconds;
+          });
+          return model!;
+        },
+      );
       await tester.pumpWidget(
-        TsukuyomiApp(
-          key: ValueKey(repetition),
-          controller: room,
-          initialPath: '/room',
-          modelLoader: () async {
-            model = await loadLive2D(
-              maxTextureSize:
-                  const bool.hasEnvironment('BENCHMARK_TEXTURE_SIZE')
-                  ? const int.fromEnvironment('BENCHMARK_TEXTURE_SIZE')
-                  : Live2DSceneController.textureLimitFor('auto'),
-            );
-            model!.addListener(() {
-              ticks++;
-              modelCpuMs += model!.updateMilliseconds;
-            });
-            return model!;
-          },
-        ),
+        const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT')
+            ? Center(
+                child: SizedBox(
+                  width: 390,
+                  height: 844,
+                  child: MediaQuery(
+                    data: MediaQueryData(
+                      size: const Size(390, 844),
+                      devicePixelRatio: tester.view.devicePixelRatio,
+                    ),
+                    child: app,
+                  ),
+                ),
+              )
+            : app,
       );
       await tester.pump();
       final inputMs = started.elapsedMilliseconds;
@@ -122,6 +147,13 @@ void main() {
       }
       expect(model, isNotNull);
       await tester.pump(const Duration(seconds: 1));
+      await tester.runAsync(() async {
+        await windowManager.show();
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        await windowManager.focus();
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      expect(await windowManager.isFocused(), true);
       frames.clear();
       ticks = 0;
       modelCpuMs = 0;
@@ -133,17 +165,21 @@ void main() {
       expect(chat.stream, isNotNull);
       final list = find
           .descendant(
-            of: find.byKey(const Key('desktop-workspace')),
-            matching: find.byWidgetPredicate(
-              (widget) =>
-                  widget is Scrollable &&
-                  widget.axisDirection == AxisDirection.down,
-            ),
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
           )
           .first;
       for (var step = 0; step < 240; step++) {
         chat.stream!.add('片段 $step，');
-        if (step % 6 == 0) await tester.drag(list, const Offset(0, 180));
+        if (step % 6 == 0) {
+          await tester.drag(
+            list,
+            Offset(
+              0,
+              const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL') ? 360 : 180,
+            ),
+          );
+        }
         await tester.pump(const Duration(milliseconds: 16));
       }
       await chat.stream!.close();
@@ -204,6 +240,10 @@ void main() {
           values.isEmpty ? 0 : values[((values.length - 1) * .95).round()];
       final run = <String, dynamic>{
         'run': repetition + 1,
+        'chat_scroll_workload': const bool.fromEnvironment(
+          'BENCHMARK_CHAT_SCROLL',
+        ),
+        'mobile_layout': const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT'),
         'image_fixture': {
           'asset': 'assets/images/yachiyo-portrait.webp',
           'width': imageWidth,
@@ -260,7 +300,8 @@ void main() {
         'BENCHMARK_LABEL',
         defaultValue: 'after',
       ),
-      'scene': '1280x820 native macOS; 2000 turns, 200 valid bundled portrait image messages, streamed fragments, Live2D, three runs',
+      'scene':
+          '${const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT') ? '390x844 mobile layout' : '1280x820 desktop layout'} native macOS; 2000 turns, 200 valid bundled portrait image messages, streamed fragments, Live2D, three runs; mixed Markdown/long replies=${const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL')}',
       'runs': runs,
     };
   }, timeout: const Timeout(Duration(minutes: 10)));

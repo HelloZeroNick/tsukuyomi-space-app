@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-12",
+  "version": "0.6.17+23",
+  "baseline_source_commit": "72f2771707833c8c45470a2ea9390001055d026d",
+  "focused_tests": 56,
+  "reply_compatibility_differential_cases": 4000,
+  "analysis": "no issues",
+  "mobile_layout_sample_engine": "macOS native Flutter Profile, not Android",
+  "reference_device": "Apple M5 / 16 GiB / macOS 27.0.1 / Flutter 3.47.5",
+  "physical_android_connected": false,
+  "reported_device": "Redmi K90 / Snapdragon 8 Elite (user supplied)",
+  "discarded_samples": "Window focus was lost in initial mobile layout attempts; no failed attempt is included",
+  "cache_limits": {
+    "replies": 128,
+    "reply_characters": 262144,
+    "images": 24,
+    "encoded_image_bytes": 8388608,
+    "cleared_on": "Room disposal and account/site scope changes"
+  },
+  "validated_at": "2026-10-12T11:51:47.388190+00:00",
+  "full_regression": {
+    "passed": 860,
+    "skipped": 34,
+    "native_cubism_enabled": true
+  },
+  "format_files": 242,
+  "release_tool_tests": 38,
+  "release_metadata": "0.6.17+23 / v0.6.17-beta.1; pubspec and baked tag agree",
+  "initial_version_metadata_mismatch": "Fixed before final full regression; final full run passed"
+}

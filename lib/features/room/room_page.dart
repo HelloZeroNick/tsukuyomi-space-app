@@ -3,7 +3,6 @@ import 'dart:ui' show AppExitResponse;
 import '../../core/site_localization.dart';
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
@@ -17,7 +16,6 @@ import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 
 import '../../core/models.dart';
 import '../../core/room_files.dart';
-import '../../core/room_reply.dart';
 import '../settings/room_memory_manager.dart';
 import 'room_actions.dart';
 import 'room_music.dart';
@@ -32,6 +30,7 @@ import 'room_controller.dart';
 import 'room_panels.dart';
 import 'room_style.dart';
 import 'room_quick_setup.dart';
+import 'room_message_cache.dart';
 import '../agent/agent_panel.dart';
 import '../agent/desktop_agent_controller.dart';
 
@@ -62,6 +61,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   final _focus = FocusNode();
   final _stageKey = GlobalKey();
   final _conversationCenter = GlobalKey();
+  final _messages = RoomMessageCache();
+  List<ChatTurn>? _lastTurnSource;
+  bool _wasGenerating = false;
   DateTime _openedAt = DateTime.now();
   final _historicalIds = <String>{};
   late final RoomMusic _roomMusic;
@@ -89,6 +91,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     _lastScope = c.scope;
     _historicalIds.addAll(c.visibleTurns.map((t) => t.id));
     _lastDraft = c.draft;
+    _lastTurnSource = c.turns;
+    _wasGenerating = c.generating;
     _input.text = c.draft;
     c.addListener(_update);
     c.streamRevision.addListener(_followConversation);
@@ -115,10 +119,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       _unread.value = true;
       return;
     }
+    if (_scroll.position.isScrollingNotifier.value) return;
     final pixels = _scroll.position.pixels;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
           _scroll.hasClients &&
+          !_scroll.position.isScrollingNotifier.value &&
           (_scroll.position.pixels - pixels).abs() < 1) {
         _scroll.jumpTo(_scroll.position.maxScrollExtent);
       }
@@ -131,6 +137,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     c.removeListener(_update);
     c.streamRevision.removeListener(_followConversation);
     _unread.dispose();
+    _messages.clear();
     _agent?.dispose();
     _input.dispose();
     _scroll.dispose();
@@ -169,6 +176,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   void _update() {
     if (!mounted) return;
     if (_lastScope != c.scope) {
+      _messages.clear();
       _openedAt = DateTime.now();
       _historicalIds
         ..clear()
@@ -182,15 +190,27 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       _lastScope = c.scope;
       _lastDraft = c.draft;
     }
+    final conversationChanged =
+        !identical(_lastTurnSource, c.turns) || _wasGenerating != c.generating;
+    _lastTurnSource = c.turns;
+    _wasGenerating = c.generating;
     final nearBottom =
         !_scroll.hasClients || _scroll.position.extentAfter < 100;
+    final pixels = _scroll.hasClients ? _scroll.position.pixels : null;
     setState(() {});
-    if (!nearBottom && (c.visibleTurns.isNotEmpty || c.generating)) {
+    if (conversationChanged &&
+        !nearBottom &&
+        (c.visibleTurns.isNotEmpty || c.generating)) {
       _unread.value = true;
     }
-    if (nearBottom && (c.visibleTurns.isNotEmpty || c.generating)) {
+    if (conversationChanged &&
+        nearBottom &&
+        (c.visibleTurns.isNotEmpty || c.generating)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scroll.hasClients) {
+        if (mounted &&
+            _scroll.hasClients &&
+            !_scroll.position.isScrollingNotifier.value &&
+            (pixels == null || (_scroll.position.pixels - pixels).abs() < 1)) {
           _scroll.jumpTo(_scroll.position.maxScrollExtent);
         }
       });
@@ -301,7 +321,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(12),
         child: data.startsWith('data:image/')
             ? Image.memory(
-                base64Decode(data.split(',').last),
+                _messages.image(data),
                 height: height,
                 cacheHeight: (height * MediaQuery.devicePixelRatioOf(context))
                     .ceil(),
@@ -936,81 +956,86 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         }
         return false;
       },
-      child: CustomScrollView(
-        key: ValueKey('conversation:${c.scope}'),
-        controller: _scroll,
-        center: _conversationCenter,
-        anchor: 1,
-        scrollCacheExtent: const ScrollCacheExtent.pixels(240),
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: mobile ? 16 : 1),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  if (index == history.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: Text(shared?['title']?.toString() ?? '公开对话片段'),
-                    );
-                  }
-                  final turn = history[history.length - 1 - index];
-                  return _turnItem(
-                    turn,
-                    mobile: mobile,
-                    last: turn.id == turns.last.id,
-                  );
-                },
-                childCount: history.length + (shared == null ? 0 : 1),
-                findChildIndexCallback: (key) =>
-                    key is ValueKey<String> ? historyIndices[key.value] : null,
-              ),
-            ),
-          ),
-          SliverPadding(
-            key: _conversationCenter,
-            padding: EdgeInsets.fromLTRB(
-              mobile ? 16 : 1,
-              0,
-              mobile ? 16 : 1,
-              6,
-            ),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  if (index < recent.length) {
-                    final turn = recent[index];
+      child: RepaintBoundary(
+        key: const Key('chat-scroll-repaint'),
+        child: CustomScrollView(
+          key: ValueKey('conversation:${c.scope}'),
+          controller: _scroll,
+          center: _conversationCenter,
+          anchor: 1,
+          scrollCacheExtent: ScrollCacheExtent.pixels(mobile ? 360 : 480),
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: mobile ? 16 : 1),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index == history.length) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 18),
+                        child: Text(shared?['title']?.toString() ?? '公开对话片段'),
+                      );
+                    }
+                    final turn = history[history.length - 1 - index];
                     return _turnItem(
                       turn,
                       mobile: mobile,
                       last: turn.id == turns.last.id,
                     );
-                  }
-                  return AnimatedBuilder(
-                    key: const ValueKey('streaming-reply'),
-                    animation: c.streamRevision,
-                    child: _bubble(c.sendingText, user: true, mobile: mobile),
-                    builder: (context, question) => Column(
-                      children: [
-                        question!,
-                        _replyBubbles(
-                          cleanRoomReply(c.partial).isEmpty
-                              ? '正在想怎么回答你…'
-                              : cleanRoomReply(c.partial),
-                          mobile: mobile,
-                          streaming: true,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                childCount: recent.length + (c.generating ? 1 : 0),
-                findChildIndexCallback: (key) =>
-                    key is ValueKey<String> ? recentIndices[key.value] : null,
+                  },
+                  childCount: history.length + (shared == null ? 0 : 1),
+                  findChildIndexCallback: (key) => key is ValueKey<String>
+                      ? historyIndices[key.value]
+                      : null,
+                ),
               ),
             ),
-          ),
-        ],
+            SliverPadding(
+              key: _conversationCenter,
+              padding: EdgeInsets.fromLTRB(
+                mobile ? 16 : 1,
+                0,
+                mobile ? 16 : 1,
+                6,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index < recent.length) {
+                      final turn = recent[index];
+                      return _turnItem(
+                        turn,
+                        mobile: mobile,
+                        last: turn.id == turns.last.id,
+                      );
+                    }
+                    return AnimatedBuilder(
+                      key: const ValueKey('streaming-reply'),
+                      animation: c.streamRevision,
+                      child: _bubble(c.sendingText, user: true, mobile: mobile),
+                      builder: (context, question) {
+                        final reply = cleanRoomReply(c.partial);
+                        return Column(
+                          children: [
+                            question!,
+                            _replyBubbles(
+                              reply.isEmpty ? '正在想怎么回答你…' : reply,
+                              mobile: mobile,
+                              streaming: true,
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  childCount: recent.length + (c.generating ? 1 : 0),
+                  findChildIndexCallback: (key) =>
+                      key is ValueKey<String> ? recentIndices[key.value] : null,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1364,20 +1389,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  bool _hasMarkdown(String text) =>
-      RegExp(r'(^|\n)\s*(#{1,6} |[-*] |[0-9]+\. |~~~)|\*\*|\[[^\]]+\]\(')
-          .hasMatch(text) ||
-      text.contains(String.fromCharCode(96) * 3);
-
   Widget _replyBubbles(
     String text, {
     required bool mobile,
     DateTime? time,
     bool streaming = false,
   }) {
-    final parts = !streaming && _hasMarkdown(text)
-        ? [text]
-        : splitRoomReply(text);
+    final presentation = _messages.reply(text, streaming: streaming);
+    final parts = presentation.parts;
     return Column(
       children: [
         for (var i = 0; i < parts.length; i++)
@@ -1389,6 +1408,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             continuation: i > 0,
             controls: i == parts.length - 1,
             fullReply: text,
+            markdown: presentation.markdown,
           ),
       ],
     );
@@ -1401,6 +1421,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     bool streaming = false,
     bool continuation = false,
     bool controls = true,
+    bool markdown = false,
     String? fullReply,
     DateTime? time,
   }) {
@@ -1483,10 +1504,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                           bottomRight: const Radius.circular(20),
                         ),
                       ),
-                      child: !user && !streaming && _hasMarkdown(text)
+                      child: markdown
                           ? NativeRichText(
                               content: text,
                               format: 'markdown',
+                              trackReading: false,
                               site: c.settings.siteUrl,
                               onNavigate: (path) => _website(path),
                             )

@@ -1,12 +1,14 @@
 # 月读空间 · Flutter 原生客户端
 
-Tsukuyomi Space 的独立 Flutter 客户端。0.6.16 Room / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
+Tsukuyomi Space 的独立 Flutter 客户端。0.6.17 Room / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
 
 整站原生页面包含入口、Hub、Wiki、图库、附件库、编辑器、像素工坊、辉夜跑酷、友链、公开主页、管理后台和 Live2D 工作台，支持跨设备事件、中文／日语／英语、全站搜索及八千代导览。后台只向有效登录的 admin／super_admin 显示和开放；本地、合并与云端记忆来源跟进原站最新逻辑。实现与验收边界见 [整站迁移记录](docs/native-full-site-implementation-2026-09-30.md)。
 
 下载安装包见 [GitHub Releases](https://github.com/redchenk/tsukuyomi-space-app/releases)，配置与安装说明见 [release-guide.md](docs/release-guide.md)。发布包包括 Android APK、macOS Universal DMG、Windows 安装程序、Linux DEB 和供用户自签的 iOS IPA。
 
 所有平台打开即进入 Room，不播放 Access 动画。默认关闭演示；首次使用在聊天区填写模型地址、名称和 Key，保存后直接真实聊天。已有配置直接可用，本地历史先加载，登录与同步随后执行。升级保留独立演示历史。
+
+0.6.17 优化 Room 聊天滚动：修复长回复逐字符重复扫描，缓存已完成回复与图片字节，关闭聊天 Markdown 的文章进度测量，流式更新避开拖动及惯性滚动。保持2048纹理和原有聊天分句、选区、链接、分享与朗读。见 [聊天滚动与复测记录](docs/native-chat-scroll-v0.6.17.md)。
 
 0.6.16 移除 Room 与全屏角色舞台加载期间的静态立绘兜底，保留背景及简短状态；加载失败可重试，模型未就绪时仍可聊天。沿用2048纹理和更新弹窗，见 [加载体验修复记录](docs/native-room-loading-v0.6.16.md)。
 
