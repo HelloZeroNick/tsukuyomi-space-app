@@ -57,13 +57,15 @@ void main() {
       scene.dispose();
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
-  testWidgets('full character quality keeps the original texture dimensions', (
-    tester,
-  ) async {
-    final model = (await tester.runAsync(() => loadLive2D(maxTextureSize: 0)))!;
+  testWidgets('saved full quality also decodes 2048 textures', (tester) async {
+    final model = (await tester.runAsync(
+      () => loadLive2D(
+        maxTextureSize: Live2DSceneController.textureLimitFor('full'),
+      ),
+    ))!;
     try {
       expect(
-        model.textures.every((t) => t.width == 4096 && t.height == 4096),
+        model.textures.every((t) => t.width == 2048 && t.height == 2048),
         true,
       );
     } finally {
@@ -71,7 +73,7 @@ void main() {
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
   testWidgets(
-    'default character quality decodes sharper 3K atlases on both platforms',
+    'default character quality uses 2K atlases and 32 MiB on both platforms',
     (tester) async {
       final model = (await tester.runAsync(
         () => loadLive2D(
@@ -80,7 +82,7 @@ void main() {
       ))!;
       try {
         expect(
-          model.textures.every((t) => t.width == 3072 && t.height == 3072),
+          model.textures.every((t) => t.width == 2048 && t.height == 2048),
           true,
         );
         expect(
@@ -88,7 +90,7 @@ void main() {
             0,
             (total, t) => total + t.width * t.height * 4,
           ),
-          72 * 1024 * 1024,
+          32 * 1024 * 1024,
         );
       } finally {
         model.dispose();

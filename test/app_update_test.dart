@@ -421,6 +421,10 @@ void main() {
       clock = clock.add(const Duration(days: 1));
       await c.checkAutomatically();
       expect(c.notification, 2);
+      // Closing an older popup must not dismiss a newly fetched release.
+      await c.remindLater(tag: 'v0.6.12-beta.1');
+      expect(prefs.getString('app-update.dismissed'), 'v0.6.12-beta.1');
+      expect(c.release!.tag, 'v0.6.13-beta.1');
       await c.setAutomatic(false);
       clock = clock.add(const Duration(days: 1));
       await c.checkAutomatically();

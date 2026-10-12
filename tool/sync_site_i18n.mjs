@@ -59,10 +59,10 @@ for (const language of ['zh','ja','en']) {
   extras[language].nativeLive2dQuality = {zh:'角色画质',ja:'キャラクター画質',en:'Character quality'}[language];
   extras[language].nativeLive2dQualityAuto = {zh:'自动（推荐）',ja:'自動（推奨）',en:'Automatic (recommended)'}[language];
   extras[language].nativeLive2dQualityEconomy = {zh:'省电 · 降低显卡负载',ja:'省電力 · GPU 負荷を軽減',en:'Power saving · Lower GPU load'}[language];
-  extras[language].nativeLive2dQualityFull = {zh:'完整分辨率',ja:'フル解像度',en:'Full resolution'}[language];
+  extras[language].nativeLive2dQualityFull = {zh:'细节优先',ja:'ディテール優先',en:'Detail priority'}[language];
   extras[language].nativeLive2dFrameRate = {zh:'角色帧率',ja:'キャラクターのフレームレート',en:'Character frame rate'}[language];
   extras[language].nativeLive2dFrameAuto = {zh:'自动（电脑 60 / 手机 30）',ja:'自動（PC 60 / モバイル 30）',en:'Automatic (desktop 60 / mobile 30)'}[language];
-  extras[language].nativeLive2dPerformanceHint = {zh:'自动模式使用高清纹理，绘制预算集中在角色区域；完整分辨率更清晰，但开销更高。省电模式可降低显卡负载。角色不跟随鼠标；隐藏页面或最小化窗口会暂停角色。',ja:'自動モードは高精細テクスチャを使用し、描画をキャラクター領域に集中します。フル解像度はより鮮明ですが負荷が増えます。省電力モードで GPU 負荷を軽減できます。マウス追従は無効です。非表示や最小化時はキャラクターを停止します。',en:'Automatic mode uses sharper textures and concentrates the drawing budget on the character. Full resolution adds detail at a higher cost; power saving reduces GPU load. Mouse tracking is disabled. Hidden pages and minimized windows pause the character.'}[language];
+  extras[language].nativeLive2dPerformanceHint = {zh:'所有模式使用 2048 纹理。自动模式限制绘制开销；细节优先提高绘制预算，省电模式进一步降低负载。角色不跟随鼠标；隐藏页面、后台或最小化时暂停。',ja:'すべてのモードで 2048 テクスチャを使用します。自動モードは描画負荷を制限し、ディテール優先は描画予算を増やし、省電力は負荷をさらに軽減します。マウス追従は無効です。非表示、バックグラウンド、最小化時は停止します。',en:'All modes use 2048 textures. Automatic limits rendering cost; detail priority increases the drawing budget, while power saving reduces it further. Mouse tracking is disabled. Hidden pages, background apps and minimized windows pause the character.'}[language];
   extras[language].nativeAssetPagination = {zh:'{total} 项 · 第 {page} / {pages} 页',ja:'{total}件 · {page} / {pages}ページ',en:'{total} items · Page {page} / {pages}'}[language];
 }
 const literal = value => JSON.stringify(value).replaceAll('$', '\\$');

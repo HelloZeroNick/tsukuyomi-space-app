@@ -52,6 +52,52 @@ class AppUpdateButton extends StatelessWidget {
   }
 }
 
+/// A notice only: downloading and installation remain explicit page actions.
+class AppUpdatePrompt extends StatelessWidget {
+  const AppUpdatePrompt({
+    super.key,
+    required this.release,
+    required this.currentVersion,
+    required this.editing,
+  });
+  final AppUpdateRelease release;
+  final String currentVersion;
+  final bool editing;
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    key: const Key('app-update-prompt'),
+    title: Text(updateText(context, 'new')),
+    scrollable: true,
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${updateText(context, 'current')}: $currentVersion'),
+        const SizedBox(height: 8),
+        Text(release.tag, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+        Text(updateText(context, 'description')),
+        if (editing) ...[
+          const SizedBox(height: 12),
+          Text(updateText(context, 'saveBeforeOpen')),
+        ],
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, false),
+        child: Text(updateText(context, 'later')),
+      ),
+      if (!editing)
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(updateText(context, 'view')),
+        ),
+    ],
+  );
+}
+
 class AppUpdatePage extends StatefulWidget {
   const AppUpdatePage({
     super.key,

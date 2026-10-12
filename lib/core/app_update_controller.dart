@@ -103,9 +103,10 @@ class AppUpdateController extends ChangeNotifier {
     await check();
   }
 
-  Future<void> remindLater() async {
-    if (release != null) {
-      await preferences.setString('app-update.dismissed', release!.tag);
+  Future<void> remindLater({String? tag}) async {
+    final dismissed = tag ?? release?.tag;
+    if (dismissed != null) {
+      await preferences.setString('app-update.dismissed', dismissed);
     }
     _notify();
   }

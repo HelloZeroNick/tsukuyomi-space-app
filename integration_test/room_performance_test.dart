@@ -21,13 +21,17 @@ void main() {
   testWidgets('Room 2000 messages, image, stream and native Live2D benchmark', (
     tester,
   ) async {
-    await windowManager.ensureInitialized();
-    await windowManager.setFullScreen(false);
-    await windowManager.setSize(const Size(1280, 820));
-    await windowManager.show();
-    await windowManager.focus();
+    await tester.runAsync(() async {
+      await windowManager.ensureInitialized();
+      await windowManager.setFullScreen(false);
+      await windowManager.setSize(const Size(1280, 820));
+    });
     final runs = <Map<String, dynamic>>[];
     for (var repetition = 0; repetition < 3; repetition++) {
+      await tester.runAsync(() async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
       final started = Stopwatch()..start();
       final frames = <FrameTiming>[];
       void timings(List<FrameTiming> batch) => frames.addAll(batch);

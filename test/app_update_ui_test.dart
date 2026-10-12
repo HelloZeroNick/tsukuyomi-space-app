@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,8 @@ import 'package:tsukuyomi_space_app/core/locale_controller.dart';
 import 'package:tsukuyomi_space_app/core/site_theme.dart';
 import 'package:tsukuyomi_space_app/features/room/room_controller.dart';
 import 'package:tsukuyomi_space_app/features/settings/settings_page.dart';
+import 'package:tsukuyomi_space_app/features/site/site_chrome.dart';
+import 'package:tsukuyomi_space_app/features/site/site_widgets.dart';
 import 'package:tsukuyomi_space_app/features/updates/app_update_page.dart';
 import 'package:tsukuyomi_space_app/main.dart';
 
@@ -275,9 +278,145 @@ void main() {
     await updates.preferences.setBool('app-update.automatic', true);
     await updates.check(automaticCheck: true);
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('app-update-prompt')), findsOneWidget);
     expect(find.textContaining('保存当前内容后，可从顶部更新图标查看。'), findsOneWidget);
     expect(find.text('查看更新'), findsNothing);
     expect(find.byType(AppUpdatePage), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'automatic popup offers details without downloading and only once',
+    (tester) async {
+      final (room, updates, transport, installer) = await setup();
+      await tester.pumpWidget(
+        TsukuyomiApp(controller: room, updates: updates, loadNative: false),
+      );
+      await tester.pumpAndSettle();
+      await updates.preferences.setBool('app-update.automatic', true);
+      await updates.check(automaticCheck: true);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('app-update-prompt')), findsOneWidget);
+      expect(find.text('v9.0.0'), findsOneWidget);
+      expect(installer.calls, 0);
+      expect(transport.calls, 2);
+      await tester.tap(find.text('查看更新'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppUpdatePage), findsOneWidget);
+      expect(transport.calls, 2);
+      await updates.check(automaticCheck: true);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('app-update-prompt')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'popup waits for other dialogs and foreground, later persists tag',
+    (tester) async {
+      final (room, updates, _, _) = await setup();
+      await tester.pumpWidget(
+        TsukuyomiApp(controller: room, updates: updates, loadNative: false),
+      );
+      await tester.pumpAndSettle();
+      final pageContext = tester.element(find.byType(Scaffold).first);
+      final dialog = showDialog<void>(
+        context: pageContext,
+        builder: (_) => const AlertDialog(title: Text('existing dialog')),
+      );
+      await tester.pumpAndSettle();
+      await updates.preferences.setBool('app-update.automatic', true);
+      await updates.check(automaticCheck: true);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('app-update-prompt')), findsNothing);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      Navigator.of(tester.element(find.text('existing dialog'))).pop();
+      await dialog;
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('app-update-prompt')), findsNothing);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('app-update-prompt')), findsOneWidget);
+      await tester.tap(find.text('此版本稍后提醒'));
+      await tester.pumpAndSettle();
+      expect(updates.preferences.getString('app-update.dismissed'), 'v9.0.0');
+      await updates.check(automaticCheck: true);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('app-update-prompt')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  for (final width in [320, 360, 390, 768, 960, 1280, 1920]) {
+    for (final language in ['zh', 'ja', 'en']) {
+      testWidgets('logged in brand stays complete at $width in $language', (
+        tester,
+      ) async {
+        tester.view.physicalSize = Size(width.toDouble(), 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final (room, updates, _, _) = await setup();
+        addTearDown(updates.dispose);
+        await room.login('alice', 'test');
+        final chrome = SiteChromeController(room);
+        addTearDown(chrome.dispose);
+        final locale = LocaleController(room.storage);
+        await locale.setLanguage(language);
+        addTearDown(locale.dispose);
+        await tester.pumpWidget(
+          SiteLocaleScope(
+            controller: locale,
+            child: AppUpdateScope(
+              controller: updates,
+              child: SiteChromeScope(
+                controller: chrome,
+                child: MaterialApp(
+                  theme: siteTheme(false),
+                  builder: (context, child) => MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      textScaler: TextScaler.linear(
+                        width == 360 && language == 'zh' ? 3 : 1.5,
+                      ),
+                    ),
+                    child: child!,
+                  ),
+                  home: Scaffold(
+                    body: Align(
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        height: 60,
+                        child: SiteHeader(
+                          title: '私人居所',
+                          username: 'alice',
+                          onGo: (_) {},
+                          onLogin: () {},
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.descendant(
+            of: find.byKey(const Key('site-brand-title')),
+            matching: find.byType(RichText),
+          ),
+        );
+        expect(paragraph.didExceedMaxLines, false);
+        expect(paragraph.text.toPlainText().contains('…'), false);
+        expect(tester.takeException(), isNull);
+        expect(find.byTooltip('alice'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+      });
+    }
+  }
 }

@@ -105,12 +105,12 @@ Future<void> main() async {
     final detail = await probeLive2DCroppedDetail();
     if (detail['different_bytes'] != 0 ||
         detail['after'][3] != 0 ||
-        model.textures.any((t) => t.width != 3072 || t.height != 3072)) {
+        model.textures.any((t) => t.width != 2048 || t.height != 2048)) {
       throw StateError('Native character detail mismatch: $detail');
     }
     // ignore: avoid_print
     print(
-      'TSUKUYOMI_LIVE2D_DETAIL_OK 3072px atlases, narrow viewport detail and deformed crop verified',
+      'TSUKUYOMI_LIVE2D_DETAIL_OK 2048px atlases, narrow viewport detail and deformed crop verified',
     );
     for (var pixel = 0; pixel < 4; pixel++) {
       for (var channel = 0; channel < 4; channel++) {

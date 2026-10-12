@@ -8,6 +8,7 @@ import 'package:tsukuyomi_space_app/core/desktop_window.dart';
 import 'package:tsukuyomi_space_app/core/models.dart';
 import 'package:tsukuyomi_space_app/live2d/character_stage.dart';
 import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
+import 'package:tsukuyomi_space_app/live2d/room_animation.dart';
 
 import 'support/fakes.dart';
 
@@ -50,6 +51,68 @@ class _Model extends Live2DModel {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  testWidgets(
+    'idle model updates keep transforms stable; actions still move the character',
+    (tester) async {
+      final model = _Model(), animation = RoomAnimation();
+      addTearDown(animation.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CharacterStage(
+              voice: SilentVoice(),
+              animation: animation,
+              modelLoader: () async => model,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      final paint = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is Live2DPainter,
+      );
+      final transforms = find.ancestor(
+        of: paint,
+        matching: find.byType(Transform),
+      );
+      final idle = tester.widgetList<Transform>(transforms).toList();
+      expect(idle, hasLength(3));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 34));
+      }
+      expect(model.ticks, greaterThan(3));
+      final afterIdle = tester.widgetList<Transform>(transforms).toList();
+      for (var i = 0; i < idle.length; i++) {
+        expect(identical(idle[i], afterIdle[i]), true);
+      }
+      animation.enqueue({'motion': 'nod', 'durationMs': 1000});
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 34));
+      }
+      expect(animation.y, isNot(0));
+      expect(
+        tester
+            .widgetList<Transform>(transforms)
+            .map((w) => w.transform.storage.toList()),
+        isNot(equals(idle.map((w) => w.transform.storage.toList()))),
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  test(
+    'every quality, including saved full mode, is bounded on both platforms',
+    () {
+      for (final quality in ['auto', 'full', 'economy', 'unknown']) {
+        expect(Live2DSceneController.textureLimitFor(quality), 2048);
+        for (final mobile in [true, false]) {
+          expect(
+            Live2DSceneController.rasterBudgetFor(quality, mobile: mobile),
+            inInclusiveRange(1, 900000),
+          );
+        }
+      }
+    },
+  );
   for (final refresh in [60, 90, 120, 144]) {
     for (final mobile in [false, true]) {
       test('clock keeps ${mobile ? 30 : 60} fps on $refresh Hz display', () {
@@ -91,7 +154,7 @@ void main() {
     clock.frame(const Duration(hours: 1, milliseconds: 34));
     expect(deltas, [.034, .034]);
     scene.configure(quality: 'full');
-    expect(scene.painter!.rasterPixelBudget, 0);
+    expect(scene.painter!.rasterPixelBudget, 900000);
   });
 
   for (final mobile in [true, false]) {

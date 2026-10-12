@@ -383,7 +383,7 @@ class SiteHeader extends StatelessWidget {
       final style = RoomStyle(context);
       final compact =
           box.maxWidth <
-          860 * (MediaQuery.textScalerOf(context).scale(14) / 14);
+          1160 * (MediaQuery.textScalerOf(context).scale(14) / 14);
       final path = ModalRoute.of(context)?.settings.name ?? '';
       final controller = SiteControllerScope.maybeOf(context);
       final music = SiteMusicScope.maybeOf(context);
@@ -480,34 +480,42 @@ class SiteHeader extends StatelessWidget {
                             cacheWidth: 132,
                             excludeFromSemantics: true,
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: compact ? 8 : 10),
                         ],
                         Expanded(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SiteText(
-                                '月读空间',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: RoomStyle.serif,
-                                  fontSize: 21,
-                                  height: 1.2,
-                                  letterSpacing: 2,
+                              Flexible(
+                                fit: FlexFit.loose,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: SiteText(
+                                    '月读空间',
+                                    key: const Key('site-brand-title'),
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontFamily: RoomStyle.serif,
+                                      fontSize: compact ? 18 : 21,
+                                      height: 1.5,
+                                      letterSpacing: compact ? 1 : 2,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              SiteText(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  height: 1.4,
-                                  color: style.muted,
+                              if (!compact)
+                                SiteText(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    height: 1.4,
+                                    color: style.muted,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -521,7 +529,6 @@ class SiteHeader extends StatelessWidget {
                 capsule(SiteDesktopNavigation(onGo: onGo, path: path)),
                 const SizedBox(width: 12),
               ],
-              if (compact) const SizedBox(width: 10),
               capsule(
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -541,7 +548,8 @@ class SiteHeader extends StatelessWidget {
                         onPressed: () => showRoomMusic(context, music),
                         icon: const Icon(Icons.music_note_outlined),
                       ),
-                    if (username != null &&
+                    if (!compact &&
+                        username != null &&
                         SiteChromeScope.maybeOf(context)?.authed == true)
                       IconButton(
                         onPressed: () => onGo('/notifications'),

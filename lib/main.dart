@@ -16,8 +16,8 @@ import 'core/site_client.dart';
 import 'core/site_routes.dart';
 import 'core/storage.dart';
 import 'core/app_update_controller.dart';
+import 'core/app_update_release.dart';
 import 'features/updates/app_update_page.dart';
-import 'features/updates/update_copy.dart';
 import 'core/voice_service.dart';
 import 'features/room/room_controller.dart';
 import 'features/room/room_page.dart';
@@ -96,10 +96,18 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
   late final ValueNotifier<String> _activePath;
   bool get _dark => _theme.dark;
   int _updateNotification = 0;
+  AppUpdateRelease? _pendingUpdate;
+  Route<dynamic>? _topRoute;
+  bool _updatePromptShowing = false, _updatePromptScheduled = false;
+  bool _foreground = true;
+  final _promptedTags = <String>{};
 
   @override
   void initState() {
     super.initState();
+    _foreground =
+        WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
     WidgetsBinding.instance.addObserver(this);
     widget.updates?.addListener(_updateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -121,12 +129,20 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
       widget.controller,
       initialPath: widget.initialPath,
     )..start();
+    _chrome.addListener(_scheduleUpdatePrompt);
     _activePath = ValueNotifier(widget.initialPath);
-    _routeObserver = _SiteRouteObserver(_chrome, (path) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _activePath.value != path) _activePath.value = path;
-      });
-    });
+    _routeObserver = _SiteRouteObserver(
+      _chrome,
+      (path) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _activePath.value != path) _activePath.value = path;
+        });
+      },
+      (route) {
+        _topRoute = route;
+        _scheduleUpdatePrompt();
+      },
+    );
   }
 
   void _themeChanged() {
@@ -135,8 +151,10 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
     if (state == AppLifecycleState.resumed) {
       widget.updates?.checkAutomatically();
+      _scheduleUpdatePrompt();
     }
   }
 
@@ -148,29 +166,60 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
       return;
     }
     _updateNotification = updates.notification;
+    _pendingUpdate = updates.release;
+    _scheduleUpdatePrompt();
+  }
+
+  void _scheduleUpdatePrompt() {
+    if (!mounted || _pendingUpdate == null || _updatePromptScheduled) return;
+    _updatePromptScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updatePromptScheduled = false;
+      if (mounted) _showUpdatePrompt();
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  Future<void> _showUpdatePrompt() async {
+    final updates = widget.updates, release = _pendingUpdate;
     final context = _navigator.currentState?.overlay?.context;
-    if (context == null) return;
-    // These pages own a save/discard guard. Their header uses the guarded
-    // onGo callback; a global snackbar must not bypass it.
-    final editing = {
-      '/editor',
-      '/room/settings',
-    }.contains(Uri.tryParse(_activePath.value)?.path);
-    _messenger.currentState?.showSnackBar(
-      SnackBar(
-        content: Text(
-          '${updateText(context, 'new')} · ${updates.release?.tag ?? ''}${editing ? '\n${updateText(context, 'saveBeforeOpen')}' : ''}',
-        ),
-        duration: const Duration(seconds: 10),
-        action: editing
-            ? null
-            : SnackBarAction(
-                label: updateText(context, 'view'),
-                onPressed: () =>
-                    _navigator.currentState?.pushNamed('/app/update'),
-              ),
+    if (updates == null ||
+        release == null ||
+        context == null ||
+        !_foreground ||
+        _updatePromptShowing ||
+        _chrome.popup != null ||
+        _topRoute is! PageRoute ||
+        _topRoute?.isCurrent != true) {
+      return;
+    }
+    _pendingUpdate = null;
+    if (!updates.automatic ||
+        updates.release?.tag != release.tag ||
+        updates.preferences.getString('app-update.dismissed') == release.tag) {
+      return;
+    }
+    final path = Uri.tryParse(_topRoute!.settings.name ?? '')?.path;
+    if (!_promptedTags.add(release.tag) || path == '/app/update') return;
+    // Editors own their save/discard guard. Do not navigate around it.
+    final editing = {'/editor', '/room/settings'}.contains(path);
+    _updatePromptShowing = true;
+    final view = await showDialog<bool>(
+      context: context,
+      builder: (_) => AppUpdatePrompt(
+        release: release,
+        currentVersion: updates.installed?.version.value ?? '',
+        editing: editing,
       ),
     );
+    if (!mounted) return;
+    if (view == true) {
+      _navigator.currentState?.pushNamed('/app/update');
+    } else {
+      await updates.remindLater(tag: release.tag);
+    }
+    _updatePromptShowing = false;
+    _scheduleUpdatePrompt();
   }
 
   void _toggleTheme() {
@@ -196,6 +245,7 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
     _season.dispose();
     _locale.removeListener(_themeChanged);
     _locale.dispose();
+    _chrome.removeListener(_scheduleUpdatePrompt);
     _chrome.dispose();
     _activePath.dispose();
     super.dispose();
@@ -534,10 +584,12 @@ class _SearchIntent extends Intent {
 }
 
 class _SiteRouteObserver extends NavigatorObserver {
-  _SiteRouteObserver(this.chrome, this.onPath);
+  _SiteRouteObserver(this.chrome, this.onPath, this.onRoute);
   final SiteChromeController chrome;
   final ValueChanged<String> onPath;
+  final ValueChanged<Route<dynamic>?> onRoute;
   void _changed(Route<dynamic>? route) {
+    onRoute(route);
     if (route is PageRoute) {
       final path = route.settings.name ?? '/';
       chrome.routeChanged(path);

@@ -1,0 +1,32 @@
+{
+  "version": "0.6.15+21",
+  "validated_at": "2026-10-12T07:18:55.567004+00:00",
+  "baseline_commit": "35a313298539549aea4288d5240e7a245ac3cc3d",
+  "format": "passed",
+  "analysis": "no issues",
+  "flutter_regression": {
+    "passed": 846,
+    "skipped": 34,
+    "native_cubism_enabled": true
+  },
+  "focused_regression": 112,
+  "final_layout_regression": 99,
+  "release_python_regression": 38,
+  "native_gpu_markers": [
+    "flutter: TSUKUYOMI_LIVE2D_DETAIL_OK 2048px atlases, narrow viewport detail and deformed crop verified",
+    "flutter: TSUKUYOMI_LIVE2D_RENDER_OK bounded masks/tints/destination blends verified",
+    "flutter: TSUKUYOMI_GAME_RIDING_OK {phases: 19, restart_different_bytes: [0, 0, 0, 0, 0, 0, 0, 0, 0]}",
+    "flutter: TSUKUYOMI_LIVE2D_TIMINGS frames=19 ui_p95_ms=1.25 raster_p95_ms=3.717 bounded_passes=4 pixels=727429",
+    "flutter: TSUKUYOMI_LIVE2D_OK meshes=409 textures=2"
+  ],
+  "macos_release": {
+    "version": "0.6.15+21",
+    "assets": 419,
+    "arm64_x64_runtime_packaging": "passed",
+    "deep_strict_signature_verification": "passed"
+  },
+  "physical_android_device_connected": false,
+  "9070_4060_device_connected": false,
+  "profile_scene": "M5 macOS, 2000 messages/images/stream/Live2D, three runs before and after",
+  "report": "docs/native-room-update-v0.6.15.md"
+}

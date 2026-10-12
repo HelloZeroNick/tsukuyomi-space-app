@@ -62,6 +62,8 @@ class _CharacterStageState extends State<CharacterStage>
   Live2DModel? get _model => _sceneController.model;
   final _captureKey = GlobalKey(), _fullCaptureKey = GlobalKey();
   final _sceneRevision = ValueNotifier<int>(0);
+  final _poseRevision = ValueNotifier<int>(0);
+  (double, double, double, double) _pose = (0, 0, 0, 1);
   String? _failure;
   late final Live2DSceneController _sceneController;
   bool _routeVisible = true, _fullscreen = false;
@@ -100,6 +102,17 @@ class _CharacterStageState extends State<CharacterStage>
           defaultTargetPlatform == TargetPlatform.iOS,
       onTick: (seconds, delta) {
         widget.animation?.advance(delta.clamp(0, .05));
+        final animation = widget.animation;
+        final pose = (
+          animation?.x ?? 0.0,
+          animation?.y ?? 0.0,
+          animation?.rotation ?? 0.0,
+          animation?.scale ?? 1.0,
+        );
+        if (pose != _pose) {
+          _pose = pose;
+          _poseRevision.value++;
+        }
         _model?.parameterOverrides = widget.animation?.parameters ?? {};
         _model?.tick(
           seconds,
@@ -201,6 +214,7 @@ class _CharacterStageState extends State<CharacterStage>
     _lightingTimer?.cancel();
     _sceneController.dispose();
     _sceneRevision.dispose();
+    _poseRevision.dispose();
     if (widget.animation != null) widget.animation!.ready = false;
     super.dispose();
   }
@@ -250,7 +264,9 @@ class _CharacterStageState extends State<CharacterStage>
                 excludeFromSemantics: true,
               )
             : AnimatedBuilder(
-                animation: _model!,
+                // The painter listens directly to the model. Idle breathing
+                // and blinking do not need to rebuild the transform widgets.
+                animation: _poseRevision,
                 child: RepaintBoundary(
                   child: CustomPaint(painter: _sceneController.painter),
                 ),

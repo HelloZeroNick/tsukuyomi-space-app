@@ -35,7 +35,8 @@ Future<void> main() async {
     );
     models.add(auto);
     final full = await loadLive2D(
-      maxTextureSize: Live2DSceneController.textureLimitFor('full'),
+      maxTextureSize:
+          0, // QA-only original 4096 reference, never a scene preset.
     );
     models.add(full);
     final economy = await loadLive2D(
@@ -66,6 +67,8 @@ Future<void> main() async {
                   scenario.mobile &&
                   const bool.hasEnvironment('CLARITY_MOBILE_BUDGET')
               ? const int.fromEnvironment('CLARITY_MOBILE_BUDGET')
+              : mode == 'full'
+              ? 0
               : Live2DSceneController.rasterBudgetFor(
                   mode,
                   mobile: scenario.mobile,

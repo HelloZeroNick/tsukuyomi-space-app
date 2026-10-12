@@ -12,7 +12,7 @@ import 'model.dart';
 class Live2DPainter extends CustomPainter {
   Live2DPainter(this.model) : super(repaint: model);
   final Live2DModel model;
-  // Zero keeps the direct path (probes and full-resolution mode). Large native
+  // Zero keeps the direct path for reference probes. Large native
   // viewports bound only occupied character pixels, preserving blend order.
   int rasterPixelBudget = 0;
   double pixelRatio = 1;
