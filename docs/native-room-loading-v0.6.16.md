@@ -36,4 +36,12 @@ Apple M5 / 16GiB / macOS27.0.1、Flutter3.47.5 Profile，窗口1280×820，角�
 
 [有效图片基线](qa/room-loading-v0.6.16/room-valid-images-before.json)、[本版](qa/room-loading-v0.6.16/room-valid-images-after.json)。
 
-完整CI和发布附件校验记录在完成后补充。
+## 发布验证
+
+[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38230225656)全部9个任务通过，完整回归866项通过、19项可选检查跳过；Windows、macOS、Linux、Android和未签名iOS构建通过。三桌面打包后的Agent检查各110项通过，所有安装包检查419个资源和两个编译着色器。Android原生探针验证2048纹理、409个绘制网格、遮罩与混合、音频及骑乘重开；它运行在CI模拟器上，不作为手机帧率证据。
+
+`v0.6.16-beta.1`指向源码提交`4743fa8e23983cbce58afa8154639cf2300d33ad`。应用更新服务已使用旧版0.6.15、Android arm64及预览渠道配置，实际检测本版、从GitHub下载155,256,892字节APK并完成SHA-256校验；此检查在本机Flutter测试中进行，没有执行安装。
+
+全部11个发布附件合计2,207,790,483字节已实际下载，GitHub官方摘要及`SHA256SUMS.txt`全部一致。
+
+[CI记录](qa/room-loading-v0.6.16/ci-validation.json)、[发布附件校验](qa/room-loading-v0.6.16/release-validation.json)、[实际更新下载记录](qa/room-loading-v0.6.16/updater-live-validation.json)。Android真机、9070／4060实际帧率和安装体验仍需对应设备验证；iOS安装需要自行签名。

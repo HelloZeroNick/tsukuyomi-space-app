@@ -1,0 +1,16 @@
+{
+  "validated_at": "2026-10-12T10:14:54.070255+00:00",
+  "installed_version_fixture": "v0.6.15-beta.1",
+  "detected_release": "v0.6.16-beta.1",
+  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.16-beta.1",
+  "platform": "android-arm64-v8a",
+  "previews_enabled": true,
+  "service": "AppUpdateService",
+  "downloaded_asset": "tsukuyomi-space-0.6.16-android-arm64-v8a.apk",
+  "downloaded_bytes": 155256892,
+  "sha256": "40f1aeaacbed40717573f8fda7bf42b10ca87e74d4814ec03f24a7e13714b108",
+  "github_digest_matched": true,
+  "service_verify_passed": true,
+  "installation_executed": false,
+  "environment": "macOS Flutter test using Android platform selection; not physical Android installation"
+}
