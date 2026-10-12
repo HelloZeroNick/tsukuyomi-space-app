@@ -37,5 +37,60 @@
     "texture_cap": 2048,
     "isolated_ui_spikes_reduce_pixels": false
   },
-  "android_actual_ime_probe": "required before publication; pending CI"
+  "android_actual_ime_probe": {
+    "conclusion": "passed",
+    "cycles": 3,
+    "actual_keyboard": true,
+    "stable_editor": true,
+    "stable_viewport": true,
+    "environment": "CI Android x86_64 emulator; not physical Redmi K90",
+    "performance_acceptance": false,
+    "renderer": "SwiftShader CI software renderer; functional check only"
+  },
+  "macos_release": {
+    "version": "0.6.18+24",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "packaged_agent_architectures": [
+      "arm64",
+      "x64"
+    ],
+    "verified_assets": 419,
+    "compiled_shaders": 2,
+    "deep_strict_signature": "passed"
+  },
+  "ci_regression": {
+    "passed": 885,
+    "skipped": 19,
+    "real_backend_fixture": true
+  },
+  "ci": {
+    "run_id": 38259178111,
+    "conclusion": "success",
+    "jobs": 9,
+    "platforms": [
+      "Android",
+      "iOS",
+      "Windows",
+      "macOS",
+      "Linux"
+    ],
+    "desktop_control_tests_each": 115,
+    "packaged_agent_tests_each": 110,
+    "source_commit": "ac939ae11af580794afe840a035dfde8e39ae8dd"
+  },
+  "release": {
+    "tag": "v0.6.18-beta.1",
+    "source_commit": "ac939ae11af580794afe840a035dfde8e39ae8dd",
+    "assets": 11,
+    "downloaded_bytes": 2207493602,
+    "sha256_verified": true,
+    "current_version_only_notes": true,
+    "actual_app_updater": "passed after transient network retry",
+    "remote_branches": [
+      "main"
+    ]
+  }
 }

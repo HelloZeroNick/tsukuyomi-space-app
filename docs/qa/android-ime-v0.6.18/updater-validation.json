@@ -1,0 +1,14 @@
+{
+  "installed_version": "v0.6.17-beta.1",
+  "detected_tag": "v0.6.18-beta.1",
+  "platform": "Android arm64-v8a",
+  "previews": true,
+  "real_github_download": true,
+  "service_verification": "passed",
+  "installer": "tsukuyomi-space-0.6.18-android-arm64-v8a.apk",
+  "bytes": 155256892,
+  "sha256": "22de90fe9fbd399b47dca572495531cacc63bd8927b04cfd9fc70338eb1919df",
+  "installation_attempted": false,
+  "network_failures_before_successful_retry": 2,
+  "tested_through": "production AppUpdateService check/download/verify"
+}
