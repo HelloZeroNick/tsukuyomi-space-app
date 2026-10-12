@@ -1,0 +1,119 @@
+{
+  "validated_at": "2026-10-12T11:58:44.526172+00:00",
+  "only_field_updated": "body",
+  "all_sources_and_assets_preserved": true,
+  "releases": [
+    {
+      "id": 410460870,
+      "tag": "v0.6.16-beta.1",
+      "before_characters": 11090,
+      "after_characters": 671,
+      "source_commit": "4743fa8e23983cbce58afa8154639cf2300d33ad"
+    },
+    {
+      "id": 410334622,
+      "tag": "v0.6.15-beta.1",
+      "before_characters": 10780,
+      "after_characters": 1104,
+      "source_commit": "3d058198696c1ccab9769ada69d3e6e03953e5cb"
+    },
+    {
+      "id": 410012164,
+      "tag": "v0.6.14-beta.1",
+      "before_characters": 9860,
+      "after_characters": 651,
+      "source_commit": "67620482b3855813b3496fa5cc2e799b626f57ed"
+    },
+    {
+      "id": 409556762,
+      "tag": "v0.6.13-beta.1",
+      "before_characters": 9393,
+      "after_characters": 583,
+      "source_commit": "2b210da32b7a94ef9c1b0e9d774bf078f8f86a76"
+    },
+    {
+      "id": 409330762,
+      "tag": "v0.6.12-beta.1",
+      "before_characters": 8994,
+      "after_characters": 980,
+      "source_commit": "30d034e7831f866f8acd8695c867ba9883cb7ba4"
+    },
+    {
+      "id": 409044997,
+      "tag": "v0.6.11-beta.1",
+      "before_characters": 8198,
+      "after_characters": 802,
+      "source_commit": "8d4bb0e44882330affb0e54f1d93f47a996ef062"
+    },
+    {
+      "id": 408971393,
+      "tag": "v0.6.10-beta.1",
+      "before_characters": 7580,
+      "after_characters": 734,
+      "source_commit": "ad04d37e32345fa77cdf37b18e08918f7cf534d5"
+    },
+    {
+      "id": 404604202,
+      "tag": "v0.6.9-beta.1",
+      "before_characters": 7030,
+      "after_characters": 674,
+      "source_commit": "2719cb861e549dad261e7cd745a9ea713a9b6e4b"
+    },
+    {
+      "id": 403036276,
+      "tag": "v0.6.8-beta.1",
+      "before_characters": 6539,
+      "after_characters": 680,
+      "source_commit": "50a8e12e103e10326181335f2a218e6214fc9455"
+    },
+    {
+      "id": 402418131,
+      "tag": "v0.6.7-beta.1",
+      "before_characters": 6042,
+      "after_characters": 951,
+      "source_commit": "f14fc1c53bc096d9ca2bb85e2cb0da9b80e08fa7"
+    },
+    {
+      "id": 402325318,
+      "tag": "v0.6.6-beta.1",
+      "before_characters": 5179,
+      "after_characters": 819,
+      "source_commit": "6886cbbc1374bb3868031ab3c47a9b00834af1bd"
+    },
+    {
+      "id": 402271022,
+      "tag": "v0.6.5-beta.1",
+      "before_characters": 4543,
+      "after_characters": 1031,
+      "source_commit": "5e66847bbf1f34cecbef9e54b0b28f17a5de3601"
+    },
+    {
+      "id": 401155649,
+      "tag": "v0.6.4-beta.1",
+      "before_characters": 3695,
+      "after_characters": 934,
+      "source_commit": "54efac36308a66afe8f3034faeab43a463b65df2"
+    },
+    {
+      "id": 400695873,
+      "tag": "v0.6.3-beta.1",
+      "before_characters": 3752,
+      "after_characters": 1025,
+      "source_commit": "d8ef4de62199113761b2ab72217efc0f8354554c"
+    },
+    {
+      "id": 400593281,
+      "tag": "v0.6.2-beta.1",
+      "before_characters": 3418,
+      "after_characters": 1049,
+      "source_commit": "f00a63c51cd540dc95ae5a148f289a31a5eee32d"
+    },
+    {
+      "id": 400538363,
+      "tag": "v0.6.1-beta.1",
+      "before_characters": 3373,
+      "after_characters": 812,
+      "source_commit": "072275bd739e23b573e254e9d39d4e9183a48773"
+    }
+  ]
+}

@@ -26,5 +26,42 @@
   "format_files": 242,
   "release_tool_tests": 38,
   "release_metadata": "0.6.17+23 / v0.6.17-beta.1; pubspec and baked tag agree",
-  "initial_version_metadata_mismatch": "Fixed before final full regression; final full run passed"
+  "initial_version_metadata_mismatch": "Fixed before final full regression; final full run passed",
+  "macos_release": {
+    "version": "0.6.17+23",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "packaged_agent_architectures": [
+      "arm64",
+      "x64"
+    ],
+    "verified_assets": 419,
+    "compiled_shaders": 2,
+    "deep_strict_signature": "passed"
+  },
+  "superseded_ci_run": {
+    "id": 38245408867,
+    "reason": "user requested current-version-only release notes before publication",
+    "replacement_source_commit": "412a1cc2880de789ccb3053c286cbeb6d7f92599",
+    "replacement_run_id": 38245891729
+  },
+  "additional_backend_validation": {
+    "website_commit": "836e11b56610cf83550fe7d51a4f830f95f05df5",
+    "fixture_data": "disposable SQLite and in-memory object storage; original checkout untouched",
+    "dependency_lock_matches": true,
+    "initial_run": {
+      "passed": 14,
+      "failed": 1,
+      "failure": "30s timeout in site_backend_integration_test.dart"
+    },
+    "retry": {
+      "passed": 1,
+      "fresh_fixture_database": true,
+      "duration_seconds": 13
+    },
+    "all_15_cases_verified": true,
+    "full_ci_backend_regression": "875 passed / 19 skipped"
+  }
 }

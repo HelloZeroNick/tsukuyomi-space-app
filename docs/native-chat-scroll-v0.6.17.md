@@ -39,4 +39,10 @@ UI P95均值：桌面9.325 → 2.945ms，移动布局9.222 → 2.718ms。Raster�
 
 ## 发布
 
-完整回归、五平台构建、Android原生探针、发布附件和实际应用更新下载记录在完成后补充。红米K90、9070／4060和其他真实设备的滚动体验仍需设备复测；iOS包需要自行签名。
+[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38245891729)全部9个任务通过，完整回归875项通过、19项可选检查跳过（包含原站后端）；五平台构建、三桌面各110项打包后检查、Android原生探针通过。原生探针使用CI模拟器，只验证模型、资源、更新和游戏功能，不能作为手机性能证明。额外本地后端检查14项首次通过、1项30秒超时；该项在新建临时数据库后13秒复测通过，源码与依赖锁均使用同一原站固定提交。
+
+`v0.6.17-beta.1`指向`412a1cc2880de789ccb3053c286cbeb6d7f92599`。全部11个发布附件合计2,207,473,885字节已实际下载，GitHub摘要与`SHA256SUMS.txt`一致；应用更新服务实际检测本版、下载155,256,896字节Android arm64 APK并完成校验，没有执行安装。
+
+本次Release说明为586字符，与`docs/release-notes.md`一致，只含当版更新；历史日志独立保留在[变更记录](changelog.md)。已清理v0.6.1～v0.6.16的重复历史说明，并逐项验证标签、源码、附件ID及摘要没有变化。
+
+[CI记录](qa/chat-scroll-v0.6.17/ci-validation.json)、[附件校验](qa/chat-scroll-v0.6.17/release-validation.json)、[实际更新下载](qa/chat-scroll-v0.6.17/updater-live-validation.json)、[旧版说明清理记录](qa/chat-scroll-v0.6.17/release-notes-cleanup.json)。红米K90、9070／4060和其他真实设备的滚动体验仍需设备复测；iOS包需要自行签名。
