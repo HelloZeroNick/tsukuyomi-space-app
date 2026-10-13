@@ -1,0 +1,16 @@
+{
+  "source_commit": "098e2d55bbc60e4adf2bbd09036de5cd05d75e87",
+  "release_tag": "v0.6.21-beta.1",
+  "checks_from": [
+    "v0.6.20-beta.2",
+    "v0.6.19-beta.1"
+  ],
+  "platform": "androidArm64",
+  "production_service": "AppUpdateService",
+  "live_github_check": true,
+  "download_verified": true,
+  "bytes": 155322432,
+  "sha256": "eb7e6964d4b3dde3ecdc5e8cb1b6fc1687b909a41b3cc3c36cb8540c9436fc5d",
+  "physical_installation_performed": false,
+  "test_passed": true
+}

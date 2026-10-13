@@ -1,0 +1,33 @@
+{
+  "run_id": 38345499421,
+  "source_commit": "098e2d55bbc60e4adf2bbd09036de5cd05d75e87",
+  "platform": "Android API35 x86_64 native release on CI SwiftShader emulator",
+  "passed": true,
+  "room": {
+    "turns": 2000,
+    "reply_sentences": 600,
+    "mounted_text_widgets": 7,
+    "model_updates_during_drag": 0,
+    "resumed_after_drag": true,
+    "actual_ime_cycles": 3,
+    "stable_editor": true,
+    "stable_viewport": true
+  },
+  "live2d": {
+    "synthetic_max_channel_delta": 0,
+    "native_max_channel_delta": 0,
+    "raster_failures": 0,
+    "frozen_resize_max_channel_delta": 0,
+    "cache_repaints_extra_records": 0,
+    "cache_repaints_extra_rasterizations": 0,
+    "texture_size": 2048
+  },
+  "diagnostic_timings": {
+    "frames": 11,
+    "ui_p95_ms": 5.807,
+    "raster_p95_ms": 1198.549,
+    "physical_device_acceptance": false,
+    "interpretation": "Software renderer diagnostic only; not K90 performance or frame budget evidence"
+  },
+  "log": "artifacts/room-refactor-v0621/ci/native-smoke-android.log"
+}
