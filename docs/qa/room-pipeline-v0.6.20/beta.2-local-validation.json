@@ -10,5 +10,73 @@
   "real_model_frozen_max_channel_delta": 1,
   "beta1_source": "730e82357344540345721f1d202e2ffe31c817c8",
   "physical_k90_connected": false,
-  "release": "not yet published"
+  "release": {
+    "tag": "v0.6.20-beta.2",
+    "source_commit": "e16f4a164b8dd2531b23bd4f56caabac4888f40f",
+    "published": true,
+    "prerelease": true,
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.20-beta.2",
+    "integrity_downloads": "passed",
+    "all_sha256_verified": true,
+    "asset_count": 11,
+    "downloaded_bytes": 2207674611
+  },
+  "source_commit": "e16f4a164b8dd2531b23bd4f56caabac4888f40f",
+  "ci": {
+    "run_id": 38331436856,
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38331436856",
+    "conclusion": "success",
+    "logical_jobs": 9,
+    "passed": 919,
+    "skipped": 19,
+    "build_platforms": [
+      "android",
+      "ios",
+      "macos",
+      "windows",
+      "linux"
+    ],
+    "desktop_window_update_tests_per_platform": 118,
+    "packaged_agent_tests_per_platform": 113
+  },
+  "android_native": {
+    "async_pixel_max_channel_delta": 0,
+    "frozen_resize_pixel_max_channel_delta": 0,
+    "frozen_extra_model_records": 0,
+    "frozen_extra_rasterizations": 0,
+    "sky_frames": 1500,
+    "sky_wraps": 41,
+    "sky_gaps": 0,
+    "high_dismount_models": [
+      1,
+      2,
+      4
+    ],
+    "actual_ime_cycles": 3,
+    "texture_size": 2048,
+    "renderer": "SwiftShader, functional checks only",
+    "diagnostic_frames": 16,
+    "diagnostic_ui_p95_ms": 3.234,
+    "diagnostic_raster_p95_ms": 399.364,
+    "physical_fps_acceptance": false
+  },
+  "updater": {
+    "date": "2026-10-13",
+    "service": "production AppUpdateService.check/download/verify",
+    "installed_versions_checked": [
+      "v0.6.19-beta.1",
+      "v0.6.20-beta.1"
+    ],
+    "detected_version": "v0.6.20-beta.2",
+    "platform": "androidArm64",
+    "previews": true,
+    "download_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.20-beta.2/tsukuyomi-space-0.6.20-android-arm64-v8a.apk",
+    "asset": "tsukuyomi-space-0.6.20-android-arm64-v8a.apk",
+    "downloaded_bytes": 155256892,
+    "sha256": "867c3a47b265430c1cbf928256e8693d24325b6c10a9fb37f87d08dd117427d3",
+    "real_github_download": true,
+    "service_verification_passed": true,
+    "independent_sha256_verified": true,
+    "installation_attempted": false
+  }
 }

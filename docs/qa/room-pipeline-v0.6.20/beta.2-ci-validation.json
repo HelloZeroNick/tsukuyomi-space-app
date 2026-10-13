@@ -1,0 +1,867 @@
+{
+  "run_id": 38331436856,
+  "source_commit": "e16f4a164b8dd2531b23bd4f56caabac4888f40f",
+  "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38331436856",
+  "conclusion": "success",
+  "run_attempt": 1,
+  "jobs": [
+    {
+      "id": 115081828249,
+      "name": "metadata",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:17:47Z",
+      "completed_at": "2026-10-13T01:17:56Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate version, tag and publication mode",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": []
+    },
+    {
+      "id": 115081878900,
+      "name": "quality",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:17:59Z",
+      "completed_at": "2026-10-13T01:28:44Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Android toolchain against this Flutter SDK",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify licensed build inputs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run python -m unittest discover -s tool/release -p 'test_*.py'",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run python -m unittest discover -s tool/agent -p 'test_*.py'",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter pub get",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run dart format --output=none --set-exit-if-changed lib test packages/tsukuyomi_live2d/lib packages/tsukuyomi_live2d/hook",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter analyze --no-pub",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check out original site backend fixture",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm ci --prefix build/site-fixture-source",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run all source and real backend regressions",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Check out original site backend fixture",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:28:39.2034904Z 🎉 919 tests passed, 19 skipped."
+      ]
+    },
+    {
+      "id": 115084607563,
+      "name": "build (ubuntu-22.04, linux)",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:28:48Z",
+      "completed_at": "2026-10-13T01:44:28Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Linux native build and playback libraries",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify CocoaPods for native media and QQ login",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Install NuGet for Windows WebView2 plugin",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run bash tool/release/setup_android.sh",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Download and verify licensed build inputs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter pub get",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare fixed desktop Agent runtimes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify updater and fullscreen controls on each desktop OS",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build macOS universal release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build unsigned iPhoneOS IPA for self-signing",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build Windows release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Package Windows with Visual C++ runtime",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build and package Linux",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build signed Android APKs",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Exercise packaged OpenCode, MCP gateway and Codex sandbox",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:31:43.1500525Z 🎉 118 tests passed.",
+        "2026-10-13T01:33:11.3334254Z Packaged and verified: linux-x64",
+        "2026-10-13T01:33:11.7198034Z PASS build/linux/x64/release/bundle/data/flutter_assets: 419 exact site/game/model assets and both compiled shaders",
+        "2026-10-13T01:44:05.8609325Z 🎉 113 tests passed."
+      ]
+    },
+    {
+      "id": 115084607589,
+      "name": "build (ubuntu-22.04, android)",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:28:47Z",
+      "completed_at": "2026-10-13T01:37:27Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Linux native build and playback libraries",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify CocoaPods for native media and QQ login",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Install NuGet for Windows WebView2 plugin",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run bash tool/release/setup_android.sh",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify licensed build inputs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter pub get",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare fixed desktop Agent runtimes",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify updater and fullscreen controls on each desktop OS",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build macOS universal release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build unsigned iPhoneOS IPA for self-signing",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build Windows release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Package Windows with Visual C++ runtime",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build and package Linux",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build signed Android APKs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exercise packaged OpenCode, MCP gateway and Codex sandbox",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:37:10.2644700Z PASS build/app/outputs/flutter-apk/app-arm64-v8a-release.apk: 419 exact site/game/model assets and both compiled shaders",
+        "2026-10-13T01:37:11.3500946Z PASS build/app/outputs/flutter-apk/app-x86_64-release.apk: 419 exact site/game/model assets and both compiled shaders"
+      ]
+    },
+    {
+      "id": 115084607591,
+      "name": "build (macos-15, macos)",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:28:51Z",
+      "completed_at": "2026-10-13T01:39:35Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Linux native build and playback libraries",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify CocoaPods for native media and QQ login",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install NuGet for Windows WebView2 plugin",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run bash tool/release/setup_android.sh",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Download and verify licensed build inputs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter pub get",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare fixed desktop Agent runtimes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify updater and fullscreen controls on each desktop OS",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build macOS universal release",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build unsigned iPhoneOS IPA for self-signing",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build Windows release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Package Windows with Visual C++ runtime",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build and package Linux",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build signed Android APKs",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Exercise packaged OpenCode, MCP gateway and Codex sandbox",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:30:49.9992540Z 🎉 118 tests passed.",
+        "2026-10-13T01:34:33.7967070Z Packaged and verified: macos-arm64",
+        "2026-10-13T01:34:33.8067310Z Packaged and verified: macos-x64",
+        "2026-10-13T01:34:35.1202560Z PASS build/macos/Build/Products/Release/tsukuyomi_space_app.app/Contents/Frameworks/App.framework/Resources/flutter_assets: 419 exact site/game/model assets and both compiled shaders",
+        "2026-10-13T01:39:09.1989860Z 🎉 113 tests passed."
+      ]
+    },
+    {
+      "id": 115084607603,
+      "name": "native-smoke / android",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:28:47Z",
+      "completed_at": "2026-10-13T01:37:52Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run bash tool/release/setup_android.sh",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run python3 tool/release/verify_android_toolchain.py",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run python3 tool/release/prepare_assets.py",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release probe with real native model",
+          "conclusion": "success"
+        },
+        {
+          "name": "Release build daemon memory",
+          "conclusion": "success"
+        },
+        {
+          "name": "Enable KVM",
+          "conclusion": "success"
+        },
+        {
+          "name": "Load and animate on Android",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:37:46.4723420Z I/flutter ( 2953): TSUKUYOMI_ROOM_IME_OK cycles=3 actual_keyboard=true stable_editor=true stable_viewport=true",
+        "2026-10-13T01:37:46.4742554Z I/flutter ( 2953): TSUKUYOMI_LIVE2D_BATCH_OK synthetic_max_delta=0 native={max_channel_delta: 0, runs: [{direct_calls: 455, batch_calls: 226, batched_meshes: 268, retained_bytes: 441172}, {direct_calls: 455, batch_calls: 226, batched_meshes: 268, retained_bytes: 441172}, {direct_calls: 455, batch_calls: 329, batched_meshes: 152, retained_bytes: 272046}]}",
+        "2026-10-13T01:37:46.4757020Z I/flutter ( 2953): TSUKUYOMI_LIVE2D_ASYNC_OK synthetic_max_delta=0 native={max_channel_delta: 0, raster_failures: 0, cache_record_timings: [{pose: 0, reference_record_us: 11179, cached_record_us: 469, paints: 10, async_preparation_us: 9508, extra_model_records: 0, extra_rasterizations: 0}, {pose: 1, reference_record_us: 19665, cached_record_us: 295, paints: 10, async_preparation_us: 2032, extra_model_records: 0, extra_rasterizations: 0}, {pose: 2, reference_record_us: 8976, cached_record_us: 298, paints: 10, async_preparation_us: 1451, extra_model_records: 0, extra_rasterizations: 0}], frozen_resize: {max_channel_delta: 0, extra_model_records: 0, extra_rasterizations: 0}}",
+        "2026-10-13T01:37:46.4774740Z I/flutter ( 2953): TSUKUYOMI_GAME_CONTINUITY_OK high={models: [{model: 1, y: -33.0, running_costumes: [11, 12, 13, 14]}, {model: 2, y: -33.0, running_costumes: [11, 12, 13, 14]}, {model: 4, y: -33.0, running_costumes: [41, 42, 43, 44]}]} sky={checked_frames: 1500, wraps: 41, gaps: 0, speeds: [7, 8, 11, 18, 24]}",
+        "2026-10-13T01:37:46.4790938Z I/flutter ( 2953): TSUKUYOMI_LIVE2D_DETAIL_OK 2048px atlases, narrow viewport detail and deformed crop verified",
+        "2026-10-13T01:37:46.4805999Z I/flutter ( 2953): TSUKUYOMI_LIVE2D_RENDER_OK bounded masks/tints/destination blends verified",
+        "2026-10-13T01:37:46.4819962Z I/flutter ( 2953): TSUKUYOMI_LIVE2D_TIMINGS frames=16 ui_p95_ms=3.234 raster_p95_ms=399.364 bounded_passes=0 pixels=0",
+        "2026-10-13T01:37:46.4834877Z I/flutter ( 2953): TSUKUYOMI_GAME_AUDIO_OK BGM+SFX mixed, pause/resume verified",
+        "2026-10-13T01:37:46.4849146Z I/flutter ( 2953): TSUKUYOMI_GAME_RIDING_OK {phases: 19, restart_different_bytes: [0, 0, 0, 0, 0, 0, 0, 0, 0]}",
+        "2026-10-13T01:37:46.4864360Z I/flutter ( 2953): TSUKUYOMI_UPDATE_OK abis=[x86_64, arm64-v8a] platform=androidX64 version=v0.6.20-beta.2 private-cache=Directory: '/data/user/0/space.tsukuyomi.tsukuyomi_space_app/cache'",
+        "2026-10-13T01:37:46.4892866Z I/flutter ( 2953): TSUKUYOMI_LIVE2D_OK meshes=409 textures=2"
+      ]
+    },
+    {
+      "id": 115084607659,
+      "name": "build (windows-2022, windows)",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:28:47Z",
+      "completed_at": "2026-10-13T01:48:59Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Linux native build and playback libraries",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify CocoaPods for native media and QQ login",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Install NuGet for Windows WebView2 plugin",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run bash tool/release/setup_android.sh",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Download and verify licensed build inputs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter pub get",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare fixed desktop Agent runtimes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify updater and fullscreen controls on each desktop OS",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build macOS universal release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build unsigned iPhoneOS IPA for self-signing",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build Windows release",
+          "conclusion": "success"
+        },
+        {
+          "name": "Package Windows with Visual C++ runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build and package Linux",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build signed Android APKs",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Exercise packaged OpenCode, MCP gateway and Codex sandbox",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:32:53.5911462Z 🎉 118 tests passed.",
+        "2026-10-13T01:39:48.9778403Z Packaged and verified: windows-x64",
+        "2026-10-13T01:39:49.4306047Z PASS build\\windows\\x64\\runner\\Release\\data\\flutter_assets: 419 exact site/game/model assets and both compiled shaders",
+        "2026-10-13T01:48:34.4831822Z 🎉 113 tests passed."
+      ]
+    },
+    {
+      "id": 115084607675,
+      "name": "build (macos-15, ios)",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:28:55Z",
+      "completed_at": "2026-10-13T01:34:55Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Linux native build and playback libraries",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify CocoaPods for native media and QQ login",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install NuGet for Windows WebView2 plugin",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run bash tool/release/setup_android.sh",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Download and verify licensed build inputs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run flutter pub get",
+          "conclusion": "success"
+        },
+        {
+          "name": "Prepare fixed desktop Agent runtimes",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify updater and fullscreen controls on each desktop OS",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build macOS universal release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build unsigned iPhoneOS IPA for self-signing",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build Windows release",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Package Windows with Visual C++ runtime",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build and package Linux",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Build signed Android APKs",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Exercise packaged OpenCode, MCP gateway and Codex sandbox",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": [
+        "2026-10-13T01:34:43.4155270Z PASS dist/tsukuyomi-space-0.6.20-ios-arm64-unsigned.ipa: 419 exact site/game/model assets and both compiled shaders"
+      ]
+    },
+    {
+      "id": 115089645226,
+      "name": "publish",
+      "conclusion": "success",
+      "run_attempt": 1,
+      "started_at": "2026-10-13T01:49:01Z",
+      "completed_at": "2026-10-13T01:50:17Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify every download before publication",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload complete release and publish",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ],
+      "validation_markers": []
+    }
+  ]
+}
