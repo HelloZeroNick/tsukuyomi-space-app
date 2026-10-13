@@ -3,6 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/live2d_render_probe.dart';
 
 void main() {
+  testWidgets(
+    'async model snapshots preserve masks, opacity and destination blends',
+    (tester) async {
+      final result = (await tester.runAsync(
+        () => probeLive2DBatching(asynchronous: true),
+      ))!;
+      expect(result['max_channel_delta'], lessThanOrEqualTo(2));
+      expect(result['changed_bytes'], greaterThan(0));
+    },
+  );
   testWidgets('combined vertices split before overflowing 16-bit indices', (
     tester,
   ) async {

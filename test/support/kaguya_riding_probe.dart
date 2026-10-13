@@ -72,6 +72,93 @@ void _mount(KaguyaRuntime vm) {
   );
 }
 
+Map<String, dynamic> probeKaguyaHighDismount(KaguyaRuntime vm) {
+  final models = <Map<String, dynamic>>[];
+  for (final character in [1, 2, 4]) {
+    vm.restart();
+    _mount(vm);
+    vm.setVariableByName('辉夜模型', character);
+    vm.key('up arrow', true);
+    _frames(vm, 45);
+    vm.key('up arrow', false);
+    final ship = vm.sprites.firstWhere((s) => s.name == 'feichua');
+    _require(ship.y >= 64 && ship.y <= 70, 'high return fixture');
+    _frames(vm, 420);
+    final player = vm.sprites.firstWhere((s) => s.name == '辉夜');
+    _require(
+      KaguyaRuntime.number(vm.variableByName('辉夜是否消失')) == 0 &&
+          !ship.visible &&
+          player.visible,
+      'high return did not finish',
+    );
+    _require(
+      KaguyaRuntime.number(vm.variableByName('跳起？')) == 0 &&
+          player.y >= -36 &&
+          player.y <= -30,
+      'high return did not land',
+    );
+    final costumes = <String>{};
+    for (var i = 0; i < 45; i++) {
+      _frames(vm, 1);
+      costumes.add('${player.currentCostume['name']}');
+    }
+    _require(
+      costumes.length > 1 && !costumes.contains(character == 1 ? '17' : '47'),
+      'running animation did not resume',
+    );
+    _require(
+      !vm.executionState.any((s) => s['sprite'] == '辉夜' && s['hat'] == 'ET'),
+      'stale return animation hat',
+    );
+    models.add({
+      'model': character,
+      'y': player.y,
+      'running_costumes': costumes.toList()..sort(),
+    });
+  }
+  return {'models': models};
+}
+
+Map<String, dynamic> probeKaguyaSkyContinuity(KaguyaRuntime vm) {
+  var checked = 0, wraps = 0;
+  for (final speed in [7, 8, 11, 18, 24]) {
+    vm.restart();
+    vm.startGame();
+    _frames(vm, 150);
+    vm.broadcast('黑1');
+    int? previous;
+    for (var i = 0; i < 300; i++) {
+      vm.setVariableByName('背景速度（我跑步速度', speed);
+      _frames(vm, 1);
+      final skies = vm.drawOrder
+          .where((s) => s.name == 'sky' && s.visible && !s.deleted)
+          .toList();
+      if (skies.isEmpty) continue;
+      final id = skies.last.cloneId;
+      if (previous != null && previous != id) wraps++;
+      previous = id;
+      for (final x in [-239.0, 0.0, 239.0]) {
+        _require(
+          skies.any((s) => s.bounds.contains(ui.Offset(x, 160))),
+          'sky gap at speed=$speed frame=$i x=$x',
+        );
+      }
+      _require(
+        vm.drawOrder.map((s) => s.layer).toSet().length == vm.drawOrder.length,
+        'duplicate drawable order',
+      );
+      checked++;
+    }
+  }
+  _require(checked >= 1400 && wraps >= 10, 'sky fixture did not wrap');
+  return {
+    'checked_frames': checked,
+    'wraps': wraps,
+    'gaps': 0,
+    'speeds': [7, 8, 11, 18, 24],
+  };
+}
+
 /// Shared by flutter_tester and the actual Android Release/native GPU probe.
 /// Yields at paints needed to catch transparent collision costumes.
 Iterable<String> exerciseKaguyaRiding(KaguyaRuntime vm) sync* {

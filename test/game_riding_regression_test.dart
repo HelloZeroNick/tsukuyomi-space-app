@@ -5,11 +5,100 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsukuyomi_space_app/features/game/kaguya_assets.dart';
+import 'package:tsukuyomi_space_app/features/game/kaguya_runtime.dart';
 
 import 'game_native_test.dart' show shippedRuntime, frames;
 import 'support/kaguya_riding_probe.dart';
 
 void main() {
+  test('sky clones cover the stage during five scrolling speeds and wraps', () {
+    final vm = shippedRuntime();
+    addTearDown(vm.dispose);
+    final result = probeKaguyaSkyContinuity(vm);
+    expect(result['gaps'], 0);
+    expect(result['checked_frames'], greaterThanOrEqualTo(1400));
+    expect(result['wraps'], greaterThanOrEqualTo(10));
+  });
+  test('native shared high-dismount fixture verifies all character models', () {
+    final vm = shippedRuntime();
+    addTearDown(vm.dispose);
+    expect((probeKaguyaHighDismount(vm)['models'] as List).length, 3);
+  });
+  for (final character in [1, 2, 4]) {
+    test(
+      'high dismount lands and resumes model $character running animation',
+      () {
+        final vm = shippedRuntime();
+        addTearDown(vm.dispose);
+        vm.restart();
+        vm.startGame();
+        void step() {
+          vm.setVariableByName('心情值', 1000);
+          vm.advance(1 / 30);
+        }
+
+        for (var i = 0; i < 150; i++) {
+          step();
+        }
+        vm.broadcast('黑1');
+        vm.setVariableByName('分数', 510);
+        for (
+          var i = 0;
+          i < 120 && KaguyaRuntime.number(vm.variableByName('辉夜是否消失')) != 1;
+          i++
+        ) {
+          step();
+        }
+        expect(KaguyaRuntime.number(vm.variableByName('辉夜是否消失')), 1);
+        vm.setVariableByName('辉夜模型', character);
+        vm.key('up arrow', true);
+        for (var i = 0; i < 45; i++) {
+          step();
+        }
+        vm.key('up arrow', false);
+        final ship = vm.sprites.firstWhere((s) => s.name == 'feichua');
+        expect(ship.y, inInclusiveRange(64, 70));
+        final player = vm.sprites.firstWhere((s) => s.name == '辉夜');
+        for (var i = 0; i < 400; i++) {
+          step();
+        }
+        expect(KaguyaRuntime.number(vm.variableByName('辉夜是否消失')), 0);
+        expect(KaguyaRuntime.number(vm.variableByName('跳起？')), 0);
+        expect(ship.visible, false);
+        expect(player.y, inInclusiveRange(-36, -30));
+        final costumes = <String>{};
+        for (var i = 0; i < 45; i++) {
+          step();
+          costumes.add('${player.currentCostume['name']}');
+        }
+        expect(
+          costumes.length,
+          greaterThan(1),
+          reason: 'The running animation must advance.',
+        );
+        expect(costumes, isNot(contains(character == 1 ? '17' : '47')));
+        expect(
+          vm.executionState.where(
+            (t) => t['sprite'] == '辉夜' && t['hat'] == 'ET',
+          ),
+          isEmpty,
+        );
+        expect(vm.failure, isNull);
+      },
+    );
+  }
+
+  test('120 Hz host only publishes the original 30 Hz simulation frames', () {
+    final vm = shippedRuntime();
+    addTearDown(vm.dispose);
+    vm.restart();
+    var paints = 0;
+    vm.addListener(() => paints++);
+    for (var i = 0; i < 120; i++) {
+      vm.advance(1 / 120);
+    }
+    expect(paints, 30);
+  });
   test(
     'three complete collision-triggered rides, pause, dismount and restart',
     () {

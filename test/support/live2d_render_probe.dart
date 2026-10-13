@@ -26,10 +26,18 @@ class _ProbeModel extends Live2DModel {
     double lookX = 0,
     double lookY = 0,
     String expression = 'neutral',
-  }) {}
+  }) => notifyListeners();
 }
 
 Future<Uint8List> _batchPixels(Live2DPainter painter, Size size) async {
+  if (painter.asynchronousRasterization) {
+    final recorder = ui.PictureRecorder();
+    painter.paint(Canvas(recorder), size);
+    recorder.endRecording().dispose();
+    for (var i = 0; i < 3; i++) {
+      await painter.pendingRasterization;
+    }
+  }
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder)
     ..drawColor(const Color(0xff263453), BlendMode.src);
@@ -47,9 +55,78 @@ Future<Uint8List> _batchPixels(Live2DPainter painter, Size size) async {
   }
 }
 
+/// Compare the production async pipeline with the bounded reference path.
+/// Cache timings measure paint-recording work only, never device/GPU FPS.
+Future<Map<String, dynamic>> probeNativeLive2DAsync(Live2DModel model) async {
+  const size = Size(390, 800);
+  final direct = Live2DPainter(model)
+    ..rasterPixelBudget = 450000
+    ..pixelRatio = 2;
+  final cached = Live2DPainter(model, asynchronousRasterization: true)
+    ..rasterPixelBudget = 450000
+    ..pixelRatio = 2;
+  var maxDelta = 0;
+  final timings = <Map<String, dynamic>>[];
+  void record(Live2DPainter painter) {
+    final recorder = ui.PictureRecorder();
+    painter.paint(Canvas(recorder), size);
+    recorder.endRecording().dispose();
+  }
+
+  try {
+    for (var pose = 0; pose < 3; pose++) {
+      model.tick(
+        pose * .4,
+        1 / 30,
+        mouth: pose * .4,
+        expression: pose == 1 ? 'happy' : 'neutral',
+      );
+      final before = await _batchPixels(direct, size);
+      final after = await _batchPixels(cached, size);
+      for (var i = 0; i < before.length; i++) {
+        final delta = (before[i] - after[i]).abs();
+        if (delta > maxDelta) maxDelta = delta;
+      }
+      final records = cached.recordedFrames;
+      final rasterizations = cached.asyncRasterizations;
+      final source = Stopwatch()..start();
+      for (var i = 0; i < 10; i++) {
+        record(direct);
+      }
+      final beforeMicros = source.elapsedMicroseconds;
+      source
+        ..reset()
+        ..start();
+      for (var i = 0; i < 10; i++) {
+        record(cached);
+      }
+      timings.add({
+        'pose': pose,
+        'reference_record_us': beforeMicros,
+        'cached_record_us': source.elapsedMicroseconds,
+        'paints': 10,
+        'async_preparation_us': cached.lastPreparationMicros,
+        'extra_model_records': cached.recordedFrames - records,
+        'extra_rasterizations': cached.asyncRasterizations - rasterizations,
+      });
+    }
+    return {
+      'max_channel_delta': maxDelta,
+      'raster_failures': cached.rasterFailures,
+      'cache_record_timings': timings,
+    };
+  } finally {
+    direct.dispose();
+    cached.dispose();
+    await cached.pendingRasterization;
+  }
+}
+
 /// Covers overlap with texture alpha, destination blends, masking, tint,
 /// mutable geometry/UVs, render order and cache release, on native engines too.
-Future<Map<String, dynamic>> probeLive2DBatching() async {
+Future<Map<String, dynamic>> probeLive2DBatching({
+  bool asynchronous = false,
+}) async {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
   for (var x = 0; x < 16; x++) {
@@ -93,7 +170,7 @@ Future<Map<String, dynamic>> probeLive2DBatching() async {
   meshes[16].multiply[0] = .7;
   final model = _ProbeModel([texture], meshes);
   final direct = Live2DPainter(model)..batchMeshes = false;
-  final batched = Live2DPainter(model);
+  final batched = Live2DPainter(model, asynchronousRasterization: asynchronous);
   var maxDelta = 0, changedBytes = 0;
   Uint8List? initial;
   final runs = <Map<String, int>>[];
@@ -125,6 +202,7 @@ Future<Map<String, dynamic>> probeLive2DBatching() async {
           m.visible = false;
         }
       }
+      model.tick(phase.toDouble(), 1 / 30);
       for (final budget in [0, 4096]) {
         direct.rasterPixelBudget = batched.rasterPixelBudget = budget;
         final a = await _batchPixels(direct, const Size(128, 128));

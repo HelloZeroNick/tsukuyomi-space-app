@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-13",
+  "version": "0.6.20+26",
+  "focused_tests_passed": 78,
+  "additional_backpressure_tests": "2 passed, included in focused count",
+  "analysis": "no issues",
+  "release_tool_tests_passed": 38,
+  "native_pixel_max_channel_delta": 1,
+  "gpu_fps_acceptance": false,
+  "physical_k90_connected": false,
+  "game_before_reference": "53350436e663c063f00a2fafa4521d1528b527ee",
+  "sky_before": {
+    "frames": 300,
+    "speed": 7,
+    "gaps": 4,
+    "frames_with_gaps": [
+      69,
+      138,
+      207,
+      276
+    ]
+  },
+  "sky_after": {
+    "frames": 300,
+    "speed": 7,
+    "gaps": 0
+  },
+  "high_dismount_models": [
+    1,
+    2,
+    4
+  ],
+  "simulation_notifications": {
+    "host_hz": 120,
+    "published_hz": 30
+  },
+  "async_lifecycle": "coalesced 60 updates into 2 successor frames; 120 cached paints did not recapture; resize/disable/dispose verified",
+  "release": "not yet published",
+  "format_files": 245
+}

@@ -1,6 +1,6 @@
 # 月读空间 · Flutter 原生客户端
 
-Tsukuyomi Space 的独立 Flutter 客户端。0.6.19 Room / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
+Tsukuyomi Space 的独立 Flutter 客户端。0.6.20 Room / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
 
 整站原生页面包含入口、Hub、Wiki、图库、附件库、编辑器、像素工坊、辉夜跑酷、友链、公开主页、管理后台和 Live2D 工作台，支持跨设备事件、中文／日语／英语、全站搜索及八千代导览。后台只向有效登录的 admin／super_admin 显示和开放；本地、合并与云端记忆来源跟进原站最新逻辑。实现与验收边界见 [整站迁移记录](docs/native-full-site-implementation-2026-09-30.md)。
 
@@ -8,7 +8,7 @@ Tsukuyomi Space 的独立 Flutter 客户端。0.6.19 Room / 桌面 Agent 测试�
 
 所有平台打开即进入 Room，不播放 Access 动画。默认关闭演示；首次使用在聊天区填写模型地址、名称和 Key，保存后直接真实聊天。已有配置直接可用，本地历史先加载，登录与同步随后执行。升级保留独立演示历史。
 
-0.6.19 合并相邻同材质 Live2D 网格并优化流式解码，继续减少 Room 开销；合入 Claude API 协议支持，保留上一版输入法修复、2048纹理和鼠标追踪关闭。见 [绘制、流式解码与 PR 验证](docs/native-render-stream-v0.6.19.md)。
+0.6.20 将 Room 的 Live2D 绘制改为异步帧缓存和有界调度，减少交互时的绘制开销；修复辉夜快跑背景克隆闪烁和下车后的角色动画。保留输入法修复、2048纹理和鼠标追踪关闭。见 [Room 绘制与游戏验证](docs/native-room-pipeline-v0.6.20.md)。
 
 0.6.17 优化 Room 聊天滚动：修复长回复逐字符重复扫描，缓存已完成回复与图片字节，关闭聊天 Markdown 的文章进度测量，流式更新避开拖动及惯性滚动。保持2048纹理和原有聊天分句、选区、链接、分享与朗读。见 [聊天滚动与复测记录](docs/native-chat-scroll-v0.6.17.md)。GitHub Release只展示当版更新，[历史日志](docs/changelog.md)单独保留。
 

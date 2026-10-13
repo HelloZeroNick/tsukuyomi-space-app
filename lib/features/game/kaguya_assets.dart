@@ -90,15 +90,11 @@ class KaguyaPainter extends CustomPainter {
     canvas.scale(size.width / 480, size.height / 360);
     canvas.clipRect(const Rect.fromLTWH(0, 0, 480, 360));
     canvas.drawColor(Colors.white, BlendMode.src);
-    final sprites =
-        runtime.sprites.where((s) => s.visible && !s.deleted).toList()..sort(
-          (a, b) => a.isStage
-              ? -1
-              : b.isStage
-              ? 1
-              : a.layer.compareTo(b.layer),
-        );
-    for (final sprite in sprites) {
+    // Scratch moves drawables in a unique ordered list, with clones behind
+    // their source. Sorting equal numeric layers lets scrolling skies exchange
+    // order whenever other clones are created/deleted.
+    for (final sprite in [runtime.stage, ...runtime.drawOrder]) {
+      if (!sprite.visible || sprite.deleted) continue;
       final opacity = (1 - (sprite.effects['ghost'] ?? 0).clamp(0, 100) / 100);
       if (opacity <= 0) continue;
       canvas.save();

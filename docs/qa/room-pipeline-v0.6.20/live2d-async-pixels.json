@@ -1,0 +1,33 @@
+{
+  "max_channel_delta": 1,
+  "raster_failures": 0,
+  "cache_record_timings": [
+    {
+      "pose": 0,
+      "reference_record_us": 176873,
+      "cached_record_us": 201,
+      "paints": 10,
+      "async_preparation_us": 4017,
+      "extra_model_records": 0,
+      "extra_rasterizations": 0
+    },
+    {
+      "pose": 1,
+      "reference_record_us": 158625,
+      "cached_record_us": 170,
+      "paints": 10,
+      "async_preparation_us": 1172,
+      "extra_model_records": 0,
+      "extra_rasterizations": 0
+    },
+    {
+      "pose": 2,
+      "reference_record_us": 252371,
+      "cached_record_us": 195,
+      "paints": 10,
+      "async_preparation_us": 2079,
+      "extra_model_records": 0,
+      "extra_rasterizations": 0
+    }
+  ]
+}

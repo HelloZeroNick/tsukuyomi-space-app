@@ -10,6 +10,34 @@ import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 import 'support/live2d_render_probe.dart';
 
 void main() {
+  testWidgets(
+    'real model async snapshots match reference and reuse cached paints',
+    (tester) async {
+      final model = (await tester.runAsync(() => loadLive2D()))!;
+      try {
+        final result = (await tester.runAsync(
+          () => probeNativeLive2DAsync(model),
+        ))!;
+        expect(result['max_channel_delta'], lessThanOrEqualTo(2));
+        expect(result['raster_failures'], 0);
+        for (final timing
+            in (result['cache_record_timings'] as List).cast<Map>()) {
+          expect(timing['extra_model_records'], 0);
+          expect(timing['extra_rasterizations'], 0);
+        }
+        await tester.runAsync(() async {
+          final output = File('artifacts/performance/live2d-async-pixels.json');
+          await output.parent.create(recursive: true);
+          await output.writeAsString(
+            '${const JsonEncoder.withIndent('  ').convert(result)}\n',
+          );
+        });
+      } finally {
+        model.dispose();
+      }
+    },
+    skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'),
+  );
   testWidgets('real Cubism model deforms and renders with native physics', (
     tester,
   ) async {

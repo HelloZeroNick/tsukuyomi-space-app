@@ -47,6 +47,7 @@ class _GamePageState extends State<GamePage>
   String _loadError = '';
   bool _loading = true, _expanded = false, _backgroundPause = false;
   int _loadTicket = 0, _volumeTick = 0;
+  Object? _sessionStamp;
 
   @override
   void initState() {
@@ -61,7 +62,22 @@ class _GamePageState extends State<GamePage>
 
   void _sessionChanged() {
     _audio?.configure(gain: session.volume, mute: session.muted);
-    if (mounted) setState(() {});
+    final stamp = (
+      session.muted,
+      session.volume,
+      session.touchControls,
+      session.authenticated,
+      session.loading,
+      session.saving,
+      session.entries,
+      session.page,
+      session.totalPages,
+      session.error,
+      session.saveError,
+    );
+    if (mounted && stamp != _sessionStamp) {
+      setState(() => _sessionStamp = stamp);
+    }
   }
 
   Future<void> _load() async {
@@ -429,8 +445,10 @@ class _GamePageState extends State<GamePage>
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            CustomPaint(
-                              painter: KaguyaPainter(runtime, _assets!),
+                            RepaintBoundary(
+                              child: CustomPaint(
+                                painter: KaguyaPainter(runtime, _assets!),
+                              ),
                             ),
                             if (session.touchControls && !runtime.paused)
                               Positioned(
@@ -578,10 +596,13 @@ class _GamePageState extends State<GamePage>
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const SiteText('积分榜', style: TextStyle(fontSize: 22)),
-            Text(
-              '${siteTr(context, 'gameCurrentScore')} ${_formatScore(session.score)}'
-              '  ·  ${siteTr(context, 'gameBestScore')} ${_formatScore(session.best)}'
-              '${session.rank > 0 ? '  ·  #${session.rank}' : ''}',
+            AnimatedBuilder(
+              animation: session,
+              builder: (context, _) => Text(
+                '${siteTr(context, 'gameCurrentScore')} ${_formatScore(session.score)}'
+                '  ·  ${siteTr(context, 'gameBestScore')} ${_formatScore(session.best)}'
+                '${session.rank > 0 ? '  ·  #${session.rank}' : ''}',
+              ),
             ),
             IconButton(
               tooltip: '刷新积分榜',

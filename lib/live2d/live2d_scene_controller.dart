@@ -73,13 +73,14 @@ class Live2DSceneController {
     painter?.dispose();
     model?.dispose();
     model = value;
-    painter = Live2DPainter(value);
+    painter = Live2DPainter(value, asynchronousRasterization: true);
     configure(quality: _quality, frameLimit: _frameLimit);
   }
 
   set active(bool value) {
     if (_active == value) return;
     _active = value;
+    painter?.renderingEnabled = value;
     _last = null;
     _nextFrame = null;
     _rasterSlow = _rasterGood = 0;
@@ -91,6 +92,9 @@ class Live2DSceneController {
   }
 
   void _tick(Duration elapsed) {
+    // The GPU is still preparing the previous coherent snapshot. Updating
+    // Cubism again would consume UI time for geometry that cannot be displayed.
+    if (painter?.rasterizationPending == true) return;
     if (_last == null) {
       _last = elapsed;
       _nextFrame = elapsed.inMicroseconds + (1000000 / fps).round();

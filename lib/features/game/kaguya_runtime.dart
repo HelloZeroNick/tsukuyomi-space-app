@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:collection';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,81 @@ class KaguyaRuntime extends ChangeNotifier {
       _validateInputs(sprite);
       sprites.add(sprite);
     }
+    _restoreDrawOrder();
+    _repairDismountAnimation();
+  }
+
+  // The shipped return-from-flight hat forces costume 17 until that costume
+  // touches the floor. Its mask can miss the floor for other character models,
+  // leaving the hat to overwrite the normal animation forever. The gravity
+  // script already owns landing and selects each model's falling/running pose.
+  void _repairDismountAnimation() {
+    final sprite = _find('辉夜');
+    if (sprite == null) return;
+    final blocks = sprite.blocks;
+    final reset = blocks['lM'], move = blocks['ce'];
+    if (reset is! Map ||
+        move is! Map ||
+        reset['next'] != 'ce' ||
+        move['next'] != 'cf' ||
+        (blocks['cf'] as Map?)?['opcode'] != 'control_repeat_until') {
+      return;
+    }
+    final jumping = stage.variables.entries
+        .where((e) => e.value[0] == '跳起？')
+        .firstOrNull;
+    if (jumping == null) return;
+    const id = 'tsukuyomi-dismount-falling';
+    blocks['lM'] = Map<String, dynamic>.from(reset)..['next'] = id;
+    blocks[id] = {
+      'opcode': 'data_setvariableto',
+      'next': 'ce',
+      'parent': 'lM',
+      'inputs': {
+        'VALUE': [
+          1,
+          [10, '1'],
+        ],
+      },
+      'fields': {
+        'VARIABLE': ['跳起？', jumping.key],
+      },
+    };
+    blocks['ce'] = Map<String, dynamic>.from(move)
+      ..['parent'] = id
+      ..['next'] = null;
+  }
+
+  final _drawOrder = <KaguyaSprite>[];
+  late final List<KaguyaSprite> drawOrder = UnmodifiableListView(_drawOrder);
+  void _restoreDrawOrder() {
+    final sourceIndices = {
+      for (var i = 0; i < sprites.length; i++) sprites[i]: i,
+    };
+    _drawOrder
+      ..clear()
+      ..addAll(sprites.where((s) => !s.isStage && !s.deleted))
+      ..sort((a, b) {
+        final order = a.layer.compareTo(b.layer);
+        return order == 0
+            ? sourceIndices[a]!.compareTo(sourceIndices[b]!)
+            : order;
+      });
+    _renumberLayers();
+  }
+
+  void _renumberLayers() {
+    for (var i = 0; i < _drawOrder.length; i++) {
+      _drawOrder[i].layer = i + 1;
+    }
+  }
+
+  void _moveLayer(KaguyaSprite sprite, int destination) {
+    final index = _drawOrder.indexOf(sprite);
+    if (index < 0) return;
+    _drawOrder.removeAt(index);
+    _drawOrder.insert(destination.clamp(0, _drawOrder.length), sprite);
+    _renumberLayers();
   }
 
   // Reject malformed reporter graphs before entering the UI-thread VM. Script
@@ -243,6 +319,7 @@ class KaguyaRuntime extends ChangeNotifier {
     _threads.clear();
     physics.reset();
     sprites.removeWhere((s) => s.isClone);
+    _restoreDrawOrder();
     running = true;
     paused = false;
     mouseDown = false;
@@ -336,10 +413,8 @@ class KaguyaRuntime extends ChangeNotifier {
     mouseY = y;
     mouseDown = down;
     if (!down) return;
-    final visible =
-        sprites.where((s) => !s.isStage && s.visible && !s.deleted).toList()
-          ..sort((a, b) => b.layer.compareTo(a.layer));
-    for (final s in visible) {
+    for (final s in _drawOrder.reversed) {
+      if (!s.visible || s.deleted) continue;
       if (s.containsPoint(Offset(x, y))) {
         _hats('event_whenthisspriteclicked', target: s);
         break;
@@ -380,6 +455,7 @@ class KaguyaRuntime extends ChangeNotifier {
 
   void advance(double seconds) {
     if (!running || paused) return;
+    _advanced = false;
     _guarded(() {
       _accumulator += seconds.clamp(0.0, .25);
       while (_accumulator >= 1 / 30 && running) {
@@ -387,8 +463,10 @@ class KaguyaRuntime extends ChangeNotifier {
         _tick();
       }
     });
-    notifyListeners();
+    if (_advanced) notifyListeners();
   }
+
+  bool _advanced = false;
 
   void _guarded(VoidCallback operation) {
     try {
@@ -416,10 +494,14 @@ class KaguyaRuntime extends ChangeNotifier {
   }
 
   void _tick({bool advanceClock = true}) {
+    _advanced = true;
     if (advanceClock) time += 1 / 30;
     _simulated.removeWhere((_, until) => until < time);
-    final current = List<_Thread>.of(_threads);
-    for (final thread in current) {
+    // Scratch steps newly created hats in this same scheduler pass. Delaying
+    // clone-start hats until the next paint exposes their inherited offscreen
+    // position and leaves a one-frame hole when a scrolling sky wraps.
+    for (var index = 0; index < _threads.length; index++) {
+      final thread = _threads[index];
       if (!running) break;
       if (thread.dead || thread.sprite.deleted) continue;
       _executing = thread;
@@ -471,6 +553,10 @@ class KaguyaRuntime extends ChangeNotifier {
     }
     _threads.removeWhere((t) => t.dead || t.sprite.deleted);
     sprites.removeWhere((s) => s.deleted);
+    if (_drawOrder.any((s) => s.deleted)) {
+      _drawOrder.removeWhere((s) => s.deleted);
+      _renumberLayers();
+    }
     _postgameCycle();
   }
 
@@ -650,14 +736,17 @@ class KaguyaRuntime extends ChangeNotifier {
       case 'looks_cleargraphiceffects':
         s.effects.clear();
       case 'looks_gotofrontback':
-        final layers = sprites.map((s) => s.layer).toList();
-        s.layer = _field(b, 'FRONT_BACK') == 'front'
-            ? layers.reduce(math.max) + 1
-            : layers.reduce(math.min) - 1;
+        _moveLayer(
+          s,
+          _field(b, 'FRONT_BACK') == 'front' ? _drawOrder.length - 1 : 0,
+        );
       case 'looks_goforwardbackwardlayers':
-        s.layer +=
-            (_field(b, 'FORWARD_BACKWARD') == 'forward' ? 1 : -1) *
-            n('NUM').toInt();
+        _moveLayer(
+          s,
+          _drawOrder.indexOf(s) +
+              (_field(b, 'FORWARD_BACKWARD') == 'forward' ? 1 : -1) *
+                  n('NUM').toInt(),
+        );
       case 'sound_setvolumeto':
         s.volume = n('VOLUME').clamp(0, 100);
       case 'sound_changevolumeby':
@@ -691,6 +780,11 @@ class KaguyaRuntime extends ChangeNotifier {
         if (original != null && cloneCount < 300) {
           final clone = original.clone(++_nextClone);
           sprites.add(clone);
+          _drawOrder.insert(
+            _drawOrder.indexOf(original).clamp(0, _drawOrder.length),
+            clone,
+          );
+          _renumberLayers();
           _hats('control_start_as_clone', target: clone);
         }
       case 'control_delete_this_clone':
@@ -1228,6 +1322,17 @@ class KaguyaSprite {
   }
 
   Rect get bounds {
+    final stamp = (
+      costume,
+      x,
+      y,
+      size,
+      direction,
+      rotationStyle,
+      stretchX,
+      stretchY,
+    );
+    if (_boundsStamp == stamp && _bounds != null) return _bounds!;
     final c = currentCostume,
         box =
             (c['alphaBounds'] as List?) ??
@@ -1238,13 +1343,17 @@ class KaguyaSprite {
       _worldPoint(KaguyaRuntime.number(box[0]), KaguyaRuntime.number(box[3])),
       _worldPoint(KaguyaRuntime.number(box[2]), KaguyaRuntime.number(box[3])),
     ];
-    return Rect.fromLTRB(
+    _boundsStamp = stamp;
+    return _bounds = Rect.fromLTRB(
       points.map((p) => p.dx).reduce(math.min),
       points.map((p) => p.dy).reduce(math.min),
       points.map((p) => p.dx).reduce(math.max),
       points.map((p) => p.dy).reduce(math.max),
     );
   }
+
+  Object? _boundsStamp;
+  Rect? _bounds;
 
   bool containsPoint(Offset point) {
     if (!bounds.contains(point) || scaleX == 0 || scaleY == 0) return false;

@@ -61,7 +61,7 @@ Future<void> main() async {
     if (model.meshes.length < 10 || model.textures.isEmpty) {
       throw StateError('Cubism returned an empty model');
     }
-    final painter = Live2DPainter(model)
+    final painter = Live2DPainter(model, asynchronousRasterization: true)
       ..rasterPixelBudget = Live2DSceneController.rasterBudgetFor(
         'auto',
         mobile: true,
@@ -106,6 +106,23 @@ Future<void> main() async {
     final detail = await probeLive2DCroppedDetail();
     final batches = await probeLive2DBatching();
     final nativeBatches = await probeNativeLive2DBatching(model);
+    final asyncSynthetic = await probeLive2DBatching(asynchronous: true);
+    final asyncNative = await probeNativeLive2DAsync(model);
+    if (asyncSynthetic['max_channel_delta'] > 2 ||
+        asyncNative['max_channel_delta'] > 2 ||
+        asyncNative['raster_failures'] != 0 ||
+        (asyncNative['cache_record_timings'] as List).cast<Map>().any(
+          (r) =>
+              r['extra_model_records'] != 0 || r['extra_rasterizations'] != 0,
+        )) {
+      throw StateError(
+        'Async model snapshot mismatch: $asyncSynthetic $asyncNative',
+      );
+    }
+    // ignore: avoid_print
+    print(
+      'TSUKUYOMI_LIVE2D_ASYNC_OK synthetic_max_delta=${asyncSynthetic['max_channel_delta']} native=$asyncNative',
+    );
     if (batches['max_channel_delta'] > 2 ||
         nativeBatches['max_channel_delta'] > 2 ||
         (nativeBatches['runs'] as List).cast<Map>().any(
@@ -166,8 +183,12 @@ Future<void> main() async {
     final game = gameAssets.runtime(random: math.Random(7));
     try {
       final result = await probeKaguyaRidingPixels(game, gameAssets);
+      final high = probeKaguyaHighDismount(game);
+      final sky = probeKaguyaSkyContinuity(game);
       // ignore: avoid_print
       print('TSUKUYOMI_GAME_RIDING_OK $result');
+      // ignore: avoid_print
+      print('TSUKUYOMI_GAME_CONTINUITY_OK high=$high sky=$sky');
     } finally {
       game.dispose();
       gameAssets.dispose();
