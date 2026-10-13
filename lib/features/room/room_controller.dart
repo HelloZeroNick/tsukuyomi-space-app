@@ -135,11 +135,19 @@ class RoomController extends ChangeNotifier {
 
   Account? account;
   List<ChatTurn> turns = [];
-  String draft = '',
-      partial = '',
-      sendingText = '',
-      error = '',
-      syncStatus = '仅保存在此设备';
+  String draft = '', sendingText = '', error = '', syncStatus = '仅保存在此设备';
+  final _partialBuffer = StringBuffer();
+  String? _partialSnapshot = '';
+
+  /// Tokens accumulate without copying the complete reply for each fragment.
+  /// The throttled UI takes a shared immutable snapshot only when it reads.
+  String get partial => _partialSnapshot ??= _partialBuffer.toString();
+  set partial(String value) {
+    _partialBuffer.clear();
+    _partialBuffer.write(value);
+    _partialSnapshot = value;
+  }
+
   bool loading = true, generating = false, busy = false, sessionExpired = false;
   int _generation = 0;
   bool _disposed = false, _syncing = false;
@@ -149,21 +157,37 @@ class RoomController extends ChangeNotifier {
   ChatTurn? _sharedTurn;
   DateTime? _beforeShareStart;
   Set<String> _beforeShareIds = {};
-  List<ChatTurn> get visibleTurns =>
-      _conversationStart == null && _sharedTurn == null
-      ? turns
-      : [
-          ?_sharedTurn,
-          ...(_conversationStart == null
-              ? turns
-              : turns
-                    .where(
-                      (t) =>
-                          !_previousConversationIds.contains(t.id) &&
-                          !t.createdAt.isBefore(_conversationStart!),
-                    )
-                    .toList()),
-        ];
+  Object? _visibleStamp;
+  List<ChatTurn> _visible = const [];
+  List<ChatTurn> get visibleTurns {
+    if (_conversationStart == null && _sharedTurn == null) {
+      _visibleStamp = null;
+      _visible = const [];
+      return turns;
+    }
+    final stamp = (
+      turns,
+      turns.length,
+      _conversationStart,
+      _sharedTurn,
+      _previousConversationIds,
+    );
+    if (_visibleStamp != stamp) {
+      _visibleStamp = stamp;
+      _visible = List.unmodifiable([
+        ?_sharedTurn,
+        ...(_conversationStart == null
+            ? turns
+            : turns.where(
+                (t) =>
+                    !_previousConversationIds.contains(t.id) &&
+                    !t.createdAt.isBefore(_conversationStart!),
+              )),
+      ]);
+    }
+    return _visible;
+  }
+
   bool isSharedTurn(ChatTurn turn) => turn.id == _sharedTurn?.id;
   String get scope => settings.demo
       ? 'demo'
@@ -771,7 +795,8 @@ class RoomController extends ChangeNotifier {
         requestText,
       )) {
         if (generation != _generation || _disposed) return;
-        partial += delta;
+        _partialBuffer.write(delta);
+        _partialSnapshot = null;
         _streamChanged();
       }
       if (generation != _generation || _disposed) return;

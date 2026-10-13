@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/features/room/room_controller.dart';
 import 'package:tsukuyomi_space_app/features/room/room_page.dart';
+import 'package:tsukuyomi_space_app/features/room/room_chat_view.dart';
+import 'package:tsukuyomi_space_app/core/models.dart';
+import 'package:tsukuyomi_space_app/live2d/character_stage.dart';
 
 import '../test/support/fakes.dart';
 
@@ -35,6 +38,17 @@ Future<void> probeAndroidRoomKeyboard(Live2DModel model) async {
     voice: SilentVoice(),
   );
   await room.initialize();
+  room.turns = List.generate(
+    2000,
+    (i) => ChatTurn(
+      id: 'native-history-$i',
+      user: '历史问题 $i',
+      assistant: i == 1999
+          ? List.generate(600, (j) => '第 $j 句是较长的历史回复。').join()
+          : '历史回复 $i。第二句。',
+      createdAt: DateTime(2020),
+    ),
+  );
   runApp(
     MaterialApp(
       home: RoomPage(controller: room, modelLoader: () async => model),
@@ -62,6 +76,62 @@ Future<void> probeAndroidRoomKeyboard(Live2DModel model) async {
   final view = WidgetsBinding.instance.platformDispatcher.views.first;
   final initialViewport = viewport();
   try {
+    final chatElement = _find(
+      WidgetsBinding.instance.rootElement!,
+      (widget) => widget is RoomChatView,
+    )!;
+    var mountedTexts = 0;
+    void countTexts(Element element) {
+      if (element.widget is SelectableText) mountedTexts++;
+      element.visitChildren(countTexts);
+    }
+
+    countTexts(chatElement);
+    final scrollElement = _find(chatElement, (widget) => widget is Scrollable)!;
+    final scroll = (scrollElement as StatefulElement).state as ScrollableState;
+    final activity =
+        (_find(
+                  WidgetsBinding.instance.rootElement!,
+                  (widget) => widget is CharacterStage,
+                )!.widget
+                as CharacterStage)
+            .interacting!;
+    if (mountedTexts > 40 || mountedTexts == 0) {
+      throw StateError('Native transcript mounted $mountedTexts text widgets');
+    }
+    var modelUpdates = 0;
+    void updated() => modelUpdates++;
+    model.addListener(updated);
+    try {
+      await _wait(() => modelUpdates > 0, 'visible model advances before drag');
+      final drag = scroll.position.drag(
+        DragStartDetails(globalPosition: Offset(100, 400)),
+        () {},
+      );
+      drag.update(
+        DragUpdateDetails(
+          delta: Offset(0, 40),
+          primaryDelta: 40,
+          globalPosition: Offset(100, 440),
+        ),
+      );
+      await WidgetsBinding.instance.endOfFrame;
+      if (!activity.value) throw StateError('Native drag did not yield scene');
+      final beforeDrag = modelUpdates;
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (modelUpdates != beforeDrag) {
+        throw StateError('Native model kept updating during drag');
+      }
+      drag.cancel();
+      await _wait(() => !activity.value, 'drag completes');
+      await _wait(() => modelUpdates > beforeDrag, 'model resumes after drag');
+      // ignore: avoid_print
+      print(
+        'TSUKUYOMI_ROOM_LAZY_OK turns=2000 sentences=600 mounted_texts=$mountedTexts drag_model_updates=0 resumed=true',
+      );
+    } finally {
+      model.removeListener(updated);
+    }
     for (var cycle = 0; cycle < 3; cycle++) {
       final text = '你好 $cycle';
       editable.widget.controller.value = TextEditingValue(

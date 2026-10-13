@@ -29,6 +29,11 @@ class Live2DPainter extends CustomPainter {
   int recordedFrames = 0, cachedPaints = 0, asyncRasterizations = 0;
   int rasterFailures = 0;
   int lastPreparationMicros = 0, totalPreparationMicros = 0;
+  // Async raster work is not necessarily attributed to the visible Flutter
+  // frame's FrameTiming. Keep its queue/completion latency separate from
+  // UI-side source recording; these wall times are not GPU utilization.
+  int lastRasterizationMicros = 0, totalRasterizationMicros = 0;
+  int completedFrames = 0, discardedFrames = 0;
   bool get rasterizationPending => _pending != null;
   Future<void> get pendingRasterization => _pending ?? Future<void>.value();
 
@@ -217,6 +222,7 @@ class Live2DPainter extends CustomPainter {
   ) async {
     // Always cross an async boundary before replacing _pending. At most one
     // model frame is in flight; intermediate model updates coalesce naturally.
+    final latency = Stopwatch()..start();
     await Future<void>.value();
     try {
       for (final piece in next.pieces) {
@@ -232,12 +238,18 @@ class Live2DPainter extends CustomPainter {
       _frame?.dispose();
       _frame = next;
       _frameStamp = stamp;
+      completedFrames++;
     } catch (error) {
       rasterFailures++;
       _asyncFailed = true;
       debugPrint('Live2D async rasterization failed: ${error.runtimeType}');
     } finally {
-      if (!identical(_frame, next)) next.dispose();
+      lastRasterizationMicros = latency.elapsedMicroseconds;
+      totalRasterizationMicros += lastRasterizationMicros;
+      if (!identical(_frame, next)) {
+        discardedFrames++;
+        next.dispose();
+      }
       _pending = null;
       if (!_disposed && (_enabled || frozen)) {
         _ready.changed();

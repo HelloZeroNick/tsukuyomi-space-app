@@ -106,6 +106,9 @@ Future<Map<String, dynamic>> probeNativeLive2DAsync(Live2DModel model) async {
         'cached_record_us': source.elapsedMicroseconds,
         'paints': 10,
         'async_preparation_us': cached.lastPreparationMicros,
+        'async_elapsed_us': cached.lastRasterizationMicros,
+        'completed_frames': cached.completedFrames,
+        'discarded_frames': cached.discardedFrames,
         'extra_model_records': cached.recordedFrames - records,
         'extra_rasterizations': cached.asyncRasterizations - rasterizations,
       });

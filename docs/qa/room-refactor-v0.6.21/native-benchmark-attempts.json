@@ -1,0 +1,43 @@
+{
+  "accepted_native_comparison": false,
+  "accepted_final_runs": 0,
+  "platform": "macOS27.0.1, AppleM5,16GB; no physicalAndroid attached",
+  "baseline_commit": "1757f5ebaa2f9cf0fb40007f3384ad090b09dd35",
+  "attempts": [
+    {
+      "kind": "initial current-source instantaneous drag fixture",
+      "outcome": "three rawruns returned but wholeintegrationtestfailed",
+      "guard_or_error": "External platform accessibility enabled mid-test addedSemanticsHandle; testteardownrejected. Gestureyieldwalltime only2.6–3.2ms, so not sustainedinputperformance evidence.",
+      "accepted": false
+    },
+    {
+      "kind": "isolated baseline fixture preparation",
+      "outcome": "modeldidnotload; no sampling",
+      "guard_or_error": "Nestedignoredtexturefiles absentfrom archivedfixture; fixedrecursiveassetlinks verifiedinsidebuiltbundle.",
+      "accepted": false
+    },
+    {
+      "kind": "baseline paused-launch sustaineddrag attempt",
+      "outcome": "idleguardrejected",
+      "guard_or_error": "7modelticks/2seconds, belowminimum10; CUAshowedgrayinactivewindow despiteisKeyWindow/lifecyclereportedfocused/resumed.",
+      "accepted": false
+    },
+    {
+      "kind": "baseline genuine Windowmenuactivation beforeVMresume",
+      "outcome": "idleandforegroundguardspassed; workloadfailedbeforefinalresult",
+      "guard_or_error": "FakeChatstreamwascancelled/closed duringhelddrag at11seconds; subsequentaddthrewCannotadd eventafterclosing. No P95resultaccepted.",
+      "accepted": false
+    },
+    {
+      "kind": "baseline corrected bounded gesture with genuine Window menu activation",
+      "outcome": "whole integration test and driver passed;3 runs accepted",
+      "guard_or_error": null,
+      "accepted": true,
+      "evidence": "native-before.json"
+    }
+  ],
+  "fixture_repair_after_attempt": "Dragstarts neartranscriptedge at15percentheight, displacementboundedto60percentviewport so itstaysinsidechat; verifiedbywidgetfixture separately.",
+  "conclusion": "Early invalid runs remain rejected. Three valid baseline runs passed all foreground, idle, frame population and hidden model guards; candidate comparison pending.",
+  "accepted_baseline_runs": 3,
+  "accepted_candidate_runs": 0
+}

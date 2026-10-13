@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
+    show defaultTargetPlatform, TargetPlatform, ValueListenable;
 import 'package:flutter/rendering.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 
@@ -27,6 +27,7 @@ class CharacterStage extends StatefulWidget {
     this.loadNative = true,
     this.mobile = false,
     this.keyboardOpen = false,
+    this.interacting,
     this.onSettings,
     this.onReady,
     this.onMusic,
@@ -47,6 +48,10 @@ class CharacterStage extends StatefulWidget {
   final Map<String, dynamic> world;
   final VoidCallback? onWorld, onVoiceSettings;
   final bool loadNative, mobile, keyboardOpen;
+
+  /// The Room activity bus yields animation work during active gestures and
+  /// brief input/keyboard transitions without rebuilding the stage subtree.
+  final ValueListenable<bool>? interacting;
   final VoidCallback? onSettings, onMusic;
   final String musicTitle;
   final bool musicPlaying, musicLoading;
@@ -113,7 +118,7 @@ class _CharacterStageState extends State<CharacterStage>
           _pose = pose;
           _poseRevision.value++;
         }
-        _model?.parameterOverrides = widget.animation?.parameters ?? {};
+        _model?.parameterOverrides = widget.animation?.parameters ?? const {};
         _model?.tick(
           seconds,
           delta.clamp(0, .05),
@@ -124,6 +129,8 @@ class _CharacterStageState extends State<CharacterStage>
         );
       },
     );
+    widget.interacting?.addListener(_syncInteraction);
+    _syncInteraction();
     if (widget.loadNative) unawaited(_load());
   }
 
@@ -172,6 +179,11 @@ class _CharacterStageState extends State<CharacterStage>
         _model != null;
   }
 
+  void _syncInteraction() {
+    if (!mounted) return;
+    _sceneController.interacting = widget.interacting?.value ?? false;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -189,15 +201,22 @@ class _CharacterStageState extends State<CharacterStage>
   @override
   void didUpdateWidget(covariant CharacterStage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.interacting != widget.interacting) {
+      oldWidget.interacting?.removeListener(_syncInteraction);
+      widget.interacting?.addListener(_syncInteraction);
+      _syncInteraction();
+    }
     if (widget.loadNative &&
         widget.modelLoader == null &&
         _textureLimit(oldWidget.settings) != _textureLimit(widget.settings)) {
       unawaited(_load());
     }
     // The fullscreen route is outside this widget's subtree.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _sceneRevision.value++;
-    });
+    if (_fullscreen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _fullscreen) _sceneRevision.value++;
+      });
+    }
   }
 
   @override
@@ -211,6 +230,7 @@ class _CharacterStageState extends State<CharacterStage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _window?.removeListener(_syncTicker);
+    widget.interacting?.removeListener(_syncInteraction);
     _lightingTimer?.cancel();
     _sceneController.dispose();
     _sceneRevision.dispose();
@@ -226,7 +246,7 @@ class _CharacterStageState extends State<CharacterStage>
       content: Text(
         _model == null
             ? (_failure ?? '正在载入原生 Live2D 模型…')
-            : 'Cubism Native · ${_model!.meshes.length} 个网格\n最近模型更新 ${_model!.updateMilliseconds.toStringAsFixed(1)} ms\n自适应帧率，此数值不包含 GPU 绘制耗时。',
+            : 'Cubism Native · ${_model!.meshes.length} 个网格\n最近模型更新 ${_model!.updateMilliseconds.toStringAsFixed(1)} ms\n更新上限 ${_sceneController.fps} fps · 交互避让 ${_sceneController.interactionYields} 次\n自适应帧率，此数值不包含 GPU 绘制耗时。',
       ),
       actions: [
         TextButton(

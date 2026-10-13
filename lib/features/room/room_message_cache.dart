@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' as html;
+
 import '../../core/room_reply.dart';
+import '../site/native_article_document.dart';
 
 final _markdownPattern = RegExp(
   r'(^|\n)\s*(#{1,6} |[-*] |[0-9]+\. |~~~)|\*\*|\[[^\]]+\]\(',
@@ -13,15 +17,55 @@ bool roomReplyHasMarkdown(String text) =>
 class RoomReplyPresentation {
   factory RoomReplyPresentation(String text, {bool streaming = false}) {
     final markdown = !streaming && roomReplyHasMarkdown(text);
+    if (markdown && text.length > 6000) {
+      // Resolve reference links and sanitize the complete document before
+      // splitting. Each top-level fence, list, table and callout stays atomic.
+      final fragment = html.parseFragment(
+        parseNativeArticle(text, 'markdown').html,
+      );
+      final internalLink = fragment
+          .querySelectorAll('a[href]')
+          .any((link) => (link.attributes['href'] ?? '').startsWith('#'));
+      // NativeRichText owns anchor scrolling. Keep footnotes and other local
+      // links in one document until cross-sliver anchor navigation is available.
+      if (!internalLink) {
+        final chunks = <String>[];
+        var buffer = StringBuffer(), blocks = 0;
+        for (final node in fragment.nodes) {
+          final value = node is dom.Element
+              ? node.outerHtml
+              : const HtmlEscape().convert(node.text ?? '');
+          if (node is dom.Element &&
+              blocks > 0 &&
+              (blocks >= 6 || buffer.length + value.length > 6000)) {
+            chunks.add(buffer.toString());
+            buffer = StringBuffer();
+            blocks = 0;
+          }
+          buffer.write(value);
+          if (node is dom.Element) blocks++;
+        }
+        if (buffer.isNotEmpty) chunks.add(buffer.toString());
+        if (chunks.length > 1) {
+          return RoomReplyPresentation._(
+            true,
+            List.unmodifiable(chunks),
+            'html',
+          );
+        }
+      }
+    }
     return RoomReplyPresentation._(
       markdown,
       List.unmodifiable(markdown ? [text] : splitRoomReply(text)),
+      'markdown',
     );
   }
-  const RoomReplyPresentation._(this.markdown, this.parts);
+  const RoomReplyPresentation._(this.markdown, this.parts, this.format);
 
   final bool markdown;
   final List<String> parts;
+  final String format;
 }
 
 /// Bounded, page-owned data cache. It never retains widgets, contexts or cookies.

@@ -1,0 +1,50 @@
+{
+  "host": {
+    "os": "27.0.1",
+    "chip": "Apple M5",
+    "model": "Mac17,3",
+    "memory": "16 GB",
+    "cpu": "proc 10:4:0:6"
+  },
+  "baseline_commit": "1757f5ebaa2f9cf0fb40007f3384ad090b09dd35",
+  "scope": "native macOS profile; hardware stats are not Android K90, RX9070 or RTX4060 evidence",
+  "files_sha256": {
+    "lib/features/room/room_page.dart": "f78015b8fff58ea4b8ea3cf9e6cc61744d2eedbd9f1631c9a801837cef0e6348",
+    "lib/features/room/room_controller.dart": "46d4f5f4a8020477395dc4ea37db80c4560bf0c0aab66a0c0f7b11f8cdd6a155",
+    "lib/features/room/room_chat_view.dart": "13856c3da3193f30469d626b27aebe218d2a81238e8d8a6f008d6e353dcb9935",
+    "lib/features/room/room_composer.dart": "6ed088b16f6392590b231226505be6600ee95db9be66592dafa6f49652b4766c",
+    "lib/features/room/room_interaction.dart": "0b825b269a7c46819e3db757a0837d7fb688c4f3340fb9348196f2feb894f357",
+    "lib/features/room/room_selector.dart": "da8a3fc8fd98593351a3f4c5180fb6747b039c68616545117bb919b8e6170229",
+    "lib/live2d/character_stage.dart": "81f2b731ab33e06e5e549c242eaec2bb03647c49a813931ad89ae6fe7e760de9",
+    "lib/live2d/live2d_scene_controller.dart": "0699e46d79e469dda8cbe7567fc05deb4b615217e5a187fd2be0dc21104ab15a",
+    "packages/tsukuyomi_live2d/lib/renderer.dart": "aa5d1bedc9246285c49d90ce8a0ad062c12b88101e3f86a96382166cc3c7a86f",
+    "integration_test/room_performance_test.dart": "d00deaa87aedfb5359eec1963af5576473cd6cb5678bd5fc3ddb98bc6bc3e538"
+  },
+  "comparison_settings": {
+    "quality": "auto",
+    "desktop_raster_pixel_budget": 600000,
+    "texture_limit": 2048,
+    "display_pixel_ratio": 2.0,
+    "window_logical_size": [
+      1280,
+      820
+    ],
+    "turns": 2000,
+    "image_messages": 200,
+    "held_drags": 10,
+    "frames_per_drag": 18,
+    "wall_time_between_steps_ms": 16,
+    "repetitions": 3
+  },
+  "acceptance_guards": [
+    "foreground lifecycle throughout sample",
+    "focused desktop window throughout sample",
+    "at least10 native modelticks in2 seconds idle beforeinput",
+    "at least60 measured frames",
+    "actual interaction yields for refactor",
+    "hidden modelticks0"
+  ],
+  "baseline_harness_sha256": "d00deaa87aedfb5359eec1963af5576473cd6cb5678bd5fc3ddb98bc6bc3e538",
+  "accepted_baseline_runs": 3,
+  "baseline_driver_exit_code": 0
+}

@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 
 import '../site/site_widgets.dart' show SiteBackground;
 
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/services.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 
@@ -24,19 +23,18 @@ import 'room_search.dart';
 import '../../live2d/character_stage.dart';
 import '../settings/settings_dialog.dart';
 import '../site/login_dialog.dart';
-import '../site/native_rich_text.dart';
 import '../site/site_navigation.dart';
 import 'room_controller.dart';
 import 'room_panels.dart';
 import 'room_style.dart';
 import 'room_quick_setup.dart';
 import 'room_message_cache.dart';
+import 'room_chat_view.dart';
+import 'room_composer.dart';
+import 'room_interaction.dart';
+import 'room_selector.dart';
 import '../agent/agent_panel.dart';
 import '../agent/desktop_agent_controller.dart';
-
-class _SendMessageIntent extends Intent {
-  const _SendMessageIntent();
-}
 
 class RoomPage extends StatefulWidget {
   const RoomPage({
@@ -57,23 +55,21 @@ class RoomPage extends StatefulWidget {
 }
 
 class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
-  final _input = TextEditingController(), _scroll = ScrollController();
-  final _focus = FocusNode();
   final _stageKey = GlobalKey();
-  final _conversationCenter = GlobalKey();
+  final _composerKey = GlobalKey<RoomComposerState>();
   final _messages = RoomMessageCache();
+  final _interaction = RoomInteraction();
+  final _ready = ValueNotifier<bool>(false);
   Object? _stageStamp;
-  Widget? _stageWidget;
-  List<ChatTurn>? _lastTurnSource;
-  bool _wasGenerating = false;
-  DateTime _openedAt = DateTime.now();
-  final _historicalIds = <String>{};
+  Widget? _stageWidget, _chatWidget, _conversationWidget, _navigationWidget;
+  Object? _conversationStamp, _navigationStamp;
+  bool? _chatMobile;
   late final RoomMusic _roomMusic;
+  late final Listenable _sceneSources, _workspaceSources;
   late final bool _ownsMusic;
-  String _musicState = '';
-  String _lastScope = '', _lastDraft = '', _panel = '聊天';
-  bool _ready = false, _quiet = false;
-  final _unread = ValueNotifier<bool>(false);
+  String _panel = '聊天';
+  String _imageScope = '';
+  bool _quiet = false;
   DesktopAgentController? _agent;
   Map<String, IconData> get _roomTabs => {
     ..._tabs,
@@ -90,61 +86,24 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _lastScope = c.scope;
-    _historicalIds.addAll(c.visibleTurns.map((t) => t.id));
-    _lastDraft = c.draft;
-    _lastTurnSource = c.turns;
-    _wasGenerating = c.generating;
-    _input.text = c.draft;
-    c.addListener(_update);
-    c.streamRevision.addListener(_followConversation);
     final shared = SiteMusicScope.maybeOf(context);
     _ownsMusic = shared == null;
-    _roomMusic = (shared ?? RoomMusic(c))..addListener(_musicChanged);
+    _roomMusic = shared ?? RoomMusic(c);
+    _sceneSources = Listenable.merge([c, _roomMusic]);
+    _workspaceSources = Listenable.merge([c, _ready]);
     if (_ownsMusic) {
       c.registerBackgroundMusic(this, _roomMusic.suspend);
       unawaited(_roomMusic.load());
     }
   }
 
-  void _musicChanged() {
-    final state =
-        '${_roomMusic.index}/${_roomMusic.playing}/${_roomMusic.loading}/${_roomMusic.error}';
-    if (mounted && state != _musicState) {
-      setState(() => _musicState = state);
-    }
-  }
-
-  void _followConversation() {
-    if (!mounted || !_scroll.hasClients) return;
-    if (_scroll.position.extentAfter > 100) {
-      _unread.value = true;
-      return;
-    }
-    if (_scroll.position.isScrollingNotifier.value) return;
-    final pixels = _scroll.position.pixels;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          _scroll.hasClients &&
-          !_scroll.position.isScrollingNotifier.value &&
-          (_scroll.position.pixels - pixels).abs() < 1) {
-        _scroll.jumpTo(_scroll.position.maxScrollExtent);
-      }
-    });
-  }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    c.removeListener(_update);
-    c.streamRevision.removeListener(_followConversation);
-    _unread.dispose();
+    _ready.dispose();
+    _interaction.dispose();
     _messages.clear();
     _agent?.dispose();
-    _input.dispose();
-    _scroll.dispose();
-    _focus.dispose();
-    _roomMusic.removeListener(_musicChanged);
     if (_ownsMusic) {
       c.unregisterBackgroundMusic(this);
       _roomMusic.dispose();
@@ -175,67 +134,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return AppExitResponse.exit;
   }
 
-  void _update() {
-    if (!mounted) return;
-    if (_lastScope != c.scope) {
-      _messages.clear();
-      _openedAt = DateTime.now();
-      _historicalIds
-        ..clear()
-        ..addAll(c.visibleTurns.map((t) => t.id));
-      _unread.value = false;
-    }
-    if (_lastScope != c.scope ||
-        _lastDraft != c.draft ||
-        (!c.generating && _input.text.isEmpty && c.draft.isNotEmpty)) {
-      if (!c.generating && (_lastScope != c.scope || _input.text != c.draft)) {
-        _input.value = TextEditingValue(
-          text: c.draft,
-          selection: TextSelection.collapsed(offset: c.draft.length),
-        );
-      }
-      _lastScope = c.scope;
-      _lastDraft = c.draft;
-    }
-    final conversationChanged =
-        !identical(_lastTurnSource, c.turns) || _wasGenerating != c.generating;
-    _lastTurnSource = c.turns;
-    _wasGenerating = c.generating;
-    final nearBottom =
-        !_scroll.hasClients || _scroll.position.extentAfter < 100;
-    final pixels = _scroll.hasClients ? _scroll.position.pixels : null;
-    setState(() {});
-    if (conversationChanged &&
-        !nearBottom &&
-        (c.visibleTurns.isNotEmpty || c.generating)) {
-      _unread.value = true;
-    }
-    if (conversationChanged &&
-        nearBottom &&
-        (c.visibleTurns.isNotEmpty || c.generating)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted &&
-            _scroll.hasClients &&
-            !_scroll.position.isScrollingNotifier.value &&
-            (pixels == null || (_scroll.position.pixels - pixels).abs() < 1)) {
-          _scroll.jumpTo(_scroll.position.maxScrollExtent);
-        }
-      });
-    }
-  }
-
-  void _send() {
-    if ((_input.text.trim().isEmpty && c.attachment == null) || !c.canSend) {
-      return;
-    }
-    final value = _input.text;
-    // Keep rejected oversized input visible, matching controller validation.
-    if (value.trim().length > 12000) {
-      unawaited(c.send(value));
-      return;
-    }
-    _input.clear();
-    unawaited(c.send(value));
+  @override
+  void didChangeMetrics() {
+    _interaction.keyboardTransition();
   }
 
   void _settings() =>
@@ -278,7 +179,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         setState(() {
           _panel = '聊天';
           _quiet = false;
-          _input.clear();
         });
       }
     } catch (_) {
@@ -353,6 +253,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   Widget _characterStage({required bool mobile, required bool keyboardOpen}) {
+    if (_imageScope != c.scope) {
+      _imageScope = c.scope;
+      _messages.clear();
+    }
     final stamp = (
       c.scope,
       c.settings,
@@ -407,6 +311,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         modelLoader: widget.modelLoader,
         mobile: mobile,
         keyboardOpen: keyboardOpen,
+        interacting: _interaction,
         onSettings: _settings,
         onVoiceSettings: () => showRoomSettings(
           context,
@@ -425,7 +330,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           }
         },
         onReady: (value) {
-          if (mounted) setState(() => _ready = value);
+          if (mounted) _ready.value = value;
         },
       );
     }
@@ -434,7 +339,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyK, meta: true): _search,
@@ -446,6 +350,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           maintainBottomViewPadding: true,
           child: LayoutBuilder(
             builder: (context, box) {
+              final keyboard = MediaQuery.viewInsetsOf(context).bottom;
               final mobile = box.maxWidth <= RoomStyle.breakpoint;
               final headerHeight = math.max(
                 mobile ? 60.0 : 68.0,
@@ -456,9 +361,18 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               final landscape = mobile && box.maxHeight < 500 && keyboard == 0;
               final compactKeyboard =
                   mobile && keyboard > 0 && box.maxHeight - keyboard < 240;
-              final stage = _characterStage(
-                mobile: mobile,
-                keyboardOpen: keyboard > 0,
+              final stage = RoomSelector(
+                listenable: _sceneSources,
+                select: () => (
+                  c.scope,
+                  c.settings,
+                  c.workspace.currentWorld['city'],
+                  _roomMusic.index,
+                  _roomMusic.playing,
+                  _roomMusic.loading,
+                ),
+                builder: (_) =>
+                    _characterStage(mobile: mobile, keyboardOpen: keyboard > 0),
               );
               return Stack(
                 fit: StackFit.expand,
@@ -486,7 +400,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       Positioned(
                         top: headerHeight + 22,
                         left: 16,
-                        child: _mobileTools(),
+                        child: RoomSelector(
+                          listenable: c,
+                          select: () => c.canSend,
+                          builder: (_) => _mobileTools(),
+                        ),
                       ),
                     if (!compactKeyboard)
                       Positioned(
@@ -533,22 +451,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                           ? 12
                           : math.max(24, (box.maxWidth - 1320) / 2),
                       height: headerHeight,
-                      child: RoomNavigation(
-                        mobile: mobile,
-                        width: box.maxWidth,
-                        onGo: (path) => path == '/room'
-                            ? _selectPanel('聊天')
-                            : _website(path),
-                        onSearch: _search,
-                        onSettings: _settings,
-                        onTheme: widget.onToggleTheme,
-                        onAccount: c.loading || c.busy || c.generating
-                            ? null
-                            : _account,
-                        accountLabel: c.sessionExpired
-                            ? '重新登录'
-                            : c.account?.displayName ?? '登录',
-                      ),
+                      child: _navigation(mobile, box.maxWidth),
                     ),
                 ],
               );
@@ -557,6 +460,37 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  Widget _navigation(bool mobile, double width) {
+    final stamp = (mobile, width, widget.onToggleTheme, widget.onNavigate);
+    if (_navigationStamp != stamp) {
+      _navigationStamp = stamp;
+      _navigationWidget = RoomSelector(
+        listenable: c,
+        select: () => (
+          c.loading,
+          c.busy,
+          c.generating,
+          c.sessionExpired,
+          c.account,
+          c.sessionVerified,
+        ),
+        builder: (_) => RoomNavigation(
+          mobile: mobile,
+          width: width,
+          onGo: (path) => path == '/room' ? _selectPanel('聊天') : _website(path),
+          onSearch: _search,
+          onSettings: _settings,
+          onTheme: widget.onToggleTheme,
+          onAccount: c.loading || c.busy || c.generating ? null : _account,
+          accountLabel: c.sessionExpired
+              ? '重新登录'
+              : c.account?.displayName ?? '登录',
+        ),
+      );
+    }
+    return _navigationWidget!;
   }
 
   Widget _roundButton(String label, IconData icon, VoidCallback action) {
@@ -636,7 +570,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _desktopWorkspace() {
+  Widget _desktopWorkspace() => RoomSelector(
+    listenable: _workspaceSources,
+    select: () =>
+        (c.scope, c.canSend, c.generating, c.turns.isEmpty, _ready.value),
+    builder: (_) => _desktopWorkspaceBody(),
+  );
+
+  Widget _desktopWorkspaceBody() {
     final p = RoomStyle(context);
     return Container(
       key: const Key('desktop-workspace'),
@@ -670,7 +611,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         Icon(
                           Icons.circle,
                           size: 4,
-                          color: _ready ? p.success : p.muted,
+                          color: _ready.value ? p.success : p.muted,
                         ),
                         const SizedBox(width: 5),
                         Expanded(
@@ -774,7 +715,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _utilityPanel() => _panel == 'Agent'
+  Widget _utilityPanel() => RoomSelector(
+    listenable: c,
+    select: () => c.scope,
+    builder: (_) => _utilityPanelBody(),
+  );
+
+  Widget _utilityPanelBody() => _panel == 'Agent'
       ? AgentPanel(controller: _agent!, onGo: (path) => _website(path))
       : RoomUtilityPanel(
           key: ValueKey('${c.scope}:$_panel'),
@@ -817,6 +764,35 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     bool keyboard = false,
     bool short = false,
   }) {
+    final stamp = (mobile, keyboard, short, Theme.of(context));
+    if (_conversationStamp != stamp) {
+      _conversationStamp = stamp;
+      _conversationWidget = RoomSelector(
+        listenable: c,
+        select: () => (
+          c.scope,
+          c.loading,
+          c.settings.demo,
+          c.settings.model,
+          c.visibleTurns.isEmpty,
+          c.generating,
+          c.error,
+          c.draft.isNotEmpty,
+          c.attachment,
+          c.canSend,
+        ),
+        builder: (_) =>
+            _conversationBody(mobile: mobile, keyboard: keyboard, short: short),
+      );
+    }
+    return _conversationWidget!;
+  }
+
+  Widget _conversationBody({
+    required bool mobile,
+    required bool keyboard,
+    required bool short,
+  }) {
     final turns = c.visibleTurns;
     final p = RoomStyle(context);
     return Column(
@@ -832,22 +808,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               ? const Center(child: CircularProgressIndicator())
               : turns.isEmpty && !c.generating
               ? _welcome(mobile: mobile, short: short || keyboard)
-              : _messageList(turns, mobile: mobile),
-        ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _unread,
-          builder: (context, unread, _) => unread
-              ? TextButton.icon(
-                  icon: const Icon(Icons.arrow_downward, size: 16),
-                  label: const SiteText('查看新消息'),
-                  onPressed: () {
-                    _unread.value = false;
-                    if (_scroll.hasClients) {
-                      _scroll.jumpTo(_scroll.position.maxScrollExtent);
-                    }
-                  },
-                )
-              : const SizedBox.shrink(),
+              : _chat(mobile),
         ),
         if (c.error.isNotEmpty)
           Padding(
@@ -913,51 +874,63 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         Padding(
           key: const ValueKey('room-composer-slot'),
           padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 0),
-          child: AnimatedBuilder(
-            animation: _input,
-            builder: (context, _) => _composer(mobile),
+          child: RoomComposer(
+            key: _composerKey,
+            controller: c,
+            mobile: mobile,
+            onAttach: () => unawaited(_attach()),
+            onTyping: _interaction.typing,
           ),
         ),
         if (!mobile)
-          Padding(
-            padding: const EdgeInsets.only(top: 7),
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: siteTranslate(context, '结束聊天'),
-                  onPressed: _endConversation,
-                  style: IconButton.styleFrom(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(24, 24),
-                    padding: const EdgeInsets.all(3),
-                  ),
-                  icon: const Icon(CupertinoIcons.book, size: 12),
-                ),
-                Expanded(
-                  child: Text(
-                    c.settings.demo ? '离线演示 · 仅保存在本机' : c.syncStatus,
-                    style: TextStyle(fontSize: 9, height: 1.15, color: p.muted),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (c.account != null)
+          RoomSelector(
+            listenable: c,
+            select: () =>
+                (c.settings.demo, c.syncStatus, c.account, c.generating),
+            builder: (_) => Padding(
+              padding: const EdgeInsets.only(top: 7),
+              child: Row(
+                children: [
                   IconButton(
-                    tooltip: siteTranslate(context, '同步会话'),
-                    onPressed: c.generating ? null : c.sync,
-                    icon: const Icon(
-                      CupertinoIcons.arrow_2_circlepath,
-                      size: 14,
+                    tooltip: siteTranslate(context, '结束聊天'),
+                    onPressed: _endConversation,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(24, 24),
+                      padding: const EdgeInsets.all(3),
+                    ),
+                    icon: const Icon(CupertinoIcons.book, size: 12),
+                  ),
+                  Expanded(
+                    child: Text(
+                      c.settings.demo ? '离线演示 · 仅保存在本机' : c.syncStatus,
+                      style: TextStyle(
+                        fontSize: 9,
+                        height: 1.15,
+                        color: p.muted,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                Flexible(
-                  child: SiteText(
-                    'AI 角色对话 · 请理性判断生成内容',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 8, color: p.muted),
+                  if (c.account != null)
+                    IconButton(
+                      tooltip: siteTranslate(context, '同步会话'),
+                      onPressed: c.generating ? null : c.sync,
+                      icon: const Icon(
+                        CupertinoIcons.arrow_2_circlepath,
+                        size: 14,
+                      ),
+                    ),
+                  Flexible(
+                    child: SiteText(
+                      'AI 角色对话 · 请理性判断生成内容',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 8, color: p.muted),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         if (mobile && c.settings.demo && keyboard)
@@ -972,187 +945,27 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _messageList(List<ChatTurn> turns, {required bool mobile}) {
-    // History grows upwards from a fixed centre. New replies grow downwards,
-    // keeping the same pixel offset while the user reads older messages.
-    final history = <ChatTurn>[], recent = <ChatTurn>[];
-    for (final turn in turns) {
-      if (_historicalIds.contains(turn.id) ||
-          !turn.createdAt.isAfter(_openedAt)) {
-        history.add(turn);
-      } else {
-        recent.add(turn);
-      }
+  Widget _chat(bool mobile) {
+    if (_chatWidget == null || _chatMobile != mobile) {
+      _chatMobile = mobile;
+      _chatWidget = RoomChatView(
+        controller: c,
+        mobile: mobile,
+        onNavigate: _website,
+        onNotice: _notice,
+        onScrollActivity: _interaction.scrolling,
+      );
     }
-    final historyIndices = {
-      for (var i = 0; i < history.length; i++)
-        history[i].id: history.length - 1 - i,
-    };
-    final recentIndices = {
-      for (var i = 0; i < recent.length; i++) recent[i].id: i,
-    };
-    final shared = c.sharedConversation;
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification.metrics.extentAfter < 16 && _unread.value) {
-          _unread.value = false;
-        }
-        return false;
-      },
-      child: RepaintBoundary(
-        key: const Key('chat-scroll-repaint'),
-        child: CustomScrollView(
-          key: ValueKey('conversation:${c.scope}'),
-          controller: _scroll,
-          center: _conversationCenter,
-          anchor: 1,
-          scrollCacheExtent: ScrollCacheExtent.pixels(mobile ? 360 : 480),
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: mobile ? 16 : 1),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index == history.length) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 18),
-                        child: Text(shared?['title']?.toString() ?? '公开对话片段'),
-                      );
-                    }
-                    final turn = history[history.length - 1 - index];
-                    return _turnItem(
-                      turn,
-                      mobile: mobile,
-                      last: turn.id == turns.last.id,
-                    );
-                  },
-                  childCount: history.length + (shared == null ? 0 : 1),
-                  findChildIndexCallback: (key) => key is ValueKey<String>
-                      ? historyIndices[key.value]
-                      : null,
-                ),
-              ),
-            ),
-            SliverPadding(
-              key: _conversationCenter,
-              padding: EdgeInsets.fromLTRB(
-                mobile ? 16 : 1,
-                0,
-                mobile ? 16 : 1,
-                6,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index < recent.length) {
-                      final turn = recent[index];
-                      return _turnItem(
-                        turn,
-                        mobile: mobile,
-                        last: turn.id == turns.last.id,
-                      );
-                    }
-                    return AnimatedBuilder(
-                      key: const ValueKey('streaming-reply'),
-                      animation: c.streamRevision,
-                      child: _bubble(c.sendingText, user: true, mobile: mobile),
-                      builder: (context, question) {
-                        final reply = cleanRoomReply(c.partial);
-                        return Column(
-                          children: [
-                            question!,
-                            _replyBubbles(
-                              reply.isEmpty ? '正在想怎么回答你…' : reply,
-                              mobile: mobile,
-                              streaming: true,
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  childCount: recent.length + (c.generating ? 1 : 0),
-                  findChildIndexCallback: (key) =>
-                      key is ValueKey<String> ? recentIndices[key.value] : null,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return _chatWidget!;
   }
 
-  Widget _turnItem(ChatTurn turn, {required bool mobile, required bool last}) {
-    final p = RoomStyle(context);
-    return RepaintBoundary(
-      key: ValueKey(turn.id),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (turn.image != null)
-            Align(alignment: Alignment.centerRight, child: _image(turn.image!)),
-          if (turn.user.isNotEmpty)
-            _bubble(
-              turn.user,
-              user: true,
-              mobile: mobile,
-              time: turn.createdAt,
-            ),
-          _replyBubbles(turn.assistant, mobile: mobile, time: turn.createdAt),
-          Wrap(
-            alignment: WrapAlignment.end,
-            children: [
-              if (!c.isSharedTurn(turn) &&
-                  !turn.pending &&
-                  turn.image == null &&
-                  last) ...[
-                if (turn.user.isNotEmpty)
-                  TextButton(
-                    onPressed: c.canSend
-                        ? () => editRoomTurn(context, c, turn)
-                        : null,
-                    child: const SiteText('编辑'),
-                  ),
-                TextButton(
-                  onPressed: c.canSend
-                      ? () => c.send(
-                          turn.user,
-                          opener: turn.user.isEmpty,
-                          replacement: turn,
-                        )
-                      : null,
-                  child: const SiteText('重新生成'),
-                ),
-              ],
-              if (!c.isSharedTurn(turn) &&
-                  turn.user.isNotEmpty &&
-                  turn.image == null)
-                TextButton(
-                  onPressed: c.canSend
-                      ? () => shareRoomTurn(context, c, turn)
-                      : null,
-                  child: const SiteText('分享'),
-                ),
-            ],
-          ),
-          if (turn.pending)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: SiteText(
-                '已保存在本机 · 等待同步',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: mobile ? Colors.white : p.muted,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  Widget _welcome({required bool mobile, required bool short}) => RoomSelector(
+    listenable: _workspaceSources,
+    select: () => (c.canSend, c.settings.demo, _ready.value),
+    builder: (_) => _welcomeBody(mobile: mobile, short: short),
+  );
 
-  Widget _welcome({required bool mobile, required bool short}) {
+  Widget _welcomeBody({required bool mobile, required bool short}) {
     final p = RoomStyle(context);
     final shadows = mobile
         ? const [Shadow(color: Color(0xff18132a), blurRadius: 8)]
@@ -1214,8 +1027,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   SizedBox(height: box.maxHeight * .19),
                   Text(
                     c.settings.demo
-                        ? '离线演示 · ${_ready ? 'Live2D 已就绪' : '角色预览'}'
-                        : _ready
+                        ? '离线演示 · ${_ready.value ? 'Live2D 已就绪' : '角色预览'}'
+                        : _ready.value
                         ? 'Live2D 已就绪'
                         : '角色预览',
                     style: TextStyle(fontSize: 10, color: p.muted),
@@ -1248,8 +1061,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 padding: const EdgeInsets.only(right: 6),
                 child: OutlinedButton(
                   onPressed: () {
-                    _input.text = text;
-                    _focus.requestFocus();
+                    _composerKey.currentState?.fillDraft(text);
                   },
                   style: OutlinedButton.styleFrom(
                     backgroundColor: mobile ? p.glass : Colors.transparent,
@@ -1266,371 +1078,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _composer(bool mobile) {
-    final p = RoomStyle(context);
-    final composing = _input.value.composing;
-    final isComposing = composing.isValid && !composing.isCollapsed;
-    final input = Shortcuts(
-      shortcuts: {
-        if (!mobile && !isComposing)
-          const SingleActivator(LogicalKeyboardKey.enter):
-              const _SendMessageIntent(),
-        if (!isComposing) ...{
-          const SingleActivator(LogicalKeyboardKey.enter, control: true):
-              const _SendMessageIntent(),
-          const SingleActivator(LogicalKeyboardKey.enter, meta: true):
-              const _SendMessageIntent(),
-        },
-      },
-      child: Actions(
-        actions: {
-          _SendMessageIntent: CallbackAction<_SendMessageIntent>(
-            onInvoke: (_) {
-              _send();
-              return null;
-            },
-          ),
-        },
-        child: TextField(
-          key: const Key('message-input'),
-          onChanged: (value) => c.saveComposerDraft(value),
-          controller: _input,
-          focusNode: _focus,
-          enabled: !c.loading && !c.busy,
-          readOnly: c.generating,
-          minLines: 1,
-          maxLines: 4,
-          textInputAction: TextInputAction.newline,
-          style: TextStyle(
-            fontSize: mobile ? 16 : 13,
-            height: mobile ? 1.5 : 1.65,
-            color: p.ink,
-          ),
-          decoration: InputDecoration(
-            hintText: siteTranslate(
-              context,
-              mobile && c.settings.demo ? '离线演示 · 和八千代聊聊…' : '和八千代说点什么…',
-            ),
-            filled: false,
-            isDense: true,
-            hintStyle: TextStyle(
-              fontSize: mobile ? 14 : 12,
-              color: p.muted.withValues(alpha: .7),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: mobile ? 5 : 2,
-              vertical: mobile ? 10 : 2,
-            ),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            disabledBorder: InputBorder.none,
-          ),
-        ),
-      ),
-    );
-    final attach = Tooltip(
-      message: '添加图片',
-      child: IconButton(
-        onPressed: c.canSend ? _attach : null,
-        icon: Icon(CupertinoIcons.photo, size: mobile ? 22 : 18),
-        style: IconButton.styleFrom(
-          disabledForegroundColor: p.muted,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          minimumSize: Size(mobile ? 44 : 30, mobile ? 44 : 30),
-        ),
-      ),
-    );
-    final send = Tooltip(
-      message: c.generating ? '停止生成' : '发送',
-      child: FilledButton(
-        onPressed: c.generating
-            ? c.stop
-            : (!c.canSend ||
-                      (_input.text.trim().isEmpty && c.attachment == null)
-                  ? null
-                  : _send),
-        style: FilledButton.styleFrom(
-          backgroundColor: p.primary,
-          foregroundColor: p.onPrimary,
-          disabledBackgroundColor: p.primary.withValues(alpha: .5),
-          disabledForegroundColor: p.onPrimary,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          minimumSize: Size(mobile ? 44 : 67, mobile ? 44 : 29),
-          padding: EdgeInsets.symmetric(horizontal: mobile ? 0 : 10),
-          shape: const StadiumBorder(),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!mobile) ...[
-              Text(
-                c.generating ? '停止' : '发送',
-                style: const TextStyle(fontSize: 10),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Icon(
-              c.generating
-                  ? CupertinoIcons.stop_fill
-                  : CupertinoIcons.paperplane,
-              size: mobile ? 24 : 16,
-            ),
-          ],
-        ),
-      ),
-    );
-    return Container(
-      key: const Key('room-composer'),
-      padding: mobile
-          ? const EdgeInsets.all(6)
-          : const EdgeInsets.fromLTRB(10, 12, 10, 9),
-      decoration: BoxDecoration(
-        color: mobile ? p.glass : Colors.transparent,
-        border: Border.all(color: p.line),
-        borderRadius: BorderRadius.circular(mobile ? 30 : 14),
-      ),
-      child: mobile
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                attach,
-                Expanded(child: input),
-                send,
-              ],
-            )
-          : Column(
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 40),
-                  child: input,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    attach,
-                    Expanded(
-                      child: SiteText(
-                        'Enter 发送 · Shift + Enter 换行',
-                        textAlign: TextAlign.right,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 8, color: p.muted),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    send,
-                  ],
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _replyBubbles(
-    String text, {
-    required bool mobile,
-    DateTime? time,
-    bool streaming = false,
-  }) {
-    final presentation = _messages.reply(text, streaming: streaming);
-    final parts = presentation.parts;
-    return Column(
-      children: [
-        for (var i = 0; i < parts.length; i++)
-          _bubble(
-            parts[i],
-            mobile: mobile,
-            time: time,
-            streaming: streaming,
-            continuation: i > 0,
-            controls: i == parts.length - 1,
-            fullReply: text,
-            markdown: presentation.markdown,
-          ),
-      ],
-    );
-  }
-
-  Widget _bubble(
-    String text, {
-    bool user = false,
-    bool mobile = false,
-    bool streaming = false,
-    bool continuation = false,
-    bool controls = true,
-    bool markdown = false,
-    String? fullReply,
-    DateTime? time,
-  }) {
-    final p = RoomStyle(context);
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: FractionallySizedBox(
-        widthFactor: user ? .82 : .93,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!user && !mobile) ...[
-                continuation
-                    ? const SizedBox.square(dimension: 20)
-                    : const CharacterAvatar(size: 20, radius: 10),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: user
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
-                  children: [
-                    if (!user && !continuation)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 7),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SiteText(
-                              '八千代',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: mobile ? Colors.white : p.muted,
-                              ),
-                            ),
-                            if (!mobile) ...[
-                              const SizedBox(width: 5),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: p.soft,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: SiteText(
-                                  'AI',
-                                  style: TextStyle(fontSize: 7, color: p.muted),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 11,
-                      ),
-                      decoration: BoxDecoration(
-                        color: user
-                            ? Color.alphaBlend(
-                                p.accent.withValues(alpha: .12),
-                                mobile ? p.glass : p.surface,
-                              )
-                            : mobile
-                            ? p.glass
-                            : p.soft,
-                        border: Border.all(
-                          color: p.line.withValues(alpha: .65),
-                        ),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(user ? 20 : 4),
-                          topRight: Radius.circular(user ? 4 : 20),
-                          bottomLeft: const Radius.circular(20),
-                          bottomRight: const Radius.circular(20),
-                        ),
-                      ),
-                      child: markdown
-                          ? NativeRichText(
-                              content: text,
-                              format: 'markdown',
-                              trackReading: false,
-                              site: c.settings.siteUrl,
-                              onNavigate: (path) => _website(path),
-                            )
-                          : SelectableText(
-                              text,
-                              style: TextStyle(
-                                fontSize: mobile ? 14 : 13,
-                                height: 1.8,
-                                color: user ? p.accent : p.ink,
-                              ),
-                            ),
-                    ),
-                    if (!streaming && controls)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (time != null)
-                            Text(
-                              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: mobile ? Colors.white70 : p.muted,
-                              ),
-                            ),
-                          if (!user) ...[
-                            IconButton(
-                              tooltip: siteTranslate(context, '复制回复'),
-                              onPressed: () {
-                                Clipboard.setData(
-                                  ClipboardData(text: fullReply ?? text),
-                                );
-                                _notice('已复制回复');
-                              },
-                              style: IconButton.styleFrom(
-                                minimumSize: Size(32, mobile ? 36 : 26),
-                                padding: const EdgeInsets.all(4),
-                              ),
-                              icon: Icon(
-                                CupertinoIcons.doc_on_doc,
-                                size: 12,
-                                color: mobile ? Colors.white : p.muted,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: c.voice.playing ? '停止语音' : '朗读回复',
-                              onPressed: () => c.voice.playing
-                                  ? c.voice.stop()
-                                  : c.replay(fullReply ?? text),
-                              style: IconButton.styleFrom(
-                                minimumSize: Size(32, mobile ? 36 : 26),
-                                padding: const EdgeInsets.all(4),
-                              ),
-                              icon: Icon(
-                                c.voice.playing
-                                    ? CupertinoIcons.stop
-                                    : CupertinoIcons.speaker_2,
-                                size: 13,
-                                color: mobile ? Colors.white : p.muted,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              if (user && !mobile) ...[
-                const SizedBox(width: 6),
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: p.soft,
-                  child: SiteText(
-                    '你',
-                    style: TextStyle(fontSize: 9, height: 1.15, color: p.muted),
-                  ),
-                ),
-              ],
-            ],
-          ),
         ),
       ),
     );
@@ -1658,13 +1105,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 ],
               ),
               Expanded(
-                child: ListView(
-                  children: [
-                    for (final turn in c.turns) ...[
-                      _bubble(turn.user, user: true, time: turn.createdAt),
-                      _bubble(turn.assistant, time: turn.createdAt),
-                    ],
-                  ],
+                child: RoomChatHistoryView(
+                  controller: c,
+                  mobile:
+                      MediaQuery.sizeOf(context).width <= RoomStyle.breakpoint,
+                  onNavigate: _website,
+                  onNotice: _notice,
                 ),
               ),
             ],

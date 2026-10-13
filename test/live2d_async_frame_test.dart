@@ -76,6 +76,55 @@ Future<void> settle(Live2DPainter painter) async {
 }
 
 void main() {
+  testWidgets('interaction yields model work and retains the completed frame', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final recorder = ui.PictureRecorder();
+      Canvas(recorder).drawColor(Colors.white, BlendMode.src);
+      final picture = recorder.endRecording();
+      final texture = await picture.toImage(16, 16);
+      picture.dispose();
+      final model = _Model([texture]), clock = _Clock();
+      final scene = Live2DSceneController(
+        vsync: clock,
+        mobile: true,
+        onTick: (seconds, delta) => model.tick(seconds, delta),
+      )..attach(model);
+      final painter = scene.painter!..rasterPixelBudget = 4096;
+      scene.active = true;
+      try {
+        paint(painter);
+        await settle(painter);
+        final recorded = painter.recordedFrames;
+        final completed = painter.completedFrames;
+        final discarded = painter.discardedFrames;
+        final cached = painter.cachedPaints;
+        scene.interacting = true;
+        for (var i = 0; i < 60; i++) {
+          clock.frame(Duration(milliseconds: 100 + i * 17));
+          paint(painter);
+        }
+        await settle(painter);
+        expect(painter.recordedFrames, recorded);
+        expect(painter.completedFrames, completed);
+        expect(painter.discardedFrames, discarded);
+        expect(painter.cachedPaints, cached + 60);
+        scene.interacting = false;
+        clock.frame(const Duration(hours: 3));
+        clock.frame(const Duration(hours: 3, milliseconds: 34));
+        await settle(painter);
+        expect(painter.recordedFrames, recorded + 1);
+        expect(painter.completedFrames, completed + 1);
+        expect(painter.discardedFrames, discarded);
+      } finally {
+        final pending = painter.pendingRasterization;
+        scene.dispose();
+        await pending;
+        texture.dispose();
+      }
+    });
+  });
   testWidgets(
     'paused visible scene refreshes its frozen pixels after fullscreen resize',
     (tester) async {
@@ -227,6 +276,9 @@ void main() {
           await settle(painter);
           expect(painter.recordedFrames, 1);
           expect(painter.asyncRasterizations, 1);
+          expect(painter.completedFrames, 1);
+          expect(painter.discardedFrames, 0);
+          expect(painter.lastRasterizationMicros, greaterThan(0));
           for (var i = 0; i < 120; i++) {
             paint(painter);
           }
@@ -239,6 +291,7 @@ void main() {
           expect(painter.recordedFrames, 2);
           await settle(painter);
           expect(painter.recordedFrames, 3);
+          expect(painter.completedFrames, 3);
           painter.renderingEnabled = false;
           model.tick(2, 1 / 30);
           await settle(painter);

@@ -22,6 +22,37 @@ void main() {
   });
   tearDown(() => c.dispose());
   test(
+    'many stream fragments preserve text and coalesce UI notifications',
+    () async {
+      chat.controlled = true;
+      await c.initialize();
+      final sending = c.send('分片回复');
+      for (var i = 0; chat.stream == null && i < 50; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(chat.stream, isNotNull);
+      var updates = 0;
+      void changed() => updates++;
+      c.streamRevision.addListener(changed);
+      final expected = StringBuffer();
+      for (var i = 0; i < 10000; i++) {
+        final fragment = i % 3 == 0 ? '你好😀' : '$i ';
+        expected.write(fragment);
+        chat.stream!.add(fragment);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      final text = expected.toString();
+      expect(c.partial, text);
+      expect(identical(c.partial, c.partial), true);
+      expect(updates, inInclusiveRange(1, 2));
+      await chat.stream!.close();
+      await sending;
+      expect(c.turns.single.assistant, text.trim());
+      expect(c.partial, isEmpty);
+      c.streamRevision.removeListener(changed);
+    },
+  );
+  test(
     'new conversation resets model context without deleting saved history',
     () async {
       await c.initialize();

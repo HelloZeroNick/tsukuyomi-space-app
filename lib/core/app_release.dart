@@ -1,2 +1,2 @@
 // Keep this tag aligned with pubspec and the GitHub release being built.
-const appReleaseTag = 'v0.6.20-beta.2';
+const appReleaseTag = 'v0.6.21-beta.1';

@@ -36,7 +36,19 @@ class Live2DSceneController {
   int _slow = 0, _good = 0;
   int _rasterSlow = 0, _rasterGood = 0, _budgetStep = 0;
   double _refreshRate = 60;
-  bool _active = false;
+  bool _active = false, _interacting = false;
+  int _modelFrames = 0, _interactionYields = 0, _backpressureYields = 0;
+
+  /// Visibility and user interaction are separate. A foreground Room may keep
+  /// its cached character on screen while yielding all Cubism work to a drag,
+  /// keyboard transition or typing burst.
+  bool get active => _active;
+  bool get interacting => _interacting;
+  bool get running => _active && !_interacting && model != null;
+  int get modelFrames => _modelFrames;
+  int get interactionYields => _interactionYields;
+  int get backpressureYields => _backpressureYields;
+  double get activeSeconds => _seconds;
   int get effectiveRasterBudget {
     final base = rasterBudgetFor(_quality, mobile: mobile);
     return mobile ? (base * const [1.0, .75, .5][_budgetStep]).round() : base;
@@ -70,21 +82,45 @@ class Live2DSceneController {
   }
 
   void attach(Live2DModel value) {
+    ticker.stop();
+    _resetClock();
     painter?.dispose();
     model?.dispose();
     model = value;
     painter = Live2DPainter(value, asynchronousRasterization: true);
+    painter!.renderingEnabled = _active;
     configure(quality: _quality, frameLimit: _frameLimit);
+    _syncClock();
   }
 
   set active(bool value) {
     if (_active == value) return;
     _active = value;
     painter?.renderingEnabled = value;
+    _rasterSlow = _rasterGood = 0;
+    _syncClock();
+  }
+
+  set interacting(bool value) {
+    if (_interacting == value) return;
+    _interacting = value;
+    if (value && _active) _interactionYields++;
+    // Retain the current raster snapshot rather than disabling the painter.
+    // One already-running GPU snapshot may finish, but no new model updates or
+    // successor snapshots are created until input settles. Frequent keystrokes
+    // therefore do not invalidate and recapture the entire character.
+    _syncClock();
+  }
+
+  void _resetClock() {
     _last = null;
     _nextFrame = null;
-    _rasterSlow = _rasterGood = 0;
-    if (value && model != null) {
+    _lastFps = 0;
+  }
+
+  void _syncClock() {
+    _resetClock();
+    if (running) {
       ticker.start();
     } else {
       ticker.stop();
@@ -92,9 +128,13 @@ class Live2DSceneController {
   }
 
   void _tick(Duration elapsed) {
+    if (!running) return;
     // The GPU is still preparing the previous coherent snapshot. Updating
     // Cubism again would consume UI time for geometry that cannot be displayed.
-    if (painter?.rasterizationPending == true) return;
+    if (painter?.rasterizationPending == true) {
+      _backpressureYields++;
+      return;
+    }
     if (_last == null) {
       _last = elapsed;
       _nextFrame = elapsed.inMicroseconds + (1000000 / fps).round();
@@ -116,11 +156,14 @@ class Live2DSceneController {
     }
     final delta = (micros / 1000000).clamp(0.0, .05);
     _seconds += delta;
+    _modelFrames++;
     onTick(_seconds, delta);
   }
 
   void _timings(List<FrameTiming> timings) {
-    if (!_active) return;
+    // Timings from chat scrolling/IME while the model is frozen must not be
+    // attributed to Live2D or permanently lower its visible quality.
+    if (!running) return;
     for (final frame in timings) {
       if (mobile) {
         // Chat/IME animations use the display cadence even while the model is

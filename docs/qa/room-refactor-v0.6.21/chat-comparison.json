@@ -1,0 +1,29 @@
+{
+  "environment": "Flutter tester debug, no physical K90 connected",
+  "sentences": 600,
+  "historical_turns": 2000,
+  "plain_reply": {
+    "baseline_mobile_mounted_SelectableText": 601,
+    "after_mobile": 11,
+    "after_desktop": 12,
+    "after_initial_prepared_turns": "less than5; latest long reply1"
+  },
+  "markdown": {
+    "paragraphs": 600,
+    "after_mobile_mounted_chunks": 2,
+    "after_desktop_mounted_chunks": 3,
+    "atomic_blocks_preserved": [
+      "code",
+      "table",
+      "list"
+    ],
+    "whole_document_fallback": [
+      "internal anchors",
+      "footnotes"
+    ]
+  },
+  "tests": [
+    "test/room_chat_refactor_test.dart",
+    "test/room_first_and_menu_test.dart"
+  ]
+}

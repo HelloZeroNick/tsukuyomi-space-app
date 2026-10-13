@@ -218,8 +218,10 @@ Future<void> main() async {
     );
     final meshCount = model.meshes.length, textureCount = model.textures.length;
     if (Platform.isAndroid) {
-      await probeAndroidRoomKeyboard(model);
+      // The Room scene becomes the sole model/painter owner. Keep the earlier
+      // offscreen probe from also capturing every Room animation notification.
       painter.dispose();
+      await probeAndroidRoomKeyboard(model);
     }
     // ignore: avoid_print
     print('TSUKUYOMI_LIVE2D_OK meshes=$meshCount textures=$textureCount');

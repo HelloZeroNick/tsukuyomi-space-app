@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -17,14 +18,44 @@ import 'package:window_manager/window_manager.dart';
 
 import '../test/support/fakes.dart';
 
+bool get desktopBenchmark =>
+    Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
 Future<void> focusBenchmarkWindow() async {
-  for (var attempt = 0; attempt < 15; attempt++) {
+  if (!desktopBenchmark) {
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      throw StateError('Native mobile benchmark is not in the foreground');
+    }
+    return;
+  }
+  for (var attempt = 0; attempt < 150; attempt++) {
     await windowManager.show();
     await windowManager.focus();
     await Future<void>.delayed(const Duration(milliseconds: 200));
-    if (await windowManager.isFocused()) return;
+    if (await windowManager.isFocused() &&
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      return;
+    }
   }
   throw StateError('Native benchmark window could not obtain focus');
+}
+
+Future<void> expectForeground() async {
+  expect(WidgetsBinding.instance.lifecycleState, AppLifecycleState.resumed);
+  if (desktopBenchmark) expect(await windowManager.isFocused(), true);
+}
+
+class _ForegroundGuard extends WidgetsBindingObserver with WindowListener {
+  bool interrupted = false;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) interrupted = true;
+  }
+
+  @override
+  void onWindowBlur() => interrupted = true;
+  @override
+  void onWindowMinimize() => interrupted = true;
 }
 
 void main() {
@@ -42,6 +73,7 @@ void main() {
     );
     await tester.pump();
     await tester.runAsync(() async {
+      if (!desktopBenchmark) return;
       await windowManager.ensureInitialized();
       await windowManager.setFullScreen(false);
       await windowManager.setSize(
@@ -167,7 +199,22 @@ void main() {
       expect(model, isNotNull);
       await tester.pump(const Duration(seconds: 1));
       await tester.runAsync(focusBenchmarkWindow);
-      expect(await windowManager.isFocused(), true);
+      await expectForeground();
+      // Prove the visible native model is actually animating before testing
+      // input-priority scheduling. Interaction phases deliberately freeze its
+      // clock; their lower tick count is no longer mistaken for a hidden app.
+      final idleTickStart = ticks;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(seconds: 2)),
+      );
+      await tester.pump();
+      final idleTicks = ticks - idleTickStart;
+      expect(
+        idleTicks,
+        greaterThanOrEqualTo(10),
+        reason: 'Native idle scene must animate in the foreground',
+      );
+      await expectForeground();
       final measuredPainter = tester
           .widgetList<CustomPaint>(find.byType(CustomPaint))
           .map((w) => w.painter)
@@ -182,7 +229,48 @@ void main() {
       frames.clear();
       ticks = 0;
       modelCpuMs = 0;
+      final foreground = _ForegroundGuard();
+      binding.addObserver(foreground);
+      if (desktopBenchmark) windowManager.addListener(foreground);
+      void removeForegroundGuard() {
+        binding.removeObserver(foreground);
+        if (desktopBenchmark) windowManager.removeListener(foreground);
+      }
+
+      addTearDown(removeForegroundGuard);
       final sample = Stopwatch()..start();
+      final expectsInteraction = const bool.fromEnvironment(
+        'BENCHMARK_INTERACTION_EXPECTED',
+        defaultValue: true,
+      );
+      ValueListenable<bool>? activity;
+      try {
+        // The exact same workload can be copied to the pre-refactor checkout.
+        // Its stage has no activity bus; this dynamic lookup changes only the
+        // diagnostics, never its rendering or model scheduling behavior.
+        activity =
+            (tester.widget<CharacterStage>(
+                  find.byType(CharacterStage),
+                ) as dynamic).interacting
+                as ValueListenable<bool>?;
+      } on NoSuchMethodError {
+        expect(expectsInteraction, false);
+      }
+      if (expectsInteraction) expect(activity, isNotNull);
+      var yieldTransitions = 0, yieldedMicros = 0;
+      int? yieldStarted;
+      void activityChanged() {
+        if (activity!.value) {
+          yieldTransitions++;
+          yieldStarted = sample.elapsedMicroseconds;
+        } else if (yieldStarted != null) {
+          yieldedMicros += sample.elapsedMicroseconds - yieldStarted!;
+          yieldStarted = null;
+        }
+      }
+
+      activity?.addListener(activityChanged);
+      if (activity?.value == true) activityChanged();
       final sending = ime ? Future<void>.value() : room.send('并行流式性能测试');
       var editorReplacements = 0,
           stageRebuilds = 0,
@@ -196,23 +284,14 @@ void main() {
         );
         await tester.tap(input);
         await tester.pump();
-        await tester.runAsync(() async {
-          await windowManager.show();
-          await Future<void>.delayed(const Duration(milliseconds: 200));
-          await windowManager.focus();
-          await Future<void>.delayed(const Duration(milliseconds: 200));
-        });
-        expect(await windowManager.isFocused(), true);
+        await tester.runAsync(focusBenchmarkWindow);
+        await expectForeground();
         var editor = tester.state(editable);
         Widget? previousStage;
         Rect? previousViewport;
         for (var step = 0; step < 120; step++) {
           if (step % 12 == 0) {
-            await tester.runAsync(() async {
-              await windowManager.show();
-              await Future<void>.delayed(const Duration(milliseconds: 200));
-              await windowManager.focus();
-            });
+            await tester.runAsync(focusBenchmarkWindow);
           }
           keyboard.value = const [
             0.0,
@@ -244,10 +323,12 @@ void main() {
             composingResets++;
           }
           field.focusNode!.requestFocus();
-          field.controller!.value = TextEditingValue(
-            text: '中文输入 $step',
-            selection: TextSelection.collapsed(offset: '中文输入 $step'.length),
-            composing: TextRange(start: 0, end: '中文输入 $step'.length),
+          tester.testTextInput.updateEditingValue(
+            TextEditingValue(
+              text: '中文输入 $step',
+              selection: TextSelection.collapsed(offset: '中文输入 $step'.length),
+              composing: TextRange(start: 0, end: '中文输入 $step'.length),
+            ),
           );
           await room.saveComposerDraft(field.controller!.text);
           final stage = tester.widget(find.byType(CharacterStage));
@@ -268,11 +349,7 @@ void main() {
           expect(viewportChanges, 0);
           expect(composingResets, 0);
         }
-        await tester.runAsync(() async {
-          await windowManager.show();
-          await Future<void>.delayed(const Duration(milliseconds: 200));
-          await windowManager.focus();
-        });
+        await tester.runAsync(focusBenchmarkWindow);
       }
       if (!ime) {
         for (var i = 0; chat.stream == null && i < 100; i++) {
@@ -285,29 +362,75 @@ void main() {
               matching: find.byType(Scrollable),
             )
             .first;
+        final scrollRect = tester.getRect(list);
+        // Keep the whole gesture inside the transcript. A centre-origin drag
+        // can finish over the composer/Stop button on a compact window.
+        final dragStart = Offset(
+          scrollRect.left + 8,
+          scrollRect.top + scrollRect.height * .15,
+        );
+        final dragStep = (scrollRect.height * .6 / 18).clamp(
+          4.0,
+          const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL') ? 20.0 : 10.0,
+        );
+        TestGesture? heldDrag;
         for (var step = 0; step < 240; step++) {
+          expect(
+            foreground.interrupted,
+            false,
+            reason: 'Native foreground was lost at stream step $step',
+          );
+          expect(room.generating, true, reason: 'stream step $step');
+          expect(chat.stream!.isClosed, false, reason: 'stream step $step');
           chat.stream!.add('片段 $step，');
-          if (step % 6 == 0) {
-            await tester.drag(
-              list,
-              Offset(
-                0,
-                const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL') ? 360 : 180,
-              ),
-            );
+          // Hold ten real drags across display frames. tester.drag alone sends
+          // its events synchronously and leaves almost no wall-time during
+          // which the scene scheduler can yield to the user's gesture.
+          if (step % 24 == 0) {
+            heldDrag = await tester.startGesture(dragStart);
+          }
+          if (step % 24 < 18) {
+            await heldDrag!.moveBy(Offset(0, dragStep));
+          } else if (step % 24 == 18) {
+            await heldDrag!.up();
+            heldDrag = null;
           }
           await tester.pump(const Duration(milliseconds: 16));
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 16)),
+          );
         }
         await chat.stream!.close();
       }
       await sending;
       await tester.pump(const Duration(seconds: 1));
+      // FrameTiming delivery is batched. Flush the measured visible phase and
+      // stop collecting before the separate hidden-scene/navigation check.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)),
+      );
+      SchedulerBinding.instance.removeTimingsCallback(timings);
+      activity?.removeListener(activityChanged);
+      if (yieldStarted != null) {
+        yieldedMicros += sample.elapsedMicroseconds - yieldStarted!;
+      }
       sample.stop();
+      removeForegroundGuard();
+      expect(
+        foreground.interrupted,
+        false,
+        reason: 'Backgrounded or unfocused samples cannot certify performance',
+      );
+      expect(
+        frames.length,
+        greaterThanOrEqualTo(60),
+        reason: 'A real frame population is required for a P95 sample',
+      );
       final recordedTicks = ticks;
       if (ime) {
         // ignore: avoid_print
         print(
-          'IME_SAMPLE ticks=$recordedTicks elapsed_ms=${sample.elapsedMilliseconds} lifecycle=${WidgetsBinding.instance.lifecycleState} focus=${await windowManager.isFocused()} replacements=$editorReplacements viewport_changes=$viewportChanges',
+          'IME_SAMPLE ticks=$recordedTicks elapsed_ms=${sample.elapsedMilliseconds} lifecycle=${WidgetsBinding.instance.lifecycleState} focus=${desktopBenchmark ? await windowManager.isFocused() : "mobile foreground"} replacements=$editorReplacements viewport_changes=$viewportChanges',
         );
       }
       expect(
@@ -315,11 +438,14 @@ void main() {
         findsNothing,
         reason: 'Image load failures must not silently turn the workload into placeholders',
       );
-      expect(
-        recordedTicks,
-        greaterThan(120),
-        reason: 'Benchmark must run with a visible, actively updating model',
-      );
+      if (expectsInteraction) {
+        expect(
+          yieldTransitions,
+          greaterThan(0),
+          reason: 'Scrolling or typing must yield native model work',
+        );
+        expect(yieldedMicros, greaterThan(500000));
+      }
       final recordedModelMs = modelCpuMs;
       final painters = tester
           .widgetList<CustomPaint>(find.byType(CustomPaint))
@@ -331,7 +457,7 @@ void main() {
       final viewport = tester.getSize(
         find.byWidgetPredicate((w) => w is CustomPaint && w.painter == painter),
       );
-      expect(await windowManager.isFocused(), true);
+      await expectForeground();
       final boundedPasses = painter.boundedPasses;
       final downsampledPasses = painter.downsampledPasses;
       final boundedPixels = painter.rasterizedPixels;
@@ -356,7 +482,6 @@ void main() {
       expect(hiddenTicks, 0);
       Navigator.of(tester.element(find.text('hidden scene'))).pop();
       await tester.pump(const Duration(milliseconds: 400));
-      SchedulerBinding.instance.removeTimingsCallback(timings);
       final ui =
           frames.map((f) => f.buildDuration.inMicroseconds / 1000).toList()
             ..sort();
@@ -367,6 +492,13 @@ void main() {
           values.isEmpty ? 0 : values[((values.length - 1) * .95).round()];
       final run = <String, dynamic>{
         'run': repetition + 1,
+        'native_platform': Platform.operatingSystem,
+        'idle_model_ticks_2_seconds': idleTicks,
+        'interaction_yield_transitions': yieldTransitions,
+        'interaction_yield_wall_ms': yieldedMicros / 1000,
+        'interaction_priority_expected': expectsInteraction,
+        'scroll_gestures': ime ? 0 : 10,
+        'held_drag_frames_per_gesture': ime ? 0 : 18,
         'chat_scroll_workload': const bool.fromEnvironment(
           'BENCHMARK_CHAT_SCROLL',
         ),
@@ -439,7 +571,7 @@ void main() {
         defaultValue: 'after',
       ),
       'scene':
-          '${const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT') ? '390x844 mobile layout' : '1280x820 desktop layout'} native macOS; 2000 turns, 200 valid bundled portrait image messages, ${ime ? "simulated keyboard insets and typing" : "streamed fragments"}, Live2D, three runs; mixed Markdown/long replies=${const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL')}',
+          '${const bool.fromEnvironment('BENCHMARK_MOBILE_LAYOUT') ? '390x844 mobile layout' : 'native viewport'} native ${Platform.operatingSystem}; 2000 turns, 200 valid bundled portrait image messages, ${ime ? "simulated keyboard insets and typing" : "streamed fragments"}, Live2D, three runs; mixed Markdown/long replies=${const bool.fromEnvironment('BENCHMARK_CHAT_SCROLL')}',
       'runs': runs,
     };
   }, timeout: const Timeout(Duration(minutes: 10)));

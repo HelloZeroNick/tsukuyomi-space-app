@@ -1,0 +1,24 @@
+{
+  "baseline_source": "1757f5ebaa2f9cf0fb40007f3384ad090b09dd35",
+  "environment": "Flutter tester debug; widget rebuild counts, not hardware FPS",
+  "message_count": 2000,
+  "unrelated_workspace_notifications": 30,
+  "widths": [
+    390,
+    1280
+  ],
+  "before": {
+    "RoomPage": 30,
+    "CustomScrollView": 30,
+    "TextField": 30,
+    "CharacterStage": 0
+  },
+  "after": {
+    "RoomPage": 0,
+    "CustomScrollView": 0,
+    "TextField": 0,
+    "CharacterStage": 0
+  },
+  "test": "test/room_partition_test.dart",
+  "physical_redmi_k90_measured": false
+}
