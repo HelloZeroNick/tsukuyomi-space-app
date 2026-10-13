@@ -111,6 +111,8 @@ Future<void> main() async {
     if (asyncSynthetic['max_channel_delta'] > 2 ||
         asyncNative['max_channel_delta'] > 2 ||
         asyncNative['raster_failures'] != 0 ||
+        asyncNative['frozen_resize']['extra_model_records'] != 0 ||
+        asyncNative['frozen_resize']['extra_rasterizations'] != 0 ||
         (asyncNative['cache_record_timings'] as List).cast<Map>().any(
           (r) =>
               r['extra_model_records'] != 0 || r['extra_rasterizations'] != 0,

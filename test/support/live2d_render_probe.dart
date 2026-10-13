@@ -110,10 +110,31 @@ Future<Map<String, dynamic>> probeNativeLive2DAsync(Live2DModel model) async {
         'extra_rasterizations': cached.asyncRasterizations - rasterizations,
       });
     }
+    cached.renderingEnabled = false;
+    const resized = Size(480, 800);
+    final before = await _batchPixels(direct, resized);
+    final after = await _batchPixels(cached, resized);
+    var frozenDelta = 0;
+    for (var i = 0; i < before.length; i++) {
+      final delta = (before[i] - after[i]).abs();
+      if (delta > frozenDelta) frozenDelta = delta;
+      if (delta > maxDelta) maxDelta = delta;
+    }
+    final records = cached.recordedFrames, rasters = cached.asyncRasterizations;
+    for (var i = 0; i < 10; i++) {
+      final recorder = ui.PictureRecorder();
+      cached.paint(Canvas(recorder), resized);
+      recorder.endRecording().dispose();
+    }
     return {
       'max_channel_delta': maxDelta,
       'raster_failures': cached.rasterFailures,
       'cache_record_timings': timings,
+      'frozen_resize': {
+        'max_channel_delta': frozenDelta,
+        'extra_model_records': cached.recordedFrames - records,
+        'extra_rasterizations': cached.asyncRasterizations - rasters,
+      },
     };
   } finally {
     direct.dispose();

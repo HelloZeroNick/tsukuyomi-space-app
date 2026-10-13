@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-13",
+  "version": "0.6.20+27",
+  "tag": "v0.6.20-beta.2",
+  "focused_tests_passed": 80,
+  "analysis": "no issues",
+  "release_tool_tests_passed": 38,
+  "frozen_before": "beta.1 paused resize reproduction failed",
+  "frozen_after": "paused resize center alpha 255; 60 cached redraws do not prepare again; pausing initial capture completes a static frame",
+  "real_model_frozen_max_channel_delta": 1,
+  "beta1_source": "730e82357344540345721f1d202e2ffe31c817c8",
+  "physical_k90_connected": false,
+  "release": "not yet published"
+}

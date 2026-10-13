@@ -1,0 +1,10 @@
+{
+  "first_attempt": 1,
+  "run_id": 38325927598,
+  "failure": "Google Android Emulator archive was not a ZIP; native checks had not started",
+  "native_job_id": 115067363159,
+  "source_unchanged": true,
+  "pixel_checks_unchanged": true,
+  "retry_attempt": 2,
+  "retry_conclusion": "success"
+}

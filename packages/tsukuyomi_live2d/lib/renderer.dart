@@ -165,7 +165,10 @@ class Live2DPainter extends CustomPainter {
   }
 
   void _paintAsync(Canvas canvas, Size size) {
-    _requestAsync(size);
+    // A visible paused scene still needs one static frame when entering
+    // fullscreen, resizing or finishing its initial load. Model notifications
+    // remain disabled; explicit paints do not restart the animation clock.
+    _requestAsync(size, frozen: true);
     final stamp = (size, rasterPixelBudget, pixelRatio, batchMeshes);
     if (_frameStamp == stamp && _frame != null) {
       _frame!.paint(canvas, _imagePaint);
@@ -173,14 +176,14 @@ class Live2DPainter extends CustomPainter {
     }
   }
 
-  void _requestAsync(Size size) {
+  void _requestAsync(Size size, {bool frozen = false}) {
     final stamp = (size, rasterPixelBudget, pixelRatio, batchMeshes);
     if (_requestedStamp != stamp) {
       _requestedStamp = stamp;
       _recordedRevision = -1;
       _epoch++;
     }
-    if (_enabled &&
+    if ((_enabled || frozen) &&
         _pending == null &&
         (_recordedRevision != _revision || _frameStamp != stamp)) {
       final frame = _RasterFrame();
@@ -202,7 +205,7 @@ class Live2DPainter extends CustomPainter {
       totalPreparationMicros += lastPreparationMicros;
       recordedFrames++;
       final epoch = _epoch;
-      _pending = _rasterize(frame, stamp, epoch);
+      _pending = _rasterize(frame, stamp, epoch, frozen);
     }
   }
 
@@ -210,6 +213,7 @@ class Live2DPainter extends CustomPainter {
     _RasterFrame next,
     (Size, int, double, bool) stamp,
     int epoch,
+    bool frozen,
   ) async {
     // Always cross an async boundary before replacing _pending. At most one
     // model frame is in flight; intermediate model updates coalesce naturally.
@@ -222,9 +226,9 @@ class Live2DPainter extends CustomPainter {
         piece.picture!.dispose();
         piece.picture = null;
         asyncRasterizations++;
-        if (_disposed || !_enabled || epoch != _epoch) return;
+        if (_disposed || (!_enabled && !frozen) || epoch != _epoch) return;
       }
-      if (_disposed || !_enabled || epoch != _epoch) return;
+      if (_disposed || (!_enabled && !frozen) || epoch != _epoch) return;
       _frame?.dispose();
       _frame = next;
       _frameStamp = stamp;
@@ -235,9 +239,10 @@ class Live2DPainter extends CustomPainter {
     } finally {
       if (!identical(_frame, next)) next.dispose();
       _pending = null;
-      if (!_disposed && _enabled) {
+      if (!_disposed && (_enabled || frozen)) {
         _ready.changed();
-        if (!_asyncFailed &&
+        if (_enabled &&
+            !_asyncFailed &&
             _recordedRevision != _revision &&
             _requestedStamp != null) {
           _requestAsync(_requestedStamp!.$1);

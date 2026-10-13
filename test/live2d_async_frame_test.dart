@@ -77,6 +77,94 @@ Future<void> settle(Live2DPainter painter) async {
 
 void main() {
   testWidgets(
+    'paused visible scene refreshes its frozen pixels after fullscreen resize',
+    (tester) async {
+      await tester.runAsync(() async {
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder).drawColor(Colors.white, BlendMode.src);
+        final picture = recorder.endRecording();
+        final texture = await picture.toImage(16, 16);
+        picture.dispose();
+        final model = _Model([texture]);
+        final painter = Live2DPainter(model, asynchronousRasterization: true)
+          ..rasterPixelBudget = 4096;
+        Future<int> alpha(Size size) async {
+          paint(painter, size);
+          await settle(painter);
+          // A visible repaint can replace an invalidated pending viewport.
+          paint(painter, size);
+          await settle(painter);
+          final recorder = ui.PictureRecorder();
+          painter.paint(Canvas(recorder), size);
+          final picture = recorder.endRecording();
+          final image = await picture.toImage(
+            size.width.toInt(),
+            size.height.toInt(),
+          );
+          try {
+            final bytes = (await image.toByteData(
+              format: ui.ImageByteFormat.rawRgba,
+            ))!;
+            final index =
+                ((size.height ~/ 2) * size.width.toInt() + size.width ~/ 2) * 4;
+            return bytes.getUint8(index + 3);
+          } finally {
+            image.dispose();
+            picture.dispose();
+          }
+        }
+
+        try {
+          expect(await alpha(const Size(128, 128)), 255);
+          painter.renderingEnabled = false;
+          expect(await alpha(const Size(256, 128)), 255);
+          final recorded = painter.recordedFrames;
+          for (var i = 0; i < 60; i++) {
+            paint(painter, const Size(256, 128));
+          }
+          expect(painter.recordedFrames, recorded);
+          expect(painter.rasterFailures, 0);
+        } finally {
+          painter.dispose();
+          model.dispose();
+          texture.dispose();
+        }
+      });
+    },
+  );
+
+  testWidgets(
+    'pausing before initial raster completes still presents one static frame',
+    (tester) async {
+      await tester.runAsync(() async {
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder).drawColor(Colors.white, BlendMode.src);
+        final picture = recorder.endRecording();
+        final texture = await picture.toImage(16, 16);
+        picture.dispose();
+        final model = _Model([texture]);
+        final painter = Live2DPainter(model, asynchronousRasterization: true)
+          ..rasterPixelBudget = 4096;
+        try {
+          paint(painter);
+          painter.renderingEnabled = false;
+          await settle(painter);
+          paint(painter, const Size(256, 128));
+          await settle(painter);
+          final cached = painter.cachedPaints;
+          paint(painter, const Size(256, 128));
+          expect(painter.cachedPaints, cached + 1);
+          expect(painter.rasterFailures, 0);
+        } finally {
+          painter.dispose();
+          model.dispose();
+          texture.dispose();
+        }
+      });
+    },
+  );
+
+  testWidgets(
     'scene waits for pending raster work and resumes without a time jump',
     (tester) async {
       await tester.runAsync(() async {

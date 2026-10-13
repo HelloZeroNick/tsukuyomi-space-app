@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-13",
+  "version": "0.6.20+26",
+  "focused_tests_passed": 78,
+  "additional_backpressure_tests": "2 passed, included in focused count",
+  "analysis": "no issues",
+  "release_tool_tests_passed": 38,
+  "native_pixel_max_channel_delta": 1,
+  "gpu_fps_acceptance": false,
+  "physical_k90_connected": false,
+  "game_before_reference": "53350436e663c063f00a2fafa4521d1528b527ee",
+  "sky_before": {
+    "frames": 300,
+    "speed": 7,
+    "gaps": 4,
+    "frames_with_gaps": [
+      69,
+      138,
+      207,
+      276
+    ]
+  },
+  "sky_after": {
+    "frames": 300,
+    "speed": 7,
+    "gaps": 0
+  },
+  "high_dismount_models": [
+    1,
+    2,
+    4
+  ],
+  "simulation_notifications": {
+    "host_hz": 120,
+    "published_hz": 30
+  },
+  "async_lifecycle": "coalesced 60 updates into 2 successor frames; 120 cached paints did not recapture; resize/disable/dispose verified",
+  "release": {
+    "tag": "v0.6.20-beta.1",
+    "published": true,
+    "prerelease": true,
+    "source_commit": "730e82357344540345721f1d202e2ffe31c817c8",
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.20-beta.1",
+    "integrity_downloads": "passed",
+    "all_sha256_verified": true,
+    "asset_count": 11,
+    "downloaded_bytes": 2208612906
+  },
+  "format_files": 245,
+  "source_commit": "730e82357344540345721f1d202e2ffe31c817c8",
+  "ci": {
+    "run_id": 38325927598,
+    "run_attempt": 2,
+    "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38325927598",
+    "conclusion": "success",
+    "logical_jobs": 9,
+    "regression_passed": 917,
+    "regression_skipped": 19,
+    "build_platforms": [
+      "android",
+      "ios",
+      "macos",
+      "windows",
+      "linux"
+    ],
+    "desktop_window_updater_tests_per_platform": 118,
+    "packaged_agent_tests_per_platform": 113
+  },
+  "android_native": {
+    "conclusion": "success",
+    "renderer": "SwiftShader emulator, functional checks only",
+    "async_pixel_max_channel_delta": 0,
+    "raster_failures": 0,
+    "sky_frames": 1500,
+    "sky_wraps": 41,
+    "sky_gaps": 0,
+    "high_dismount_models": [
+      1,
+      2,
+      4
+    ],
+    "actual_ime_cycles": 3,
+    "restart_pixel_differences": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "texture_size": 2048,
+    "ui_p95_ms_diagnostic": 1.276,
+    "raster_p95_ms_diagnostic": 670.721,
+    "diagnostic_frame_count": 8,
+    "physical_fps_acceptance": false
+  }
+}
