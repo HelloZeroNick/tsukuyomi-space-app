@@ -1,0 +1,90 @@
+{
+  "accepted": true,
+  "native_driver_exit_codes": {
+    "before": 0,
+    "after": 0
+  },
+  "baseline_commit": "1757f5ebaa2f9cf0fb40007f3384ad090b09dd35",
+  "scope": "same Apple M5 /16GB /macOS27.0.1 /1280x820 DPR2 native profile; auto600k rasterbudget;2048 textures;2000 turns;200 images;240 streamfragments;10 helddrags;3 runs perversion",
+  "medians": {
+    "ui_p95_ms": {
+      "before": 3.498,
+      "after": 2.376,
+      "relative_change_percent": -32.07547169811321
+    },
+    "raster_p95_ms": {
+      "before": 6.996,
+      "after": 8.236,
+      "relative_change_percent": 17.724413950829042
+    },
+    "input_ready_ms": {
+      "before": 42,
+      "after": 34,
+      "relative_change_percent": -19.047619047619047
+    },
+    "model_ticks": {
+      "before": 775,
+      "after": 228,
+      "relative_change_percent": -70.58064516129032
+    },
+    "model_update_cpu_percent": {
+      "before": 3.3089535323007193,
+      "after": 1.0026973932754046,
+      "relative_change_percent": -69.69744713887754
+    },
+    "live2d_draw_calls": {
+      "before": 205802,
+      "after": 64602,
+      "relative_change_percent": -68.60963450306605
+    },
+    "rss_bytes": {
+      "before": 271368192,
+      "after": 279773184,
+      "relative_change_percent": 3.0972649882267778
+    },
+    "rss_after_navigation_bytes": {
+      "before": 263880704,
+      "after": 280838144,
+      "relative_change_percent": 6.426176580156473
+    }
+  },
+  "before_model_idle_ticks": [
+    114,
+    115,
+    115
+  ],
+  "after_model_idle_ticks": [
+    113,
+    113,
+    117
+  ],
+  "before_frames_over_16_7_ms": [
+    0,
+    0,
+    0
+  ],
+  "after_frames_over_16_7_ms": [
+    0,
+    0,
+    0
+  ],
+  "hidden_model_ticks": {
+    "before": [
+      0,
+      0,
+      0
+    ],
+    "after": [
+      0,
+      0,
+      0
+    ]
+  },
+  "interpretation": [
+    "UI P95 decreased and model updates/draw submissions decreased during sustained chat interaction.",
+    "Raster P95 increased, although everyrun stayed under16.7ms; do not claimraster P95 improved.",
+    "RSS did not decrease; three runs do not certify long-term memory stability.",
+    "Model CPU time ratio and draw submission count are not physicalGPU utilization.",
+    "Not AndroidK90, RX9070 orRTX4060 acceptance evidence."
+  ]
+}

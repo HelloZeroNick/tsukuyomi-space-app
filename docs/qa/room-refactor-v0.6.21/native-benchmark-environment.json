@@ -46,5 +46,8 @@
   ],
   "baseline_harness_sha256": "d00deaa87aedfb5359eec1963af5576473cd6cb5678bd5fc3ddb98bc6bc3e538",
   "accepted_baseline_runs": 3,
-  "baseline_driver_exit_code": 0
+  "baseline_driver_exit_code": 0,
+  "accepted_candidate_runs": 3,
+  "candidate_driver_exit_code": 0,
+  "candidate_harness_sha256": "d00deaa87aedfb5359eec1963af5576473cd6cb5678bd5fc3ddb98bc6bc3e538"
 }

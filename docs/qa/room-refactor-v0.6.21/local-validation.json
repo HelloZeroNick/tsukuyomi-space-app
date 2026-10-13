@@ -1,0 +1,45 @@
+{
+  "source_commit": "098e2d55bbc60e4adf2bbd09036de5cd05d75e87",
+  "analysis": "No issues found",
+  "format": {
+    "files": 253,
+    "changes": 0
+  },
+  "focused_regressions": {
+    "passed": 101,
+    "failed": 0,
+    "log": "artifacts/room-refactor-v0621/focused-final-tests.log"
+  },
+  "final_stream_chat_theme_composer": {
+    "passed": 33,
+    "failed": 0,
+    "log": "artifacts/room-refactor-v0621/stream-theme-final-tests.log"
+  },
+  "native_visual_and_update": {
+    "passed": 23,
+    "failed": 0,
+    "log": "artifacts/room-refactor-v0621/visual-and-update-tests.log"
+  },
+  "final_room_theme_partitions": {
+    "passed": 4,
+    "failed": 0
+  },
+  "release_tool_tests": {
+    "passed": 38,
+    "failed": 0
+  },
+  "full_local_initial_run": {
+    "passed": 929,
+    "skipped": 34,
+    "failed": 1,
+    "failure": "Baked release tag remained 0.6.20 after pubspec version bump",
+    "resolution": "Updated app_release.dart to v0.6.21-beta.1; all23 update/visual regressions and final focused tests passed. Full final CI recorded separately."
+  },
+  "native_cubism_async_pixels": {
+    "max_channel_delta": 1,
+    "raster_failures": 0,
+    "frozen_resize_retained": true,
+    "fixture": "live2d-async-pixels.json"
+  },
+  "physical_k90_connected": false
+}

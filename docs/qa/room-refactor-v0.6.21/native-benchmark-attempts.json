@@ -1,6 +1,6 @@
 {
-  "accepted_native_comparison": false,
-  "accepted_final_runs": 0,
+  "accepted_native_comparison": true,
+  "accepted_final_runs": 6,
   "platform": "macOS27.0.1, AppleM5,16GB; no physicalAndroid attached",
   "baseline_commit": "1757f5ebaa2f9cf0fb40007f3384ad090b09dd35",
   "attempts": [
@@ -34,10 +34,17 @@
       "guard_or_error": null,
       "accepted": true,
       "evidence": "native-before.json"
+    },
+    {
+      "kind": "latest candidate corrected bounded gesture with genuine Window menu activation",
+      "outcome": "whole integration test and driver passed;3 runs accepted",
+      "guard_or_error": null,
+      "accepted": true,
+      "evidence": "native-after.json"
     }
   ],
   "fixture_repair_after_attempt": "Dragstarts neartranscriptedge at15percentheight, displacementboundedto60percentviewport so itstaysinsidechat; verifiedbywidgetfixture separately.",
-  "conclusion": "Early invalid runs remain rejected. Three valid baseline runs passed all foreground, idle, frame population and hidden model guards; candidate comparison pending.",
+  "conclusion": "Early invalid runs remain rejected. Same finalized harness passedthree baseline andthree candidate runs; compare only native-before.json andnative-after.json. This is macOS evidence; physicalAndroid and discreteGPU acceptance remain untested.",
   "accepted_baseline_runs": 3,
-  "accepted_candidate_runs": 0
+  "accepted_candidate_runs": 3
 }
