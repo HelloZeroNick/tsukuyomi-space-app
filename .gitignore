@@ -63,3 +63,7 @@ assets/live2d/textures/*
 artifacts/
 
 /dist/
+
+# Generated only by the dedicated HarmonyOS build preparation.
+/pubspec_overrides.yaml
+/packages/flutter_secure_storage/

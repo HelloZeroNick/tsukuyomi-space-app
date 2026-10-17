@@ -1,5 +1,16 @@
 # Third-party notices
 
+## HarmonyOS branch adaptation
+
+The HarmonyOS platform project and initial plugin port were contributed by
+[HelloZeroNick](https://github.com/HelloZeroNick/tsukuyomi-space-app/tree/ohos),
+starting with commit `83f8a25`. Their Git history is retained in the official
+`ohos` branch. CPF-Flutter and the OpenHarmony plugin ports retain their upstream
+licenses; exact source revisions are recorded in
+`tool/ohos/dependency_overrides.json` and the build's generated Flutter NOTICES.
+The official branch rebuilds Live2D from source and does not redistribute the
+contributor's precompiled native library.
+
 This distribution includes Live2D Cubism Core and Native Framework 5 R5.
 Copyright (c) Live2D Inc. All rights reserved.
 
