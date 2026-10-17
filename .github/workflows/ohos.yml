@@ -42,11 +42,20 @@ jobs:
         env:
           GIT_LFS_SKIP_SMUDGE: 1
       - name: Build HAP
+        # No signing material on CI: the Hvigor assembleHap step fails asking
+        # for a debug signature, but the unsigned HAP is already produced
+        # (same approach as PiliNara's release-ohos.yml).
+        continue-on-error: true
         run: |
           flutter build hap --debug --target-platform ohos-arm64
+      - name: Collect unsigned HAP
+        run: |
+          mkdir -p dist
+          find build/app/outputs ohos/entry/build -name '*unsigned*.hap' -exec cp {} dist/ \;
+          ls -la dist/
       - uses: actions/upload-artifact@v4
         with:
           name: tsukuyomi-space-ohos-hap
-          path: build/app/outputs/fusion/*/*.hap
+          path: dist/*.hap
           if-no-files-found: error
           retention-days: 14
