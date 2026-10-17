@@ -1,0 +1,26 @@
+/node_modules
+/oh_modules
+/local.properties
+/.idea
+**/build
+/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+**/BuildProfile.ets
+**/oh-package-lock.json5
+/package.json
+/package-lock.json
+
+**/src/main/resources/rawfile/flutter_assets/
+**/libs/**/libapp.so
+**/libs/**/libflutter.so
+**/libs/**/libvmservice_snapshot.so
+
+# Native assets are always rebuilt from reviewed sources.
+**/libs/**/*.so
+*.p12
+*.p7b
+*.cer

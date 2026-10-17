@@ -1,0 +1,295 @@
+{
+  "dependency_overrides": {
+    "flutter_secure_storage": {
+      "path": "packages/flutter_secure_storage"
+    },
+    "win32": "5.5.3",
+    "audioplayers": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers",
+        "ref": "3a3e22642fac78dedb5fd4364b5ca29bcb144365"
+      }
+    },
+    "audioplayers_android": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_android",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "audioplayers_darwin": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_darwin",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "audioplayers_linux": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_linux",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "audioplayers_ohos": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_ohos",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "audioplayers_platform_interface": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_platform_interface",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "audioplayers_web": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_web",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "audioplayers_windows": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_audioplayers.git",
+        "path": "packages/audioplayers_windows",
+        "ref": "5061e5a17f21d177b230d938682c93c4366a1bb7"
+      }
+    },
+    "file_selector": {
+      "git": {
+        "url": "https://gitcode.com/openharmony-tpc/flutter_packages.git",
+        "path": "packages/file_selector/file_selector",
+        "ref": "9143d1c9001ba1bfbd4c5e07bf865eef108c0410"
+      }
+    },
+    "file_selector_ohos": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_packages.git",
+        "path": "packages/file_selector/file_selector_ohos",
+        "ref": "9143d1c9001ba1bfbd4c5e07bf865eef108c0410"
+      }
+    },
+    "flutter_geolocator_ohos": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_ohos",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "flutter_inappwebview": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview",
+        "ref": "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+      }
+    },
+    "flutter_inappwebview_android": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview_android",
+        "ref": "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+      }
+    },
+    "flutter_inappwebview_internal_annotations": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "dev_packages/flutter_inappwebview_internal_annotations",
+        "ref": "88c6360100725c4723675721f5f615c9f2e0a7a1"
+      }
+    },
+    "flutter_inappwebview_ios": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview_ios",
+        "ref": "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+      }
+    },
+    "flutter_inappwebview_macos": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview_macos",
+        "ref": "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+      }
+    },
+    "flutter_inappwebview_ohos": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview_ohos",
+        "ref": "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+      }
+    },
+    "flutter_inappwebview_platform_interface": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview_platform_interface",
+        "ref": "88c6360100725c4723675721f5f615c9f2e0a7a1"
+      }
+    },
+    "flutter_inappwebview_web": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git",
+        "path": "flutter_inappwebview_web",
+        "ref": "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+      }
+    },
+    "flutter_math_fork": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_math_fork.git",
+        "path": ".",
+        "ref": "ed1f274d7329b6310c05f36291ecd33cc41e1a14"
+      }
+    },
+    "geolocator": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "geolocator_android": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_android",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "geolocator_apple": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_apple",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "geolocator_linux": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_linux",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "geolocator_platform_interface": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_platform_interface",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "geolocator_web": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_web",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "geolocator_windows": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git",
+        "path": "geolocator_windows",
+        "ref": "6fa6307b29fa6bc0e1983b146d2c33de48740862"
+      }
+    },
+    "media_kit": {
+      "git": {
+        "url": "https://github.com/p1nbored/media-kit.git",
+        "path": "media_kit",
+        "ref": "eb1b563ff7c46ba4b048953f73e4616ad2fff3bc"
+      }
+    },
+    "media_kit_libs_ohos": {
+      "git": {
+        "url": "https://github.com/p1nbored/media-kit.git",
+        "path": "libs/ohos/media_kit_libs_ohos",
+        "ref": "eb1b563ff7c46ba4b048953f73e4616ad2fff3bc"
+      }
+    },
+    "media_kit_libs_video": {
+      "git": {
+        "url": "https://github.com/p1nbored/media-kit.git",
+        "path": "libs/universal/media_kit_libs_video",
+        "ref": "eb1b563ff7c46ba4b048953f73e4616ad2fff3bc"
+      }
+    },
+    "media_kit_video": {
+      "git": {
+        "url": "https://github.com/p1nbored/media-kit.git",
+        "path": "media_kit_video",
+        "ref": "eb1b563ff7c46ba4b048953f73e4616ad2fff3bc"
+      }
+    },
+    "package_info_plus": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_plus_plugins.git",
+        "path": "packages/package_info_plus/package_info_plus",
+        "ref": "bc4df814a726042a9dad1a267ebb1d2973544e24"
+      }
+    },
+    "path_provider": {
+      "git": {
+        "url": "https://gitcode.com/openharmony-tpc/flutter_packages.git",
+        "path": "packages/path_provider/path_provider",
+        "ref": "bddb2c981fcf826eaf19ed97f55113708aa55727"
+      }
+    },
+    "path_provider_ohos": {
+      "git": {
+        "url": "https://gitcode.com/openharmony-tpc/flutter_packages.git",
+        "path": "packages/path_provider/path_provider_ohos",
+        "ref": "bddb2c981fcf826eaf19ed97f55113708aa55727"
+      }
+    },
+    "share_plus": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_plus_plugins.git",
+        "path": "packages/share_plus/share_plus",
+        "ref": "bfd882da6893c4c8bfa1648ac637c2d557e6f4fa"
+      }
+    },
+    "share_plus_platform_interface": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_plus_plugins.git",
+        "path": "packages/share_plus/share_plus_platform_interface",
+        "ref": "bfd882da6893c4c8bfa1648ac637c2d557e6f4fa"
+      }
+    },
+    "shared_preferences": {
+      "git": {
+        "url": "https://gitcode.com/CPF-Flutter/flutter_packages.git",
+        "path": "packages/shared_preferences/shared_preferences",
+        "ref": "4a7a536bba8447c7d4eacde2fb1a2e0fbe2da044"
+      }
+    },
+    "shared_preferences_ohos": {
+      "git": {
+        "url": "https://gitcode.com/openharmony-tpc/flutter_packages.git",
+        "path": "packages/shared_preferences/shared_preferences_ohos",
+        "ref": "4a7a536bba8447c7d4eacde2fb1a2e0fbe2da044"
+      }
+    },
+    "url_launcher": {
+      "git": {
+        "url": "https://gitcode.com/hellozeronick/url_launcher.git",
+        "path": "url_launcher",
+        "ref": "d3bae8643efba1924d0441fdc0fdc815caee3f27"
+      }
+    },
+    "url_launcher_ohos": {
+      "git": {
+        "url": "https://gitcode.com/hellozeronick/url_launcher.git",
+        "path": "url_launcher_ohos",
+        "ref": "d3bae8643efba1924d0441fdc0fdc815caee3f27"
+      }
+    },
+    "window_manager": {
+      "git": {
+        "url": "https://github.com/bggRGjQaUbCoE/window_manager.git",
+        "path": "packages/window_manager",
+        "ref": "ac535d09a5850279e6591a9bdd285f9a3edeebf8"
+      }
+    }
+  }
+}

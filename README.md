@@ -157,6 +157,16 @@ flutter build web
 
 HarmonyOS / OpenHarmony 适配维护在官方 [`ohos` 分支](https://github.com/redchenk/tsukuyomi-space-app/tree/ohos)，同步主线功能。感谢 [HelloZeroNick](https://github.com/HelloZeroNick) 贡献移植；工具链、构建与签名限制见 [鸿蒙适配说明](docs/harmonyos.md)。
 
+## 贡献者
+
+感谢参与月读空间开发与平台适配的贡献者。
+
+| 作者 | 贡献 | 原始仓库与提交 |
+| :--- | :--- | :--- |
+| <a href="https://github.com/HelloZeroNick"><img src="https://avatars.githubusercontent.com/u/253844495?s=96&v=4" width="48" height="48" alt="HelloZeroNick 的头像" /><br />HelloZeroNick</a> | HarmonyOS / OpenHarmony 移植、平台工程、插件适配与首次 HAP 构建 | [原 fork 的 ohos 分支](https://github.com/HelloZeroNick/tsukuyomi-space-app/tree/ohos) · [原始移植提交](https://github.com/redchenk/tsukuyomi-space-app/commit/83f8a25fd4833986bca4105ef1e3930923a6d196) |
+
+完整贡献记录见 [GitHub Contributors](https://github.com/redchenk/tsukuyomi-space-app/graphs/contributors)。鸿蒙移植的原始作者信息与提交历史保留在 `main`，`ohos` 继续作为专用构建与同步分支。
+
 ## 结构
 
 ```text

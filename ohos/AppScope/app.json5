@@ -1,0 +1,10 @@
+{
+  "app": {
+    "bundleName": "space.tsukuyomi.tsukuyomi_space_app",
+    "vendor": "Tsukuyomi Space",
+    "versionCode": 28,
+    "versionName": "0.6.21",
+    "icon": "$media:app_icon",
+    "label": "$string:app_name"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "source": "5dd51d6d07c64d4c0cbefaf82bc9968d8b0222ec",
+  "main": "ff2dae92201bb43c83712fd74d8721b78a982ff7",
+  "contributor": "6cf628063b50628e60f74fb383bc7ed9ef77a8c9",
+  "flutter": "3.47.5 / Dart 3.13.4",
+  "local": {
+    "analyze": "passed",
+    "format": {
+      "files": 254,
+      "changed": 0
+    },
+    "flutter_tests": {
+      "passed": 930,
+      "skipped": 40
+    },
+    "release_python_tests": 38,
+    "ohos_prepare_sync_tests": 7,
+    "web_build": "passed (including Wasm dry run)",
+    "update_regressions_after_ffi_fix": 82,
+    "isolated_dependency_resolution": {
+      "sdk": "standard Flutter 3.47.5 (resolver only, not OHOS compilation)",
+      "pinned_git_packages_verified": 41
+    }
+  },
+  "sync_run": 39040171963,
+  "harmonyos_device_test": "not performed: no HarmonyOS device attached",
+  "release_policy": "unsigned CI artifact only; no signed HAP or official release published",
+  "sync_behavior": {
+    "main_update": "ff2dae92201bb43c83712fd74d8721b78a982ff7",
+    "automatic_merge": "8e8a28d4886820a8746c7931bbb6edb3e76c77c2",
+    "explicit_build_dispatch": 39040183519,
+    "remote_heads": [
+      "main",
+      "ohos"
+    ]
+  },
+  "ci": {
+    "run": 39042094556,
+    "source": "5dd51d6d07c64d4c0cbefaf82bc9968d8b0222ec",
+    "result": "success",
+    "quality": "success",
+    "flutter_tests": {
+      "passed": 930,
+      "skipped": 40
+    },
+    "ohos_prepare_sync_tests": 7,
+    "cpf_flutter_analyze": "success",
+    "release_hap_build_and_package_check": "success",
+    "first_hap_attempt": {
+      "run": 39040183519,
+      "result": "failed before package validation",
+      "reason": "build wrapper did not recognize localized missing-signature message; no unsigned artifact accepted"
+    },
+    "standard_main_run": 39040171964,
+    "standard_main_result": "success",
+    "standard_main_builds": {
+      "windows-debug": "success",
+      "macos-debug": "success",
+      "linux-debug": "success",
+      "android-debug": "success",
+      "web": "success"
+    }
+  },
+  "artifact": {
+    "run": 39042094556,
+    "source": "5dd51d6d07c64d4c0cbefaf82bc9968d8b0222ec",
+    "hap": "tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap",
+    "bytes": 148781359,
+    "sha256": "9f696972f993ec2c16d94d4e42c2c9bb1ae3fd1e62501c304360497c9ada8d6c",
+    "signed": false,
+    "elf": {
+      "libapp.so": {
+        "machine": 183,
+        "needed": [],
+        "bridge_exports": [],
+        "cubism_exports": 0
+      },
+      "libflutter.so": {
+        "machine": 183,
+        "needed": [
+          "libnative_window.so",
+          "libnative_drawing.so",
+          "libnative_vsync.so",
+          "libdeviceinfo_ndk.z.so",
+          "libace_napi.z.so",
+          "libace_ndk.z.so",
+          "libhilog_ndk.z.so",
+          "libuv.so",
+          "librawfile.z.so",
+          "libEGL.so",
+          "libGLESv3.so",
+          "libimage_ndk.z.so",
+          "libnative_image.so",
+          "libpixelmap_ndk.z.so",
+          "libpixelmap.so",
+          "libimage_source.so",
+          "libqos.so",
+          "libnative_color_space_manager.so",
+          "libhitrace_ndk.z.so",
+          "libhiappevent_ndk.z.so",
+          "libnative_buffer.so",
+          "libc.so"
+        ],
+        "bridge_exports": [],
+        "cubism_exports": 0
+      },
+      "libtsukuyomi_live2d.so": {
+        "machine": 183,
+        "needed": [
+          "libc.so"
+        ],
+        "bridge_exports": [
+          "ts_audio_envelope",
+          "ts_available",
+          "ts_begin",
+          "ts_create",
+          "ts_destroy",
+          "ts_mesh",
+          "ts_mesh_count",
+          "ts_meshes",
+          "ts_parameter",
+          "ts_update"
+        ],
+        "cubism_exports": 55
+      }
+    },
+    "download_url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/39042094556/artifacts/12104807242",
+    "artifact_id": 12104807242,
+    "artifact_zip_sha256": "11c0b0f3abee2b5f4621d670b02557d0cb2f6d2e97048e89c4773ef312ae4f25",
+    "app_metadata": {
+      "buildMode": "release",
+      "debug": false,
+      "bundleName": "space.tsukuyomi.tsukuyomi_space_app",
+      "versionName": "0.6.21",
+      "versionCode": 28,
+      "compileSdkVersion": "26.0.0.105",
+      "toolchainBundle": "26.0.0.821"
+    }
+  }
+}
