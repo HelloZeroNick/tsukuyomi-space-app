@@ -153,6 +153,10 @@ flutter build web
 
 眨眼后高光发白的修正与原生验证方法见 [docs/live2d-blink-fix.md](docs/live2d-blink-fix.md)。
 
+## 鸿蒙适配
+
+HarmonyOS / OpenHarmony 适配维护在官方 [`ohos` 分支](https://github.com/redchenk/tsukuyomi-space-app/tree/ohos)，同步主线功能。感谢 [HelloZeroNick](https://github.com/HelloZeroNick) 贡献移植；工具链、构建与签名限制见 [鸿蒙适配说明](docs/harmonyos.md)。
+
 ## 结构
 
 ```text

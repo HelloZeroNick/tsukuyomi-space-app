@@ -1,0 +1,35 @@
+name: Sync main to ohos
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sync-ohos
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: github.repository == 'redchenk/tsukuyomi-space-app'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge main without replacing HarmonyOS changes
+        id: sync
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 tool/ohos/sync_branch.py
+      - name: Validate the updated HarmonyOS branch
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ohos.yml --ref ohos
