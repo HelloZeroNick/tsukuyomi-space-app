@@ -36,7 +36,11 @@ jobs:
           echo "Download and install command-line tools + HarmonyOS SDK (API 12+)"
           echo "Set DEVECO_SDK_HOME and HarmonyOS command-line tools on PATH here."
           echo "Example tooling: https://developer.huawei.com/consumer/cn/download/"
-      - run: flutter pub get
+      - name: Get Flutter dependencies
+        # Skip LFS smudge: gitcode LFS requires auth (same as PiliNara CI).
+        run: flutter pub get
+        env:
+          GIT_LFS_SKIP_SMUDGE: 1
       - name: Build HAP
         run: |
           flutter build hap --debug --target-platform ohos-arm64
