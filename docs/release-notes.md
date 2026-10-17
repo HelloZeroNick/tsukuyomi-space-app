@@ -5,4 +5,4 @@
 - 滚动、键盘开合和连续输入时保留清晰的模型缓存画面，暂停多余模型计算，交互结束后继续动画；保持2048纹理、动作、全屏及关闭鼠标追踪。
 - 保留中文输入法组合文字、焦点与选区；补齐取消／失败后草稿恢复、新消息定位和账号隔离检查。
 
-普通Android手机选择arm64-v8a。详细对比、验证记录与真机边界见[Room重构记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-room-refactor-v0.6.21.md)。iOS包仍需自签。
+普通Android手机选择arm64-v8a。详细对比、验证记录与真机边界见[Room重构记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-room-refactor-v0.6.21.md)。iOS包仍需自签。

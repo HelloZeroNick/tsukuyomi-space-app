@@ -2,7 +2,7 @@
   "validated_at": "2026-10-12T10:14:54.070255+00:00",
   "installed_version_fixture": "v0.6.15-beta.1",
   "detected_release": "v0.6.16-beta.1",
-  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.16-beta.1",
+  "release_url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.16-beta.1",
   "platform": "android-arm64-v8a",
   "previews_enabled": true,
   "service": "AppUpdateService",

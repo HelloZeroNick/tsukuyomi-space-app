@@ -4,7 +4,7 @@
 
 ## 原生与性能
 
-- Android：修复共享库缺少 libm / liblog 链接；增加链接期 `--no-undefined`。Release APK 在 Android API 35 x86_64 模拟器安装、启动并完成 120 次动画更新，输出 `TSUKUYOMI_LIVE2D_OK meshes=409 textures=2`。[运行记录](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/36319494599)。最终发布流水线会再检查当次提交。
+- Android：修复共享库缺少 libm / liblog 链接；增加链接期 `--no-undefined`。Release APK 在 Android API 35 x86_64 模拟器安装、启动并完成 120 次动画更新，输出 `TSUKUYOMI_LIVE2D_OK meshes=409 textures=2`。[运行记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/36319494599)。最终发布流水线会再检查当次提交。
 - iOS：iOS 27 模拟器实际运行相同模型检查并输出成功标记。iPhoneOS Release `--no-codesign` 构建通过；IPA 打包检查 arm64、Payload 结构、全部必要 Framework 与模型资源。尚无自签后的物理 iPhone 验收。
 - macOS：真实 Metal/Impeller 透明度像素结果与预期一致（normal、additive、masked additive）；自然眨眼 30 连续帧检查未见复发白闪。
 - 相同 Mac、相同 409 网格角色、650×800 场景，各预热 2 秒、采样 8 秒：原 30 Hz 阈值在 vsync 抖动下约 20.99 次更新/秒；移除阈值后约 59.99 次/秒。优化后 raster P95 11.98ms。原始日志为本机 `/tmp/tsukuyomi-benchmark.log`；该结果不代表其他 GPU 或手机。

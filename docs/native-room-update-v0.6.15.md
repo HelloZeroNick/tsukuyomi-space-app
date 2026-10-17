@@ -49,4 +49,4 @@ flutter run --release -d macos -t tool/verify_mobile_live2d.dart
 
 Android真机与用户的9070 / 4060未连接；本机Profile和Android软件GPU模拟器不能证明其实际帧率、发热或GPU占用。移动端默认模型30fps，页面滚动仍跟随屏幕刷新；可在设置选择模型60fps。iOS包仍需自签。升级保留账号、聊天、草稿、模型配置和游戏记录。
 
-[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38217178615)通过861项测试、五平台构建和Android原生探针。v0.6.15-beta.1指向生产代码3d058198696c1ccab9769ada69d3e6e03953e5cb；全部11个发布附件、2,207,741,379字节已实际下载，匹配GitHub摘要及SHA256SUMS。[CI记录](qa/room-update-v0.6.15/ci-validation.json)、[附件记录](qa/room-update-v0.6.15/release-validation.json)。
+[发布CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38217178615)通过861项测试、五平台构建和Android原生探针。v0.6.15-beta.1指向生产代码3d058198696c1ccab9769ada69d3e6e03953e5cb；全部11个发布附件、2,207,741,379字节已实际下载，匹配GitHub摘要及SHA256SUMS。[CI记录](qa/room-update-v0.6.15/ci-validation.json)、[附件记录](qa/room-update-v0.6.15/release-validation.json)。

@@ -1,6 +1,6 @@
-const appRepository = 'https://github.com/redchenk/tsukuyomi-space-app';
+const appRepository = 'https://github.com/HelloZeroNick/tsukuyomi-space-app';
 final appReleasesApi = Uri.parse(
-  'https://api.github.com/repos/redchenk/tsukuyomi-space-app/releases?per_page=30',
+  'https://api.github.com/repos/HelloZeroNick/tsukuyomi-space-app/releases?per_page=30',
 );
 
 class UpdateFailure implements Exception {

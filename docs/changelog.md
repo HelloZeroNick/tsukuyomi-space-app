@@ -8,7 +8,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 修复模型首次绘制尚未完成时点击暂停，角色可能不显示的问题；尺寸变化时丢弃旧结果并刷新最后一次可见布局。
 - 保留本轮已验证的异步绘制、2048纹理、关闭鼠标追踪，以及辉夜快跑背景接续和下车动画修复；新增暂停与尺寸变化的像素检查。
 
-普通Android手机使用arm64-v8a包；开启应用更新预览渠道后检查下载。K90实际帧率仍需真机复测，iOS包需自签。[验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-room-pipeline-v0.6.20.md)。
+普通Android手机使用arm64-v8a包；开启应用更新预览渠道后检查下载。K90实际帧率仍需真机复测，iOS包需自签。[验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-room-pipeline-v0.6.20.md)。
 
 ---
 
@@ -19,7 +19,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 修复游戏背景克隆晚一帧出现导致的闪烁；使用与原版一致的唯一图层顺序，减少高刷新率屏幕上的重复绘制和整页重建。
 - 修复高处骑乘结束后落地仍保持旧动作，恢复三种角色模型各自的跑步动画；新增背景连续性、下车、帧缓存与像素检查。
 
-普通Android手机使用arm64-v8a包；应用更新开启预览渠道后检查下载。K90实际帧率仍需真机复测，iOS包需自签。[验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-room-pipeline-v0.6.20.md)。
+普通Android手机使用arm64-v8a包；应用更新开启预览渠道后检查下载。K90实际帧率仍需真机复测，iOS包需自签。[验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-room-pipeline-v0.6.20.md)。
 
 ---
 
@@ -28,7 +28,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 合并相邻且材质一致的 Live2D 网格，减少绘制调用；保留遮罩、透明度、染色、绘制顺序及2048纹理，鼠标追踪保持关闭。
 - 流式文本、工具参数和私有续接内容改为增量累计与大小检查，避免每个片段重复扫描整段内容；保留中文与表情字符边界、原有安全上限及取消行为。
 - 合入 Claude API 支持 PR #7，统一聊天、Agent、向导和模型目录的工作区、参数、回退及拒绝处理。
-- 增加像素一致性、网格索引边界和 Android 原生绘制检查。K90真机的帧率仍需复测；详细数据见[验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-render-stream-v0.6.19.md)。
+- 增加像素一致性、网格索引边界和 Android 原生绘制检查。K90真机的帧率仍需复测；详细数据见[验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-render-stream-v0.6.19.md)。
 
 应用更新开启预览渠道后下载，普通 Android 手机选择 arm64-v8a。iOS包仍需自签。
 
@@ -39,7 +39,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 修复键盘弹出后输入框被重新创建、输入法马上收起的问题；保留中文组词和光标位置，状态同步不再清空正在输入的内容。
 - 键盘动画期间保留舞台尺寸，减少不必要的重建；横屏输入时收起顶部控件，为聊天与发送按钮留出空间。
 - 手机 Live2D 按屏幕刷新率和实际绘制耗时调整合成开销，空闲后恢复细节，纹理仍保持2048，鼠标追踪保持关闭。
-- 新增 Android 实际输入法开合检查和长聊天模拟；红米K90的具体帧率仍需真机复测。[修复与验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-android-ime-v0.6.18.md)。
+- 新增 Android 实际输入法开合检查和长聊天模拟；红米K90的具体帧率仍需真机复测。[修复与验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-android-ime-v0.6.18.md)。
 
 应用更新开启预览渠道后下载，普通 Android 手机选择 arm64-v8a。iOS包仍需自签。
 
@@ -50,7 +50,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 长回复分段改为跟踪词边界，避免每个字符重复扫描前文；保留原站的分句、URL、小数、引号与代码规则。
 - 已完成回复使用有界缓存；聊天图片复用解码前的字节，避免重新进入列表时重复 Base64 转换和失去 Flutter 图片缓存。退出页面、切换账号或站点时清空页面缓存。
 - 聊天 Markdown 关闭文章目录与阅读进度测量；聊天列表独立重绘、适度预加载，流式回复和同步不会打断手指拖动或惯性滚动，查看旧消息的位置保持稳定。
-- 同机三次2,000条混合聊天、有效图片、长回复／Markdown、流式输出和Live2D复测，桌面及390宽移动布局的UI P95明显下降。手机布局使用macOS原生引擎采样，不能据此保证红米K90或其他Android真机的帧率；详细数据和Raster变化见[验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-chat-scroll-v0.6.17.md)。
+- 同机三次2,000条混合聊天、有效图片、长回复／Markdown、流式输出和Live2D复测，桌面及390宽移动布局的UI P95明显下降。手机布局使用macOS原生引擎采样，不能据此保证红米K90或其他Android真机的帧率；详细数据和Raster变化见[验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-chat-scroll-v0.6.17.md)。
 
 保持2048纹理、鼠标追踪关闭、启动无静态立绘、自动更新弹窗和现有聊天记录。应用更新页开启预览渠道后检查下载；普通Android手机选择arm64-v8a安装包。iOS仍需自签。
 
@@ -63,7 +63,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 保留上版完整导航品牌、自动更新弹窗、所有画质档2048纹理、较低绘制预算、鼠标追踪关闭、隐藏暂停和待机控件重建优化。
 - 校正性能用例：旧PNG测试数据校验错误，初始数据只包含图片失败占位；现改为有效内置图片，并检查真实解码结果。旧图表不能作为实际图片解码负载的流畅度证据。
 
-应用更新页开启预览渠道后检查下载，普通Android手机使用arm64-v8a包。iOS仍需自签。Android、9070和4060实际设备帧率仍需复测。[加载体验和验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-room-loading-v0.6.16.md)。
+应用更新页开启预览渠道后检查下载，普通Android手机使用arm64-v8a包。iOS仍需自签。Android、9070和4060实际设备帧率仍需复测。[加载体验和验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/main/docs/native-room-loading-v0.6.16.md)。
 
 ---
 
@@ -75,7 +75,7 @@ GitHub Release只展示对应版本的更新。更早版本的说明保留在本
 - 待机呼吸、眨眼与口型只重绘角色画布；动作改变位置、旋转或大小时才重建外层变换。保留局部裁切、遮罩、混合、鼠标追踪关闭和隐藏暂停。
 - 同机三轮 2,000 条消息、图片、流式回复及 Live2D 测试，UI / Raster P95 均在 16.7ms 内，隐藏时更新为零。Android 真机及 9070 / 4060 的实际帧率和 GPU 占用仍需设备复测；纹理大小减少不代表整个进程内存按相同比例下降。
 
-已支持应用更新的用户可在“应用更新”开启预览渠道后检查下载；普通 Android 手机选择 arm64-v8a。首次升级到此版后，新版提示使用弹窗。iOS 仍需自签。[验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.15-beta.1/docs/native-room-update-v0.6.15.md)。
+已支持应用更新的用户可在“应用更新”开启预览渠道后检查下载；普通 Android 手机选择 arm64-v8a。首次升级到此版后，新版提示使用弹窗。iOS 仍需自签。[验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.15-beta.1/docs/native-room-update-v0.6.15.md)。
 
 ---
 
@@ -124,7 +124,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 - Windows 打开安装器；macOS 打开 DMG，Linux 打开 DEB；iOS 导出未签名 IPA 供原身份自签。保留聊天、配置和草稿；不会自动下载、安装或退出。
 - 独立更新状态订阅、流式磁盘写入、100ms 进度节流及独立 isolate 校验，避免影响 Room。
 
-**先手动安装 0.6.11，此后的新版本才能在应用内提示。** macOS 仍需拖入 Applications 替换，Linux 需要系统图形安装器或安装说明，iOS 不能直接覆盖安装未签名 IPA。[操作与平台边界](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.11-beta.1/docs/in-app-updates.md)。
+**先手动安装 0.6.11，此后的新版本才能在应用内提示。** macOS 仍需拖入 Applications 替换，Linux 需要系统图形安装器或安装说明，iOS 不能直接覆盖安装未签名 IPA。[操作与平台边界](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.11-beta.1/docs/in-app-updates.md)。
 
 ---
 
@@ -137,7 +137,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 - 新版角色知识、剧透自愿、来源区分、自定义条目保留；记忆默认12条、最多30条，公平共享上下文预算。
 - GitHub 原生认证、邮箱验证码、绑定与解绑；账号和站点切换保持隔离。
 
-[同步核对与验收边界](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.10-beta.1/docs/native-site-sync-v0.6.10.md)。五平台包附安装说明、许可证和 SHA-256。iOS 需自签；Linux OAuth 容器、模型专项诊断/导出尚未移植，目录提供手动刷新。第三方真实账号和设备 GPU 性能仍需验收。
+[同步核对与验收边界](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.10-beta.1/docs/native-site-sync-v0.6.10.md)。五平台包附安装说明、许可证和 SHA-256。iOS 需自签；Linux OAuth 容器、模型专项诊断/导出尚未移植，目录提供手动刷新。第三方真实账号和设备 GPU 性能仍需验收。
 
 ---
 
@@ -149,7 +149,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 - 聊天按完整问答裁剪；重生成验证记忆版本和删除；模型 / Agent 工具续接跟进原站参数规则。
 - 游戏轮回等待重置 / 启动确认，保留累计分数与心情；排行榜分页，连续 200 次轮回压力回归。
 
-验证见 [网站同步记录](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.9-beta.1/docs/native-site-sync-v0.6.9.md)。五平台安装说明、许可证与 SHA-256 随包提供。iOS 仍需自签；真实网易云扫码、付费模型账号、移动设备与 GPU 性能需用户验收。
+验证见 [网站同步记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.9-beta.1/docs/native-site-sync-v0.6.9.md)。五平台安装说明、许可证与 SHA-256 随包提供。iOS 仍需自签；真实网易云扫码、付费模型账号、移动设备与 GPU 性能需用户验收。
 
 ---
 
@@ -161,7 +161,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 
 本地完整回归 **667 项通过、无跳过**；最终 UI 回归 **63 项通过**，覆盖 840 个整站布局场景，并保存 112 张双主题截图。格式与静态分析通过，打包工具 40 项通过。
 
-[UI 对齐与验证边界](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.8-beta.1/docs/native-ui-theme-v0.6.8.md)。五平台安装说明、运行时许可和 SHA-256 随包提供；iOS 仍需自签，线上付费模型账号未用于测试。
+[UI 对齐与验证边界](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.8-beta.1/docs/native-ui-theme-v0.6.8.md)。五平台安装说明、运行时许可和 SHA-256 随包提供；iOS 仍需自签，线上付费模型账号未用于测试。
 
 ---
 
@@ -173,7 +173,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 - 桌面网关复用相同调用 ID 的执行结果，并拒绝同一任务重复的模型调用 ID，避免重复写入和失败重放；保留文章草稿 / 发布审批、符号链接检查、命令沙箱、大 SVG 和恢复逻辑。
 - 四类端点按 URL 选择协议，保留旧 `reply` 封装；校验截断、损坏和超大事件。三语 MCP 连接设置可直接保存，已有配置无须迁移。
 
-本地完整回归 **667 项通过、无跳过**，含 840 个整站布局场景；新增 68 项协议、MCP、三语配置和当前真实网站代理联调。格式、静态分析通过，打包工具 40 项通过。五平台构建与三桌面各 109 项运行时 / 协议用例由发布门禁执行，安装说明、许可和 SHA-256 随包提供。[协议核对与验证边界](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.7-beta.1/docs/native-llm-agent-protocol-v0.6.7.md)。
+本地完整回归 **667 项通过、无跳过**，含 840 个整站布局场景；新增 68 项协议、MCP、三语配置和当前真实网站代理联调。格式、静态分析通过，打包工具 40 项通过。五平台构建与三桌面各 109 项运行时 / 协议用例由发布门禁执行，安装说明、许可和 SHA-256 随包提供。[协议核对与验证边界](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.7-beta.1/docs/native-llm-agent-protocol-v0.6.7.md)。
 
 保留 0.6.6 的文章预览与导航头像。模型测试使用可控 HTTP 服务和真实固定桌面运行时，没有使用用户付费模型账号；iOS 仍需自签，设备和在线服务验收边界见 INSTALL.md。
 
@@ -186,7 +186,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 - 登录、会话恢复和个人资料同步保留头像；Room 与其他页面的导航均显示，更新头像立即生效。退出、账号/站点切换、过期登录清除旧图片，解码失败回退。
 - 缓存数据头像解码字节，限制解码尺寸；普通页面重建不再反复丢弃头像图片资源。
 
-本地完整回归 **599 项通过、无跳过**，覆盖 **840 个整站布局场景**；格式检查与静态分析无问题，打包工具 40 项通过。实际网页和 macOS 窗口使用同一测试账号、同一文章进行核对；截图和输入/设备验收边界见 [0.6.6 验证报告](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.6-beta.1/docs/native-preview-avatar-v0.6.6.md)。
+本地完整回归 **599 项通过、无跳过**，覆盖 **840 个整站布局场景**；格式检查与静态分析无问题，打包工具 40 项通过。实际网页和 macOS 窗口使用同一测试账号、同一文章进行核对；截图和输入/设备验收边界见 [0.6.6 验证报告](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.6-beta.1/docs/native-preview-avatar-v0.6.6.md)。
 
 五平台安装和签名说明沿用 INSTALL.md，校验值见 SHA256SUMS.txt。保留 0.6.5 的中枢性能优化、整站原生功能、模型配置、Agent 进度与固定运行时。
 
@@ -201,7 +201,7 @@ Android 用户可在“应用更新”选择预览渠道，下载 GitHub 安装�
 
 Apple M5/macOS profile 同场景三次滚动，UI P95 中位数 **2.352 → 0.944ms**，Raster **4.366 → 3.578ms**，图片缓存 **46.1 → 15.6MB**。修复前后预热场景均没有超过 16.7ms 的帧；这不是所有设备卡顿已被量化复现或消除的声明。每 32ms Room 通知的压力场景中，中枢像素预览替换次数从每次约 280 降到 0。
 
-完整回归 **587 项通过、无跳过**，含 **840 个布局场景**；静态分析无问题，打包工具 40 项通过。最终图库逐图解码截图另重跑通过。原站参照 `6487ceb`、功能核对、当前截图、三次原始性能数据及已知原生差异见 [0.6.5 验证报告](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.5-beta.1/docs/native-ui-parity-v0.6.5.md)。
+完整回归 **587 项通过、无跳过**，含 **840 个布局场景**；静态分析无问题，打包工具 40 项通过。最终图库逐图解码截图另重跑通过。原站参照 `6487ceb`、功能核对、当前截图、三次原始性能数据及已知原生差异见 [0.6.5 验证报告](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.5-beta.1/docs/native-ui-parity-v0.6.5.md)。
 
 安装、签名与运行时边界沿用 INSTALL.md；文件校验见 SHA256SUMS.txt。保留此前原生文章预览、图标、实时 Agent 与固定运行时，继续使用现有后端及用户模型配置。
 
@@ -215,7 +215,7 @@ Apple M5/macOS profile 同场景三次滚动，UI P95 中位数 **2.352 → 0.94
 - 统一固定导航、品牌、副标题和账号操作；修复大字号下的作者、排序、分页及设置保存栏布局。过期账号不显示后台角色。
 - 中文与平台粘贴直接同步编辑模型，保留 composing 与选区；桌面分栏和手机预览使用同一正文，草稿恢复继续按站点和账号隔离。
 
-完整回归 **554 项通过、无跳过**，其中整站 **840 个布局场景**全部通过；静态分析无问题，打包工具 40 项通过。核对表、当前截图、原生差异及验证边界见 [0.6.4 整站 UI 验证](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.4-beta.1/docs/native-ui-parity-v0.6.4.md)。这不是逐像素相同的声明，设备性能与输入法仍需对应真机验收。
+完整回归 **554 项通过、无跳过**，其中整站 **840 个布局场景**全部通过；静态分析无问题，打包工具 40 项通过。核对表、当前截图、原生差异及验证边界见 [0.6.4 整站 UI 验证](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.4-beta.1/docs/native-ui-parity-v0.6.4.md)。这不是逐像素相同的声明，设备性能与输入法仍需对应真机验收。
 
 五平台安装方式与签名说明沿用 INSTALL.md，文件校验见 SHA256SUMS.txt。保留 0.6.3 的长 SVG 安全处理、原站图标、实时 Agent 进度和固定运行时；现有模型配置与后端继续使用。
 
@@ -230,11 +230,11 @@ Apple M5/macOS profile 同场景三次滚动，UI P95 中位数 **2.352 → 0.94
 - **作品文件**：文件读写从 64KiB 调整到 1MiB UTF-8；超限写入保留原文件。生成动作与文件内容分离记录，避免把完整 SVG 重复塞进下一步提示。官方 DeepSeek 地址的输出预算为 32K tokens。
 - **应用图标**：Android、iOS、macOS、Windows、Web 使用原站角色图标；Windows 安装器与 Linux 窗口、DEB、便携包入口一并处理，iOS 图标无透明通道，Web 提供安全区域图标。
 
-本地完整回归 **517 项通过、无跳过**，静态分析无问题；发布与打包校验 40 项通过。本轮包含约 180KB 鹈鹕骑自行车 SVG 的真实 OpenCode 写入、超过旧 2MB 原始流量的分片回复、四协议结构化流程、转义／截断／空动作修复，以及越界写入和错误状态不重试。未接入用户 DeepSeek 在线账号。具体用例与限制见 [0.6.3 验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.3-beta.1/docs/native-svg-icons-v0.6.3.md)。
+本地完整回归 **517 项通过、无跳过**，静态分析无问题；发布与打包校验 40 项通过。本轮包含约 180KB 鹈鹕骑自行车 SVG 的真实 OpenCode 写入、超过旧 2MB 原始流量的分片回复、四协议结构化流程、转义／截断／空动作修复，以及越界写入和错误状态不重试。未接入用户 DeepSeek 在线账号。具体用例与限制见 [0.6.3 验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.3-beta.1/docs/native-svg-icons-v0.6.3.md)。
 
-保留 0.6.2 的公开阶段说明、32ms 合并的实时正文、工具状态与耗时、取消、无有效输出时的安全兼容切换和模式记忆；原生 Responses／Anthropic／Ollama 桥接仍按完整回复返回，结构化模式支持四协议流式聊天。[0.6.2 验证](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.2-beta.1/docs/native-agent-progress-v0.6.2.md)。
+保留 0.6.2 的公开阶段说明、32ms 合并的实时正文、工具状态与耗时、取消、无有效输出时的安全兼容切换和模式记忆；原生 Responses／Anthropic／Ollama 桥接仍按完整回复返回，结构化模式支持四协议流式聊天。[0.6.2 验证](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.2-beta.1/docs/native-agent-progress-v0.6.2.md)。
 
-延续 0.6.1 的文章分栏预览、180ms 合并刷新和滚动正文隔离；此前文章滚动受控场景的三次性能数据见 [0.6.1 验证记录](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.1-beta.1/docs/native-fixes-v0.6.1.md)。
+延续 0.6.1 的文章分栏预览、180ms 合并刷新和滚动正文隔离；此前文章滚动受控场景的三次性能数据见 [0.6.1 验证记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.1-beta.1/docs/native-fixes-v0.6.1.md)。
 
 保留 0.6 整站功能：文章、创作、图库、附件、Wiki、像素工坊、游戏、管理和 Live2D 工作台均在 Flutter 内运行，连接原站相同业务接口。
 

@@ -88,7 +88,7 @@
   },
   "release": {
     "tag": "v0.6.12-beta.1",
-    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.12-beta.1",
+    "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.12-beta.1",
     "source_commit": "30d034e7831f866f8acd8695c867ba9883cb7ba4",
     "tag_commit_verified": true,
     "five_platform_builds": "passed",

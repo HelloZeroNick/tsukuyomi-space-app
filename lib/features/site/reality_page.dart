@@ -110,8 +110,8 @@ class _RealityPageState extends State<RealityPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final item in const {
-                'Repo': 'https://github.com/redchenk/tsukuyomi-space',
-                'Issues': 'https://github.com/redchenk/tsukuyomi-space/issues',
+                'Repo': 'https://github.com/HelloZeroNick/tsukuyomi-space',
+                'Issues': 'https://github.com/HelloZeroNick/tsukuyomi-space/issues',
                 'Plaza': '/plaza',
               }.entries)
                 Padding(

@@ -1,10 +1,42 @@
+# Tsukuyomi Space App 鸿蒙版（HarmonyOS / OpenHarmony）
+
+本分支是 [tsukuyomi-space-app](https://github.com/redchenk/tsukuyomi-space-app) 的鸿蒙移植分支，仓库托管在
+[HelloZeroNick/tsukuyomi-space-app](https://github.com/HelloZeroNick/tsukuyomi-space-app) 的 `ohos` 分支。
+
+> [!WARNING]
+> 本分支只做一件事：把 Tsukuyomi Space 客户端适配到鸿蒙。
+>
+> - 产品功能、界面与分支特性以 [上游仓库](https://github.com/redchenk/tsukuyomi-space-app) 为准，鸿蒙侧不新增产品功能、不改变上游行为；
+> - 除鸿蒙平台相关的适配代码（`ohos/` 平台目录及鸿蒙构建产物）之外，其余代码应尽量与上游保持一致，以便后续继续同步上游；
+> - 目前仅保证 HarmonyOS 目标可编译、可运行到主要流程。
+
+## 提 issue 注意事项
+
+- 请先查看[是否已存在类似 issue](https://github.com/HelloZeroNick/tsukuyomi-space-app/issues?q=is%3Aissue)，
+  并确保问题属于**鸿蒙版特有问题**（即上游/其他平台版本没有该问题）。
+- 与鸿蒙无关的功能问题请提到 [上游仓库](https://github.com/redchenk/tsukuyomi-space-app)。
+
+## 编译运行
+
+- 1、配置鸿蒙 Flutter 环境（参考 [CPF-Flutter/flutter_flutter](https://gitcode.com/CPF-Flutter/flutter_flutter) 的 `oh-x` 分支）；
+- 2、安装 DevEco Studio 与 HarmonyOS SDK，并配置好 `DEVECO_SDK_HOME`；
+- 3、首次克隆不含 Cubism SDK 与角色模型时，界面与对话功能仍可运行，角色区域会提示模型载入失败和重试入口；
+- 4、按下方「检查与构建」完成原生部分准备后，使用 `flutter build hap --release` 或 DevEco Studio 构建运行。
+
+## 感谢
+
+- [redchenk/tsukuyomi-space-app](https://github.com/redchenk/tsukuyomi-space-app) 上游作者
+- 所有开发者和贡献者
+
+# 以下是原上游项目README
+
 # 月读空间 · Flutter 原生客户端
 
 Tsukuyomi Space 的独立 Flutter 客户端。0.6.21 Room / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
 
 整站原生页面包含入口、Hub、Wiki、图库、附件库、编辑器、像素工坊、辉夜跑酷、友链、公开主页、管理后台和 Live2D 工作台，支持跨设备事件、中文／日语／英语、全站搜索及八千代导览。后台只向有效登录的 admin／super_admin 显示和开放；本地、合并与云端记忆来源跟进原站最新逻辑。实现与验收边界见 [整站迁移记录](docs/native-full-site-implementation-2026-09-30.md)。
 
-下载安装包见 [GitHub Releases](https://github.com/redchenk/tsukuyomi-space-app/releases)，配置与安装说明见 [release-guide.md](docs/release-guide.md)。发布包包括 Android APK、macOS Universal DMG、Windows 安装程序、Linux DEB 和供用户自签的 iOS IPA。
+下载安装包见 [GitHub Releases](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases)，配置与安装说明见 [release-guide.md](docs/release-guide.md)。发布包包括 Android APK、macOS Universal DMG、Windows 安装程序、Linux DEB 和供用户自签的 iOS IPA。
 
 所有平台打开即进入 Room，不播放 Access 动画。默认关闭演示；首次使用在聊天区填写模型地址、名称和 Key，保存后直接真实聊天。已有配置直接可用，本地历史先加载，登录与同步随后执行。升级保留独立演示历史。
 
@@ -149,7 +181,7 @@ flutter build web
 
 真实模型测试产物：`artifacts/native-live2d.png`。普通 CI 验证不带模型的开发壳；Release CI 从官方 SDK 与固定版本的原网站仓库取得资源并校验 SHA-256，运行真实模型测试，缺少 Cubism Core 时禁止发布。
 
-五个平台的安装包由发布流水线统一构建，通过原生模型检查和包结构校验后发布至 [GitHub Releases](https://github.com/redchenk/tsukuyomi-space-app/releases)。自动化测试、真实后端联调及界面检查见 [整站验收记录](docs/native-full-site-implementation-2026-09-30.md)。外部服务、QQ 实号回调与已签名 iPhone 安装仍需对应账号和设备验证。
+五个平台的安装包由发布流水线统一构建，通过原生模型检查和包结构校验后发布至 [GitHub Releases](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases)。自动化测试、真实后端联调及界面检查见 [整站验收记录](docs/native-full-site-implementation-2026-09-30.md)。外部服务、QQ 实号回调与已签名 iPhone 安装仍需对应账号和设备验证。
 
 眨眼后高光发白的修正与原生验证方法见 [docs/live2d-blink-fix.md](docs/live2d-blink-fix.md)。
 

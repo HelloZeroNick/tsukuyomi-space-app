@@ -29,7 +29,7 @@ Hub 截图使用系统中文字体，覆盖360/390/768/1280/1920宽度与深浅�
 
 最终发布提交 `ad04d37e32345fa77cdf37b18e08918f7cf534d5` 的 CI：基础回归716项通过、34项门控跳过；真实网站后端与 Cubism 回归733项通过、17项门控跳过。五平台发布构建、四平台调试构建全部通过，Android 日志确认 `TSUKUYOMI_LIVE2D_OK`；三桌面的独立运行时与安装包内回归各110项通过、无跳过。
 
-[v0.6.10-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.10-beta.1) 的11个附件已全部下载，SHA-256 与 GitHub 元数据和发布清单一致。进一步校验 Windows/Linux 与 macOS 两种架构的固定运行时、逐文件校验值和许可证；macOS 主程序同时含 arm64/x86_64，iOS 为未签名 iPhoneOS 包，版本均为 `0.6.10+16`。[完整发布验证记录](qa/site-v0.6.10/release-validation.json)。
+[v0.6.10-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.10-beta.1) 的11个附件已全部下载，SHA-256 与 GitHub 元数据和发布清单一致。进一步校验 Windows/Linux 与 macOS 两种架构的固定运行时、逐文件校验值和许可证；macOS 主程序同时含 arm64/x86_64，iOS 为未签名 iPhoneOS 包，版本均为 `0.6.10+16`。[完整发布验证记录](qa/site-v0.6.10/release-validation.json)。
 
 足迹区原生截图（固定测试数据）：
 

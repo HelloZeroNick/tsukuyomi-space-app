@@ -10,7 +10,7 @@ import subprocess
 
 from metadata import ROOT, VERSION, read_version
 
-REPOSITORY = "redchenk/tsukuyomi-space-app"
+REPOSITORY = "HelloZeroNick/tsukuyomi-space-app"
 JOBS = {"metadata", "quality", "build (macos-15, macos)", "build (macos-15, ios)",
         "build (windows-2022, windows)", "build (ubuntu-22.04, linux)",
         "build (ubuntu-22.04, android)", "native-smoke / android", "publish"}

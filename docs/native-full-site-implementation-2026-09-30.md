@@ -49,7 +49,7 @@ Cookie/密钥保存在安全存储；草稿与缓存按站点及账号分区。�
 
 整站截图覆盖登录、Wiki、友链、图库、编辑器、像素工坊、个人中心及后台，桌面 `1280×900`、手机 `390×844` 共 16 张；图库、友链与头像额外验证实际解码图片。另有 Room、Hub、设置及游戏的截图与布局测试。截图检查后修正了手机站名换行和后台统计卡片宽度。截图保存于 `artifacts/native-site-parity/`，完整日志为 `artifacts/release-full-test.log`。
 
-macOS Release 构建成功，产物为 `build/macos/Build/Products/Release/tsukuyomi_space_app.app`，约 227.3 MB，主程序同时包含 `arm64` 和 `x86_64`。构建日志为 `artifacts/full-site-macos-release-final.log`。本机未构建其余平台；发行版本由 [GitHub Actions 发布流水线](https://github.com/redchenk/tsukuyomi-space-app/actions/workflows/release.yml) 统一验证五平台安装包和 Android 真模型模拟器测试，完整下载及校验和见 [v0.5.0-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.5.0-beta.1)。机器锁屏期间无法完成原生窗口的手动交互检查，界面证据来自 Flutter 截图测试。
+macOS Release 构建成功，产物为 `build/macos/Build/Products/Release/tsukuyomi_space_app.app`，约 227.3 MB，主程序同时包含 `arm64` 和 `x86_64`。构建日志为 `artifacts/full-site-macos-release-final.log`。本机未构建其余平台；发行版本由 [GitHub Actions 发布流水线](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/workflows/release.yml) 统一验证五平台安装包和 Android 真模型模拟器测试，完整下载及校验和见 [v0.5.0-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.5.0-beta.1)。机器锁屏期间无法完成原生窗口的手动交互检查，界面证据来自 Flutter 截图测试。
 
 复验时先使用符合原站依赖要求的 Node.js 启动一次新的隔离后端，再运行完整测试；后端需保持运行到测试结束：
 

@@ -30,18 +30,18 @@
 
 ## 验证
 
-本地78项相关检查、38项发布工具检查通过，分析无问题。[最终发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38325927598)的beta.1验证中，9个逻辑任务全部成功：完整回归917项通过、19项跳过；五平台构建完成，三个桌面平台各118项窗口／更新检查及113项打包Agent检查通过。
+本地78项相关检查、38项发布工具检查通过，分析无问题。[最终发布CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38325927598)的beta.1验证中，9个逻辑任务全部成功：完整回归917项通过、19项跳过；五平台构建完成，三个桌面平台各118项窗口／更新检查及113项打包Agent检查通过。
 
 Android原生引擎的合成与真实模型异步像素差均为0，缓存重绘没有再次生成模型帧／离屏图片；背景1500帧、41次克隆接续，露底为0；模型1、2、4高处下车均落地并恢复现有游戏规则对应的跑步造型。保留实际输入法三次开合、2048细节、19个骑乘阶段和重开像素一致性检查。SwiftShader诊断仅8帧，UI P95为1.276ms、Raster P95为670.721ms，不能作为真机帧率或达标证据。
 
 第一次Android任务在下载Google模拟器时遇到无效ZIP，画面检查尚未运行；第二次沿用同一源码重试成功，没有更改像素门槛。[CI记录](qa/room-pipeline-v0.6.20/beta.1-ci-validation.json)、[重试记录](qa/room-pipeline-v0.6.20/beta.1-infrastructure-retry.json)、[本地记录](qa/room-pipeline-v0.6.20/beta.1-local-validation.json)。
 
-[v0.6.20-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.20-beta.1)已发布，源码为`730e82357344540345721f1d202e2ffe31c817c8`，发布说明只包含本次更新。11个附件已实际下载并校验，合计2,208,612,906字节。[beta.1附件记录](qa/room-pipeline-v0.6.20/beta.1-release-validation.json)。
+[v0.6.20-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.20-beta.1)已发布，源码为`730e82357344540345721f1d202e2ffe31c817c8`，发布说明只包含本次更新。11个附件已实际下载并校验，合计2,208,612,906字节。[beta.1附件记录](qa/room-pipeline-v0.6.20/beta.1-release-validation.json)。
 
 当前仅连接macOS和Chrome。Android CI模拟器只证明功能与像素正确，实际手机长局、K90帧率及桌面显卡占用仍需对应设备复测。
 
 ## beta.2 暂停与静态布局补充
 
-收尾用例复现beta.1暂停后调整画布尺寸时没有可用缓存帧。现在由显式可见绘制请求生成一次静态帧；模型通知仍受暂停控制，旧尺寸的异步结果仍按代次失效。帧完成通知会触发最新可见尺寸的重绘，不恢复模型计算或积累历史时间。新增实际像素及首次加载期间暂停检查，保留暂停后60次重绘没有重复准备的检查。[beta.2完整CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38331436856)已通过，919项测试通过、19项跳过，五平台构建和三个桌面Agent检查完成。Android真实模型及暂停后尺寸变化的像素差均为0，静态重绘没有重复生成帧；背景1500帧／41次接续仍无露底，三模型下车、输入法、2048细节及重开检查均通过。SwiftShader仅16帧诊断（UI P95 3.234ms、Raster P95 399.364ms），不作为真机性能验收。
+收尾用例复现beta.1暂停后调整画布尺寸时没有可用缓存帧。现在由显式可见绘制请求生成一次静态帧；模型通知仍受暂停控制，旧尺寸的异步结果仍按代次失效。帧完成通知会触发最新可见尺寸的重绘，不恢复模型计算或积累历史时间。新增实际像素及首次加载期间暂停检查，保留暂停后60次重绘没有重复准备的检查。[beta.2完整CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38331436856)已通过，919项测试通过、19项跳过，五平台构建和三个桌面Agent检查完成。Android真实模型及暂停后尺寸变化的像素差均为0，静态重绘没有重复生成帧；背景1500帧／41次接续仍无露底，三模型下车、输入法、2048细节及重开检查均通过。SwiftShader仅16帧诊断（UI P95 3.234ms、Raster P95 399.364ms），不作为真机性能验收。
 
-[v0.6.20-beta.2](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.20-beta.2)已发布，源码为`e16f4a164b8dd2531b23bd4f56caabac4888f40f`，构建号27。[beta.2 CI记录](qa/room-pipeline-v0.6.20/beta.2-ci-validation.json)、[本地记录](qa/room-pipeline-v0.6.20/beta.2-local-validation.json)、[暂停尺寸变化像素记录](qa/room-pipeline-v0.6.20/beta.2-live2d-async-pixels.json)。11个附件共2,207,674,611字节已实际下载，与GitHub官方摘要及SHA256SUMS全部一致。生产AppUpdateService从0.6.19-beta.1和0.6.20-beta.1均检测到beta.2，实际下载并独立校验155,256,892字节Android arm64 APK；未在物理手机安装。[beta.2附件记录](qa/room-pipeline-v0.6.20/beta.2-release-validation.json)、[更新服务记录](qa/room-pipeline-v0.6.20/beta.2-updater-validation.json)。
+[v0.6.20-beta.2](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.20-beta.2)已发布，源码为`e16f4a164b8dd2531b23bd4f56caabac4888f40f`，构建号27。[beta.2 CI记录](qa/room-pipeline-v0.6.20/beta.2-ci-validation.json)、[本地记录](qa/room-pipeline-v0.6.20/beta.2-local-validation.json)、[暂停尺寸变化像素记录](qa/room-pipeline-v0.6.20/beta.2-live2d-async-pixels.json)。11个附件共2,207,674,611字节已实际下载，与GitHub官方摘要及SHA256SUMS全部一致。生产AppUpdateService从0.6.19-beta.1和0.6.20-beta.1均检测到beta.2，实际下载并独立校验155,256,892字节Android arm64 APK；未在物理手机安装。[beta.2附件记录](qa/room-pipeline-v0.6.20/beta.2-release-validation.json)、[更新服务记录](qa/room-pipeline-v0.6.20/beta.2-updater-validation.json)。

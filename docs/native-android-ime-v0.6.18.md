@@ -32,8 +32,8 @@ Flutter的[Picture.toImageSync文档](https://api.flutter.dev/flutter/dart-ui/Pi
 
 [修复前](qa/android-ime-v0.6.18/room-ime-before.json)、[修复后](qa/android-ime-v0.6.18/room-ime-after.json)。
 
-[完整发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38259178111)的9个任务全部通过：885项完整回归通过、19项可选检查跳过；五平台构建通过，三桌面平台各115项更新／窗口控制回归与110项随包Agent回归通过。各包校验419项网站／游戏／模型资源与两个已编译着色器。Android实际系统输入法连续三次开合，带原生Live2D，编辑器、焦点、文本和舞台尺寸保持稳定；游戏音频、骑乘和2048纹理检查通过。[CI记录](qa/android-ime-v0.6.18/ci-validation.json)。
+[完整发布CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38259178111)的9个任务全部通过：885项完整回归通过、19项可选检查跳过；五平台构建通过，三桌面平台各115项更新／窗口控制回归与110项随包Agent回归通过。各包校验419项网站／游戏／模型资源与两个已编译着色器。Android实际系统输入法连续三次开合，带原生Live2D，编辑器、焦点、文本和舞台尺寸保持稳定；游戏音频、骑乘和2048纹理检查通过。[CI记录](qa/android-ime-v0.6.18/ci-validation.json)。
 
 Android探针运行于x86_64模拟器及SwiftShader软件渲染，只用于功能验证。其绘制耗时不能作为K90的硬件性能验收；K90实际输入法、驱动和帧率仍需真机复测，不能据此宣称完全消除卡顿。
 
-[v0.6.18-beta.1已发布](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.18-beta.1)，源提交`ac939ae11af580794afe840a035dfde8e39ae8dd`；11个附件实际下载2,207,493,602字节，全部匹配GitHub官方摘要及SHA256SUMS。首次并行下载遇到传输超时，保留已经校验的附件并串行重试后全部通过。应用更新从v0.6.17检测到v0.6.18，独立重试后通过真实GitHub下载／校验155,256,892字节的Android arm64包，没有调用安装。发布说明只含本次更新，仓库远程仅main；iOS仍需自签。[附件记录](qa/android-ime-v0.6.18/release-validation.json)、[应用更新记录](qa/android-ime-v0.6.18/updater-validation.json)、[本地记录](qa/android-ime-v0.6.18/local-validation.json)。
+[v0.6.18-beta.1已发布](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.18-beta.1)，源提交`ac939ae11af580794afe840a035dfde8e39ae8dd`；11个附件实际下载2,207,493,602字节，全部匹配GitHub官方摘要及SHA256SUMS。首次并行下载遇到传输超时，保留已经校验的附件并串行重试后全部通过。应用更新从v0.6.17检测到v0.6.18，独立重试后通过真实GitHub下载／校验155,256,892字节的Android arm64包，没有调用安装。发布说明只含本次更新，仓库远程仅main；iOS仍需自签。[附件记录](qa/android-ime-v0.6.18/release-validation.json)、[应用更新记录](qa/android-ime-v0.6.18/updater-validation.json)、[本地记录](qa/android-ime-v0.6.18/local-validation.json)。

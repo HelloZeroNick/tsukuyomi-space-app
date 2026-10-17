@@ -1832,7 +1832,7 @@ class _SitePageState extends State<SitePage> with WidgetsBindingObserver {
               (
                 '月读空间官方',
                 '项目仓库与更新记录',
-                'https://github.com/redchenk/tsukuyomi-space',
+                'https://github.com/HelloZeroNick/tsukuyomi-space',
                 Icons.code,
               ),
               ('辉夜姬博客', '文章、公告与创作手记', '/stage', Icons.book_outlined),

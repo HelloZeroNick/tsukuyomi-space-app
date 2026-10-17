@@ -22,9 +22,9 @@
 
 远程接口需 HTTPS。本机 HTTP 支持 localhost、127.0.0.1、::1；Android 模拟器可用 10.0.2.2 连接宿主机。手机 localhost 指向手机本身；连接电脑上的服务请提供 HTTPS 地址。
 
-0.6.10 的导航、Hub 字体、模型目录/参数、记忆和 GitHub 认证更新见 [网站同步记录](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.10-beta.1/docs/native-site-sync-v0.6.10.md)。
+0.6.10 的导航、Hub 字体、模型目录/参数、记忆和 GitHub 认证更新见 [网站同步记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.10-beta.1/docs/native-site-sync-v0.6.10.md)。
 
-0.6.9 的四季配色、分组导航、昼夜背景、网易云音乐和协议同步见 [网站同步记录](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.9-beta.1/docs/native-site-sync-v0.6.9.md)。网易云使用网站既有后端，扫码、版权 / 会员曲目与网络播放仍需真实账号验收。
+0.6.9 的四季配色、分组导航、昼夜背景、网易云音乐和协议同步见 [网站同步记录](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.9-beta.1/docs/native-site-sync-v0.6.9.md)。网易云使用网站既有后端，扫码、版权 / 会员曲目与网络播放仍需真实账号验收。
 
 ## 原生整站页面与恢复
 
@@ -63,7 +63,7 @@ Windows 命令仅使用 Codex 0.159.0 内置 MXC/PSEC 严格沙箱，不需要�
 
 运行时目录内的 `runtime-manifest.json` 列出逐文件 SHA-256，`licenses/` 含上游许可证。不要单独移动或修改运行时文件。macOS 为了运行本地进程和 Codex 沙箱，直接分发版不启用 App Sandbox；工具权限由统一网关和命令系统沙箱控制。
 
-协议、请求预算、MCP 网络与验收边界见 [0.6.7 原生协议说明](https://github.com/redchenk/tsukuyomi-space-app/blob/v0.6.7-beta.1/docs/native-llm-agent-protocol-v0.6.7.md)。
+协议、请求预算、MCP 网络与验收边界见 [0.6.7 原生协议说明](https://github.com/HelloZeroNick/tsukuyomi-space-app/blob/v0.6.7-beta.1/docs/native-llm-agent-protocol-v0.6.7.md)。
 
 ## 建议验证
 

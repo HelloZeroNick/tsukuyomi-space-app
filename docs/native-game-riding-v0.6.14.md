@@ -21,11 +21,11 @@
 
 离线探针只调整关卡进度到飞船生成阈值并保持生存，真实碰撞与原项目骑乘脚本照常执行。它不创建 GameSession，也不向服务器提交测试分数。Android Release 的原生探针复用这些场景和像素断言，必须输出 `TSUKUYOMI_GAME_RIDING_OK` 才允许发布。
 
-本地完整回归 809 项通过、33 项可选环境检查跳过，静态分析和格式检查通过；发布工具 38 项、Agent 打包工具 3 项通过。macOS Release 的真实 Metal / Impeller GPU 探针完成同样 19 个绘制阶段和 9 次首帧像素比较，全部通过，原有 Live2D 绘制和细节探针也通过。见 [本地验证摘要](qa/game-riding-v0.6.14/local-validation.json)。[五平台发布流水线](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38186358091)全部成功：云端整站、后端及 Cubism 回归 824 项通过、18 项可选检查跳过；三个桌面的更新/窗口/绘制专项各 81 项、打包后 Agent 专项各 110 项通过；Android Release 模拟器完成 19 个游戏绘制阶段、9 次重开首帧比较、音频混音与更新原生通道检查。见 [CI 证据](qa/game-riding-v0.6.14/ci-validation.json)。当前没有用户那台 Android 物理设备，不能将宿主测试或模拟器通过当作用户真机已经验收。网站工作区和游戏素材文件未修改。
+本地完整回归 809 项通过、33 项可选环境检查跳过，静态分析和格式检查通过；发布工具 38 项、Agent 打包工具 3 项通过。macOS Release 的真实 Metal / Impeller GPU 探针完成同样 19 个绘制阶段和 9 次首帧像素比较，全部通过，原有 Live2D 绘制和细节探针也通过。见 [本地验证摘要](qa/game-riding-v0.6.14/local-validation.json)。[五平台发布流水线](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38186358091)全部成功：云端整站、后端及 Cubism 回归 824 项通过、18 项可选检查跳过；三个桌面的更新/窗口/绘制专项各 81 项、打包后 Agent 专项各 110 项通过；Android Release 模拟器完成 19 个游戏绘制阶段、9 次重开首帧比较、音频混音与更新原生通道检查。见 [CI 证据](qa/game-riding-v0.6.14/ci-validation.json)。当前没有用户那台 Android 物理设备，不能将宿主测试或模拟器通过当作用户真机已经验收。网站工作区和游戏素材文件未修改。
 
 
 ## 发布与升级
 
-[v0.6.14-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.14-beta.1) 已发布，标签与发布包来自 `67620482b3855813b3496fa5cc2e799b626f57ed`。已实际下载全部 11 个发布文件，共 2,208,160,608 字节，GitHub 官方 SHA-256 与 SHA256SUMS 逐项一致。见 [下载校验记录](qa/game-riding-v0.6.14/release-validation.json)。真实应用更新服务以 0.6.13 为已安装版本检测到 0.6.14，实际下载并校验 Android ARM64 APK（155,256,892 字节，SHA-256 `62713410aac6028b401ead50a7c097b27d09d7168e92dabed161e04287d2d654`），未执行系统安装。
+[v0.6.14-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.14-beta.1) 已发布，标签与发布包来自 `67620482b3855813b3496fa5cc2e799b626f57ed`。已实际下载全部 11 个发布文件，共 2,208,160,608 字节，GitHub 官方 SHA-256 与 SHA256SUMS 逐项一致。见 [下载校验记录](qa/game-riding-v0.6.14/release-validation.json)。真实应用更新服务以 0.6.13 为已安装版本检测到 0.6.14，实际下载并校验 Android ARM64 APK（155,256,892 字节，SHA-256 `62713410aac6028b401ead50a7c097b27d09d7168e92dabed161e04287d2d654`），未执行系统安装。
 
 Android 用户可在应用更新里启用预览版本，检查并下载更新后按系统提示覆盖安装；没有应用更新入口的旧版可从 Release 直接下载 ARM64 APK。最高分、聊天、草稿和账号配置保留。版本号不明且未取得原反馈手机，仍需用户在原设备复测骑乘、暂停及连续重开；这里的模拟器检查不构成真机帧率或驱动验收。仓库仍只保留 main，网站工作区未改动。

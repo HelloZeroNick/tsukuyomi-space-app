@@ -642,7 +642,20 @@ class SiteBeianLinks extends StatelessWidget {
         if (beian.text.isNotEmpty) link(beian.text, beian.url),
         if (beian.mpsText.isNotEmpty)
           link(beian.mpsText, beian.mpsUrl, mps: true),
+        repoLink('Fork: HelloZeroNick/tsukuyomi-space-app',
+            'https://github.com/HelloZeroNick/tsukuyomi-space-app'),
+        repoLink('Upstream: redchenk/tsukuyomi-space-app',
+            'https://github.com/redchenk/tsukuyomi-space-app'),
       ],
+    );
+  }
+
+  Widget repoLink(String label, String url) {
+    final controller = SiteChromeScope.maybeOf(context)!;
+    return TextButton(
+      onPressed: () =>
+          openSiteLink(controller.room.settings.siteUrl, url),
+      child: Text(label, textAlign: TextAlign.center, softWrap: true),
     );
   }
 }

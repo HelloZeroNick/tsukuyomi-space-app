@@ -31,12 +31,12 @@
 
 ## PR与验收范围
 
-[PR #7](https://github.com/redchenk/tsukuyomi-space-app/pull/7)与当前main无冲突合并，保留作者提交。复核[Claude迁移规则](https://platform.claude.com/docs/en/models/opus-5-5/migration-guide)、[工作区规则](https://platform.claude.com/docs/en/manage-claude/workspaces)及[服务端回退协议](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback)，覆盖采样参数、工作区头、模型目录、回退、拒绝／截断和最终工具轮次。首次完整回归887项通过、34项可选检查跳过，一项原有大SVG压力用例超过30秒；后续针对性64项全部通过，包括该SVG用例、四类协议、Claude、字符边界、安全上限和输入法。没有使用真实Anthropic密钥进行付费联调。
+[PR #7](https://github.com/HelloZeroNick/tsukuyomi-space-app/pull/7)与当前main无冲突合并，保留作者提交。复核[Claude迁移规则](https://platform.claude.com/docs/en/models/opus-5-5/migration-guide)、[工作区规则](https://platform.claude.com/docs/en/manage-claude/workspaces)及[服务端回退协议](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback)，覆盖采样参数、工作区头、模型目录、回退、拒绝／截断和最终工具轮次。首次完整回归887项通过、34项可选检查跳过，一项原有大SVG压力用例超过30秒；后续针对性64项全部通过，包括该SVG用例、四类协议、Claude、字符边界、安全上限和输入法。没有使用真实Anthropic密钥进行付费联调。
 
 2,000条聊天／图片／流式回复／Live2D的本机原生Profile采样三次因窗口前台／焦点条件不满足被丢弃；嵌套签名修复后仍不能满足焦点检查。保留模型活跃、窗口焦点及隐藏更新检查，不记录或宣传无效UI／Raster数据。尚不能保证K90的实际流畅度，需要用发布包进行真机复测。
 
-[Android专项CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38277802756)已通过：修正版的合成用例和真实模型像素差均为0，三个模型状态的调用从455降到226、226、329；系统输入法三次开合保持编辑器和舞台尺寸稳定，2048细节、目标混合、游戏音频与骑乘全部通过。该环境使用SwiftShader模拟器，帧耗时仅作诊断，不能用作K90帧率验收。[Android日志摘要](qa/render-stream-v0.6.19/android-focused-validation.json)。
+[Android专项CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38277802756)已通过：修正版的合成用例和真实模型像素差均为0，三个模型状态的调用从455降到226、226、329；系统输入法三次开合保持编辑器和舞台尺寸稳定，2048细节、目标混合、游戏音频与骑乘全部通过。该环境使用SwiftShader模拟器，帧耗时仅作诊断，不能用作K90帧率验收。[Android日志摘要](qa/render-stream-v0.6.19/android-focused-validation.json)。
 
-Android发布探针新增合并绘制的像素及调用检查，并保留系统输入法三次开合、2048细节、游戏音频与骑乘检查；失败会阻止发布。最终[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38278977949)的9个任务全部成功：完整回归907项通过、19项跳过，五平台构建完成；macOS、Windows、Linux各117项窗口／更新检查及113项打包Agent检查通过。iOS附件未签名，需要自行签名。PR #7已远程合并，开放PR为0，仓库分支仅main。
+Android发布探针新增合并绘制的像素及调用检查，并保留系统输入法三次开合、2048细节、游戏音频与骑乘检查；失败会阻止发布。最终[发布CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38278977949)的9个任务全部成功：完整回归907项通过、19项跳过，五平台构建完成；macOS、Windows、Linux各117项窗口／更新检查及113项打包Agent检查通过。iOS附件未签名，需要自行签名。PR #7已远程合并，开放PR为0，仓库分支仅main。
 
-[v0.6.19-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.19-beta.1)绑定源码`d8be2c83ef0f389ad3450a1e35e9e1775f5788c1`，发布说明仅包含本次更新。11个附件共2,208,576,547字节已实际下载，全部与GitHub官方摘要及SHA256SUMS一致。生产AppUpdateService以旧版0.6.18和Android arm64配置成功检测、下载并验证0.6.19的155,256,892字节APK；未在物理手机安装。[CI记录](qa/render-stream-v0.6.19/ci-validation.json)、[附件记录](qa/render-stream-v0.6.19/release-validation.json)、[更新记录](qa/render-stream-v0.6.19/updater-validation.json)、[本地记录](qa/render-stream-v0.6.19/local-validation.json)。
+[v0.6.19-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.19-beta.1)绑定源码`d8be2c83ef0f389ad3450a1e35e9e1775f5788c1`，发布说明仅包含本次更新。11个附件共2,208,576,547字节已实际下载，全部与GitHub官方摘要及SHA256SUMS一致。生产AppUpdateService以旧版0.6.18和Android arm64配置成功检测、下载并验证0.6.19的155,256,892字节APK；未在物理手机安装。[CI记录](qa/render-stream-v0.6.19/ci-validation.json)、[附件记录](qa/render-stream-v0.6.19/release-validation.json)、[更新记录](qa/render-stream-v0.6.19/updater-validation.json)、[本地记录](qa/render-stream-v0.6.19/local-validation.json)。

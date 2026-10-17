@@ -46,7 +46,7 @@
     },
     "ci": {
       "run_id": 38063268305,
-      "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38063268305",
+      "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38063268305",
       "source_commit": "8d4bb0e44882330affb0e54f1d93f47a996ef062",
       "quality": {
         "passed": 792,
@@ -111,7 +111,7 @@
     "Old versions need manual installation of 0.6.11 first"
   ],
   "release": {
-    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.11-beta.1",
+    "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.11-beta.1",
     "published_at": "2026-10-10T15:52:57Z",
     "source_commit": "8d4bb0e44882330affb0e54f1d93f47a996ef062",
     "tag_commit_verified": true,

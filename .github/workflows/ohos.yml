@@ -1,0 +1,45 @@
+name: Build HarmonyOS (ohos)
+on:
+  push:
+    branches: [ohos]
+  pull_request:
+    branches: [ohos]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ohos-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  FLUTTER_OHOS_VERSION: '3.22.0'
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Flutter for OpenHarmony
+        run: |
+          git clone --depth 1 -b dev https://gitcode.com/openharmony-sig/flutter_flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
+          flutter config --no-analytics
+          flutter doctor
+      - name: Install DevEco command line tools and HarmonyOS SDK
+        run: |
+          echo "Download and install command-line tools + HarmonyOS SDK (API 12+)"
+          echo "Set DEVECO_SDK_HOME and HarmonyOS command-line tools on PATH here."
+          echo "Example tooling: https://developer.huawei.com/consumer/cn/download/"
+      - run: flutter pub get
+      - name: Build HAP
+        run: |
+          flutter build hap --debug --target-platform ohos-arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tsukuyomi-space-ohos-hap
+          path: build/app/outputs/fusion/*/*.hap
+          if-no-files-found: error
+          retention-days: 14

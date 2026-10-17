@@ -62,7 +62,7 @@ flutter drive --profile -d <Android设备ID> --driver test_driver/performance_dr
 
 ## 发布结果
 
-[v0.6.21-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.21-beta.1)已发布，版本0.6.21+28，源码 `098e2d55bbc60e4adf2bbd09036de5cd05d75e87`。最终[发布CI](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38345499421)的9个任务全部成功，完整回归951项通过、19项跳过；五平台构建完成，三个桌面平台各121项窗口／更新检查及113项打包Agent检查通过。[CI记录](qa/room-refactor-v0.6.21/ci-validation.json)。
+[v0.6.21-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.21-beta.1)已发布，版本0.6.21+28，源码 `098e2d55bbc60e4adf2bbd09036de5cd05d75e87`。最终[发布CI](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38345499421)的9个任务全部成功，完整回归951项通过、19项跳过；五平台构建完成，三个桌面平台各121项窗口／更新检查及113项打包Agent检查通过。[CI记录](qa/room-refactor-v0.6.21/ci-validation.json)。
 
 Android原生发布程序在2,000条历史／600句回复场景中只挂载7个文字组件；拖动时模型零更新，结束后恢复；三次实际键盘开合保持同一编辑器、焦点与舞台尺寸。真实模型异步及暂停后尺寸变化像素差均为0。SwiftShader仅11帧诊断（UI P95 5.807ms、Raster P95 1198.549ms），不作真机性能验收。[Android记录](qa/room-refactor-v0.6.21/android-native-validation.json)。
 

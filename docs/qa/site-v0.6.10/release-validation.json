@@ -2,7 +2,7 @@
   "tag": "v0.6.10-beta.1",
   "version": "0.6.10+16",
   "commit": "ad04d37e32345fa77cdf37b18e08918f7cf534d5",
-  "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.10-beta.1",
+  "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.10-beta.1",
   "published_at": "2026-10-10T13:31:58Z",
   "website_source_ref": "836e11b56610cf83550fe7d51a4f830f95f05df5",
   "all_assets_downloaded_and_hashed": true,
@@ -70,7 +70,7 @@
       "name": "Release installers",
       "status": "completed",
       "conclusion": "success",
-      "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38054173938",
+      "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38054173938",
       "jobs": [
         {
           "id": 114219128292,
@@ -142,7 +142,7 @@
       "name": "Desktop Agent runtimes",
       "status": "completed",
       "conclusion": "success",
-      "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38054173361",
+      "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38054173361",
       "jobs": [
         {
           "id": 114219122867,
@@ -172,7 +172,7 @@
       "name": "Flutter prototype",
       "status": "completed",
       "conclusion": "success",
-      "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38054173364",
+      "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38054173364",
       "jobs": [
         {
           "id": 114219122965,

@@ -40,7 +40,7 @@
     "published": true,
     "prerelease": true,
     "source_commit": "730e82357344540345721f1d202e2ffe31c817c8",
-    "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.20-beta.1",
+    "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.20-beta.1",
     "integrity_downloads": "passed",
     "all_sha256_verified": true,
     "asset_count": 11,
@@ -51,7 +51,7 @@
   "ci": {
     "run_id": 38325927598,
     "run_attempt": 2,
-    "url": "https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38325927598",
+    "url": "https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38325927598",
     "conclusion": "success",
     "logical_jobs": 9,
     "regression_passed": 917,

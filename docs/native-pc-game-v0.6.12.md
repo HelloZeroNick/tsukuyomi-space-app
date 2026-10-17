@@ -32,7 +32,7 @@
 
 ## 发布验收
 
-[v0.6.12-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.12-beta.1) 已发布，源码为 `30d034e7831f866f8acd8695c867ba9883cb7ba4`。[发布流水线](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/38101481317)全部成功：五平台构建，整站及真实后端/Cubism回归814项通过、18项可选检查跳过，三个桌面的窗口/更新器/绘制专项各78项、打包后的Agent专项各110项通过；Android原生绘制、音频播放状态和更新器探针通过。
+[v0.6.12-beta.1](https://github.com/HelloZeroNick/tsukuyomi-space-app/releases/tag/v0.6.12-beta.1) 已发布，源码为 `30d034e7831f866f8acd8695c867ba9883cb7ba4`。[发布流水线](https://github.com/HelloZeroNick/tsukuyomi-space-app/actions/runs/38101481317)全部成功：五平台构建，整站及真实后端/Cubism回归814项通过、18项可选检查跳过，三个桌面的窗口/更新器/绘制专项各78项、打包后的Agent专项各110项通过；Android原生绘制、音频播放状态和更新器探针通过。
 
 已实际下载全部11个发布文件（2,208,428,512字节），逐项核对GitHub官方SHA-256及SHA256SUMS。标签对应源码提交也已核对；真实应用更新器检测并下载本次版本的未签名IPA，通过大小和哈希校验，没有执行安装。最终macOS Release的两个运行时、419个精确资源、两份编译着色器及深层签名均通过检查，并实际验证F11、Esc、角色显示及性能设置。
 
