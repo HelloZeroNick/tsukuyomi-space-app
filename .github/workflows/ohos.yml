@@ -27,6 +27,7 @@ jobs:
   build:
     # Both jobs must succeed. Build in parallel with standard-Flutter regression
     # so a first-time SDK/plugin download does not serialize the entire run.
+    if: github.ref == 'refs/heads/ohos'
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     env:
