@@ -12,6 +12,14 @@ ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = Path('ohos/entry/build/default/outputs/default')
 
 
+def is_missing_signature(log):
+    return bool(re.search(
+        r'(?i)(no signing configs|signing config.*(?:not found|not exist)|'
+        r'no material.*sign|please.*signing|unsigned.*sign|'
+        r'配置调试签名|Automatically generate signature)', log,
+    ))
+
+
 def validate_hap(path):
     with zipfile.ZipFile(path) as archive:
         if archive.testzip() is not None:
@@ -50,7 +58,7 @@ def build(root):
     candidates = list(output.glob('*unsigned.hap'))
     # No blanket continue-on-error: only the known absent-signature failure is
     # acceptable, and only with a newly generated, structurally valid HAP.
-    signing_failure = re.search(r'(?i)(no signing configs|signing config.*(?:not found|not exist)|no material.*sign|please.*signing|unsigned.*sign)', proc.stdout)
+    signing_failure = is_missing_signature(proc.stdout)
     if proc.returncode and not signing_failure:
         raise RuntimeError(f'HAP build failed ({proc.returncode})')
     if len(candidates) != 1:

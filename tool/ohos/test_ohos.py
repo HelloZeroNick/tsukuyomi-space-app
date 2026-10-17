@@ -29,7 +29,7 @@ class PreparationTests(unittest.TestCase):
             for relative in ['pubspec.yaml', 'packages/tsukuyomi_live2d/pubspec.yaml']:
                 p = root / relative
                 p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_text('version: 0.7.0+42\nenvironment:\n  sdk: ^3.13.4\n')
+                p.write_text('version: 0.7.0+42\nenvironment:\n  sdk: ^3.13.4\ndependencies:\n')
             (root / 'lib/core').mkdir(parents=True)
             (root / 'lib/core/storage.dart').write_text('MacOsOptions(usesDataProtectionKeychain: false)')
             (root / 'ohos/AppScope').mkdir(parents=True)
@@ -40,6 +40,7 @@ class PreparationTests(unittest.TestCase):
             self.assertEqual(json.loads(app.read_text())['app']['versionCode'], 42)
             self.assertEqual(json.loads(app.read_text())['app']['versionName'], '0.7.0')
             self.assertIn('sdk: ^3.12.2', (root / 'pubspec.yaml').read_text())
+            self.assertIn('  flutter_geolocator_ohos: any', (root / 'pubspec.yaml').read_text())
             self.assertIn('MacOsOptions()', (root / 'lib/core/storage.dart').read_text())
             self.assertTrue((root / 'packages/flutter_secure_storage/lib/flutter_secure_storage.dart').is_file())
             overrides = json.loads((root / 'pubspec_overrides.yaml').read_text())['dependency_overrides']
@@ -54,6 +55,11 @@ class PreparationTests(unittest.TestCase):
                 archive.writestr('module.json', '{}')
             with self.assertRaisesRegex(ValueError, 'Missing HAP component'):
                 load('build').validate_hap(path)
+
+    def test_accepts_only_known_missing_signature_messages(self):
+        builder = load('build')
+        self.assertTrue(builder.is_missing_signature('请通过DevEco Studio打开ohos工程后配置调试签名(File -> Project Structure -> Signing Configs 勾选Automatically generate signature)'))
+        self.assertFalse(builder.is_missing_signature('Native compilation failed: undefined symbol'))
 
     def test_build_failure_cannot_reuse_stale_hap(self):
         builder = load('build')

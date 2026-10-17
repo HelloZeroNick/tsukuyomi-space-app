@@ -18,6 +18,12 @@ def prepare(root):
         text, count = re.subn(r'(?m)^  sdk: \^3\.\d+\.\d+$', '  sdk: ^3.12.2', text)
         if count != 1:
             raise ValueError(f'Unsupported SDK declaration in {relative}')
+        if relative == 'pubspec.yaml' and '  flutter_geolocator_ohos:' not in text:
+            # The pinned facade mistakenly endorses geolocator_ohos, but the
+            # implementation package is named flutter_geolocator_ohos. Flutter
+            # selects a direct implementation over an invalid default package.
+            text = text.replace('dependencies:\n',
+                                'dependencies:\n  flutter_geolocator_ohos: any\n', 1)
         path.write_text(text)
     adapter = root / 'packages/flutter_secure_storage'
     (adapter / 'lib').mkdir(parents=True, exist_ok=True)
