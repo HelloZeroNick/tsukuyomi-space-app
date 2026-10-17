@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'dart:ffi' show Abi;
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'app_update_abi_stub.dart' if (dart.library.ffi) 'dart:ffi' show Abi;
 import 'app_release.dart';
 import 'app_update_release.dart';
 
