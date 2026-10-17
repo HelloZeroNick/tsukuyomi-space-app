@@ -1,9 +1,9 @@
 name: Build HarmonyOS (ohos)
 on:
+  release:
+    types: [published]
   push:
-    branches: [ohos]
-  pull_request:
-    branches: [ohos]
+    tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,7 +23,7 @@ jobs:
           java-version: '17'
       - name: Install Flutter for OpenHarmony
         run: |
-          git clone --depth 1 -b oh-3.44.9-dev https://gitcode.com/openharmony-tpc/flutter_flutter.git "$RUNNER_TEMP/flutter"
+          git clone --depth 1 -b oh-3.44.9-dev https://gitcode.com/CPF-Flutter/flutter_flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
           export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
           flutter config --no-analytics
