@@ -31,11 +31,11 @@ jobs:
           export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
           flutter config --no-analytics
           flutter doctor
-      - name: Install DevEco command line tools and HarmonyOS SDK
-        run: |
-          echo "Download and install command-line tools + HarmonyOS SDK (API 12+)"
-          echo "Set DEVECO_SDK_HOME and HarmonyOS command-line tools on PATH here."
-          echo "Example tooling: https://developer.huawei.com/consumer/cn/download/"
+      - name: Setup HarmonyOS toolchain
+        uses: ErBWs/setup-ohos@v1
+        with:
+          version: '26.0.0.821'
+          cache: true
       - name: Get Flutter dependencies
         # Skip LFS smudge: gitcode LFS requires auth (same as PiliNara CI).
         run: flutter pub get
