@@ -11,7 +11,7 @@ concurrency:
   group: ohos-${{ github.ref }}
   cancel-in-progress: true
 env:
-  FLUTTER_OHOS_VERSION: '3.22.0'
+  FLUTTER_OHOS_VERSION: '3.44.9'
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
           java-version: '17'
       - name: Install Flutter for OpenHarmony
         run: |
-          git clone --depth 1 -b dev https://gitcode.com/openharmony-sig/flutter_flutter.git "$RUNNER_TEMP/flutter"
+          git clone --depth 1 -b oh-3.44.9-dev https://gitcode.com/openharmony-tpc/flutter_flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
           export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
           flutter config --no-analytics
