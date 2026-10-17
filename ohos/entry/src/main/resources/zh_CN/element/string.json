@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "月读空间原生客户端"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "月读空间房间客户端"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "月读空间"
+    },
+    {
+      "name": "keep_background_running_reason",
+      "value": "用于在后台继续播放音频"
+    },
+    {
+      "name": "location_reason",
+      "value": "用于在加入的房间内共享你的位置"
+    },
+    {
+      "name": "location_background_reason",
+      "value": "用于在后台继续向所在房间共享位置"
+    },
+    {
+      "name": "network_info_reason",
+      "value": "用于检测网络状态以保障媒体播放"
+    }
+  ]
+}

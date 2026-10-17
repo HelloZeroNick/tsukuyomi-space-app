@@ -104,7 +104,8 @@ class _CharacterStageState extends State<CharacterStage>
       vsync: this,
       mobile:
           defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS,
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.ohos,
       onTick: (seconds, delta) {
         widget.animation?.advance(delta.clamp(0, .05));
         final animation = widget.animation;

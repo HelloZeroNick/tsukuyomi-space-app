@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Native Flutter room client for Tsukuyomi Space"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Tsukuyomi Space room client"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Tsukuyomi Space"
+    },
+    {
+      "name": "keep_background_running_reason",
+      "value": "Keep playing audio in the background"
+    },
+    {
+      "name": "location_reason",
+      "value": "Share your location with the room you joined"
+    },
+    {
+      "name": "location_background_reason",
+      "value": "Keep sharing your location with the room while in background"
+    },
+    {
+      "name": "network_info_reason",
+      "value": "Check network state for media playback"
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 name: tsukuyomi_space_app
 description: Native Flutter Room client for Tsukuyomi Space.
 publish_to: none
-version: 0.6.21+28
+version: 0.6.21+80
 environment:
-  sdk: ^3.13.4
+  sdk: ^3.12.2
 dependencies:
-  package_info_plus: ^10.2.1
+  package_info_plus: ">=4.0.0 <11.0.0"
   path_provider: ^2.1.6
   path: ^1.9.1
   window_manager: 0.5.2
@@ -15,12 +15,22 @@ dependencies:
     sdk: flutter
   http: ^1.6.0
   crypto: ^3.0.7
-  flutter_secure_storage: ^10.0.0
+  flutter_secure_storage:
+    path: packages/flutter_secure_storage
   shared_preferences: ^2.5.3
   audioplayers: ^6.5.1
-  media_kit: ^1.2.6
-  media_kit_video: ^2.0.1
-  media_kit_libs_video: ^1.0.7
+  # 视频播放器（鸿蒙 fork，参照 PiliPlus）
+  media_kit: # overridden
+  media_kit_video:
+    git:
+      url: https://github.com/p1nbored/media-kit.git
+      ref: feat-ohos-hdr
+      path: ./media_kit_video
+  media_kit_libs_video:
+    git:
+      url: https://github.com/p1nbored/media-kit.git
+      ref: feat-ohos-hdr
+      path: ./libs/universal/media_kit_libs_video
   tsukuyomi_live2d:
     path: packages/tsukuyomi_live2d
   qr_flutter: 4.1.0
@@ -38,9 +48,134 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   geolocator: ^14.1.1
   share_plus: ^13.3.0
+# 鸿蒙（OpenHarmony）适配：参照 PiliNara / PiliPlus 的 dependency_overrides 写法。
+dependency_overrides:
+  # flutter_secure_storage 9.2.4 的 windows 实现仅支持 win32 ^5，而 plus 系列
+  # 已要求 win32 ^6；参照 PiliNara 固定到 5.5.3 以解除版本冲突。
+  flutter_secure_storage:
+    path: packages/flutter_secure_storage
+  win32: 5.5.3
+  # 应用可用路径.鸿蒙适配
+  path_provider:
+    git:
+      url: https://gitcode.com/openharmony-tpc/flutter_packages.git
+      path: packages/path_provider/path_provider
+  # 分享.鸿蒙适配（12.0.1；13.x 要求 win32 ^6，与安全存储的 win32 ^5 冲突）
+  share_plus:
+    git:
+      url: https://gitcode.com/CPF-Flutter/flutter_plus_plugins.git
+      path: packages/share_plus/share_plus
+      ref: br_share_plus-v12.0.1_ohos
+  # 打开链接.鸿蒙适配
+  url_launcher:
+    git:
+      url: https://gitcode.com/hellozeronick/url_launcher.git
+      path: url_launcher
+      ref: main
+  # 键值存储.鸿蒙适配
+  shared_preferences:
+    git:
+      url: https://gitcode.com/CPF-Flutter/flutter_packages.git
+      path: packages/shared_preferences/shared_preferences
+      ref: br_shared_preferences-v2.5.4_ohos
+  # 包信息.鸿蒙适配（鸿蒙侧最高 9.0.0；10.x 要求 win32 ^6，与安全存储冲突）
+  package_info_plus:
+    git:
+      url: https://gitcode.com/CPF-Flutter/flutter_plus_plugins.git
+      path: packages/package_info_plus/package_info_plus
+      ref: package_info_plus-9.0.0-ohos-1.0.0
+  # 文件选择.鸿蒙适配
+  file_selector:
+    git:
+      url: https://gitcode.com/openharmony-tpc/flutter_packages.git
+      path: packages/file_selector/file_selector
+      ref: oh-3.44.9-dev
+  # 音频播放.鸿蒙适配
+  audioplayers:
+    git:
+      url: https://gitcode.com/CPF-Flutter/flutter_audioplayers.git
+      path: packages/audioplayers
+      ref: 6.5.1-ohos-1.0.0
+  # 视频播放器.鸿蒙适配
+  media_kit:
+    git:
+      url: https://github.com/p1nbored/media-kit.git
+      ref: feat-ohos-hdr
+      path: ./media_kit
+  media_kit_libs_ohos:
+    git:
+      url: https://github.com/p1nbored/media-kit.git
+      ref: feat-ohos-hdr
+      path: ./libs/ohos/media_kit_libs_ohos
+  # 内嵌浏览器.鸿蒙适配
+  flutter_inappwebview:
+    git:
+      url: "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git"
+      path: "flutter_inappwebview"
+      ref: "b596ae059e388cbc8f710a6c26c5370a0527a03a"
+  flutter_inappwebview_platform_interface:
+    git:
+      url: "https://gitcode.com/CPF-Flutter/flutter_inappwebview.git"
+      path: "flutter_inappwebview_platform_interface"
+      ref: "br_v6.1.5_ohos_dev"
+  # 定位.鸿蒙适配（鸿蒙侧最高 14.0.2）
+  geolocator:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator
+      ref: 14.0.2-ohos-1.0.0
+  # geolocator 的兄弟包必须钉到同一 ref，否则会解析到 fork 默认分支的旧版本，
+  # 出现 geolocator_web/web_settings.dart 缺失一类的编译错误。
+  geolocator_android:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_android
+      ref: 14.0.2-ohos-1.0.0
+  geolocator_apple:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_apple
+      ref: 14.0.2-ohos-1.0.0
+  geolocator_linux:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_linux
+      ref: 14.0.2-ohos-1.0.0
+  geolocator_platform_interface:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_platform_interface
+      ref: 14.0.2-ohos-1.0.0
+  geolocator_web:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_web
+      ref: 14.0.2-ohos-1.0.0
+  geolocator_windows:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_windows
+      ref: 14.0.2-ohos-1.0.0
+  # 鸿蒙实现的实际包名是 flutter_geolocator_ohos（目录名 geolocator_ohos），
+  # 同样必须钉到 tag，否则会解析到旧版本并与 uuid 冲突。
+  flutter_geolocator_ohos:
+    git:
+      url: https://gitcode.com/CPF-Flutter/fluttertpc_geolocator.git
+      path: geolocator_ohos
+      ref: 14.0.2-ohos-1.0.0
+  # 数学公式渲染.鸿蒙适配（补 TargetPlatform.ohos 分支）
+  flutter_math_fork:
+    git:
+      url: https://gitcode.com/CPF-Flutter/flutter_math_fork.git
+      ref: br_v0.7.4_flutter3.35.7_ohos
+  # 桌面窗口.鸿蒙适配（参照 PiliNara / PiliPlus）
+  window_manager:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/window_manager.git
+      path: packages/window_manager
+      ref: main
+
 dev_dependencies:
-  integration_test:
-    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0

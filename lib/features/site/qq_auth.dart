@@ -263,6 +263,8 @@ Future<QQAuthGrant?> showQQAuthorization(
         TargetPlatform.macOS,
         TargetPlatform.windows,
       ].contains(defaultTargetPlatform)) {
+    // HarmonyOS is excluded: the QQ quick-login page needs third-party app
+    // launch and an HTTPS app-link return channel that are not wired up here.
     throw const ApiFailure('当前平台没有支持 OAuth 浏览器绑定 Cookie 的授权容器，请使用密码或邮箱验证码登录');
   }
   final site = controller.settings.siteUrl, account = controller.account?.id;
@@ -582,6 +584,7 @@ class _QQBrowserState extends State<_QQBrowser> {
                 ),
                 initialSettings: InAppWebViewSettings(
                   useShouldOverrideUrlLoading: true,
+                  useShouldInterceptRequest: false,
                   javaScriptEnabled: true,
                   javaScriptCanOpenWindowsAutomatically: true,
                   supportMultipleWindows: true,

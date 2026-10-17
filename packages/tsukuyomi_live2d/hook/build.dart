@@ -5,6 +5,31 @@ import 'package:hooks/hooks.dart';
 import 'package:logging/logging.dart';
 import 'package:native_toolchain_c/native_toolchain_c.dart';
 
+/// Clang target triple per architecture for OpenHarmony/HarmonyOS.
+const Map<String, String> _ohosTriples = {
+  'arm64': 'aarch64-linux-ohos',
+  'arm': 'armv7-linux-ohos',
+  'x64': 'x86_64-linux-ohos',
+};
+
+/// The OHOS Flutter tool forwards `targetOS: OS.linux` to package hooks (the
+/// hosted `code_assets` does not know OHOS yet), while still handing over the
+/// OHOS clang from DevEco Studio. Detect that case from the compiler path so
+/// the Linux build path is not used by accident.
+Directory? _ohosNativeRoot(CCompilerConfig? cCompiler) {
+  final compiler = cCompiler?.compiler;
+  if (compiler == null) return null;
+  final dir = File.fromUri(compiler).parent;
+  final path = dir.path.replaceAll('\\', '/').toLowerCase();
+  if (!path.contains('openharmony') && !path.contains('harmonyos')) {
+    return null;
+  }
+  // <native>/llvm/bin -> <native>
+  final native = dir.parent.parent;
+  final sysroot = Directory('${native.path}${Platform.pathSeparator}sysroot');
+  return sysroot.existsSync() ? native : null;
+}
+
 void main(List<String> args) async {
   await build(args, (input, output) async {
     if (!input.config.buildCodeAssets) return;
@@ -12,8 +37,30 @@ void main(List<String> args) async {
     final config = input.config.code;
     final os = config.targetOS;
     final arch = config.targetArchitecture.toString();
+    final ohosRoot = os == OS.linux ? _ohosNativeRoot(config.cCompiler) : null;
+    final ohos = ohosRoot != null;
+    final ohosTriple = ohos ? _ohosTriples[arch] : null;
     String? core;
-    if (os == OS.macOS) {
+    if (ohos) {
+      // The official SDK ships the HarmonyOS core under Core/lib/harmonyos/
+      // (see Live2D/CubismNativeSamples: proj.harmonyos.cmake), so that path is
+      // canonical. `lib/ohos` is still accepted for a hand-rolled port.
+      final abi = {
+        'arm64': 'arm64-v8a',
+        'arm': 'armeabi-v7a',
+        'x64': 'x86_64',
+      }[arch];
+      if (abi != null) {
+        final canonical = 'Core/lib/harmonyos/$abi/libLive2DCubismCore.a';
+        core = [
+          canonical,
+          'Core/lib/ohos/$abi/libLive2DCubismCore.a',
+        ].firstWhere(
+          (candidate) => File.fromUri(sdk.resolve(candidate)).existsSync(),
+          orElse: () => canonical,
+        );
+      }
+    } else if (os == OS.macOS) {
       core =
           'Core/lib/macos/${arch == 'x64' ? 'x86_64' : arch}/libLive2DCubismCore.a';
     } else if (os == OS.linux && arch == 'x64') {
@@ -64,7 +111,7 @@ void main(List<String> args) async {
       language: Language.cpp,
       cppLinkStdLib: os == OS.windows
           ? null
-          : (os == OS.android
+          : (os == OS.android || ohos
                 ? 'c++_static'
                 : (os == OS.linux ? 'stdc++' : 'c++')),
       includes: enabled
@@ -76,7 +123,16 @@ void main(List<String> args) async {
       defines: {'TS_HAS_CUBISM': enabled ? '1' : '0'},
       flags: os == OS.windows
           ? ['/std:c++17', '/MD']
-          : ['-std=c++17', if (os == OS.android) '-Wl,--no-undefined'],
+          : [
+              '-std=c++17',
+              if (os == OS.android) '-Wl,--no-undefined',
+              // The OHOS toolchain is a cross compiler: without an explicit
+              // target it falls back to the host triple and cannot find the
+              // OHOS C++ headers.
+              if (ohosTriple != null) '--target=$ohosTriple',
+              if (ohos)
+                '--sysroot=${ohosRoot.path}${Platform.pathSeparator}sysroot',
+            ],
       libraries: [
         if (enabled)
           os == OS.windows ? 'Live2DCubismCore_MD' : 'Live2DCubismCore',

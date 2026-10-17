@@ -22,7 +22,7 @@ class DeviceRoomStorage implements RoomStorage {
   final FlutterSecureStorage _secure = const FlutterSecureStorage(
     // Direct downloads have no Apple team signature. The login keychain works
     // with ad-hoc signing; the data-protection keychain requires a team profile.
-    mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+    mOptions: MacOsOptions(),//useDataProtectionKeyChain: false),
   );
   @override
   Future<String?> readSecret(String key) => _secure.read(key: 'tsukuyomi.$key');

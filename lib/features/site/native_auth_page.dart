@@ -3,6 +3,7 @@ import '../../core/site_localization.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/models.dart';
 import '../../core/site_client.dart';
@@ -498,6 +499,8 @@ class _NativeAuthPageState extends State<NativeAuthPage> {
           },
         );
         if (!mounted || ticket != _generation) return;
+        // 登录/注册成功，通知系统密码保险箱保存本次凭据（Android/iOS/鸿蒙）。
+        TextInput.finishAutofillContext(shouldSave: true);
         await _claimInvite();
         if (mounted && ticket == _generation) {
           widget.onAuthenticated?.call();
@@ -533,6 +536,7 @@ class _NativeAuthPageState extends State<NativeAuthPage> {
     bool email = false,
     int? maxLength,
     List<String>? autofill,
+    TextInputAction textInputAction = TextInputAction.next,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 18),
     child: TextFormField(
@@ -546,6 +550,7 @@ class _NativeAuthPageState extends State<NativeAuthPage> {
       obscureText: secret && !_showPassword,
       maxLength: maxLength,
       autofillHints: autofill,
+      textInputAction: textInputAction,
       onChanged: (_) => setState(() {}),
       keyboardType: email
           ? TextInputType.emailAddress
@@ -720,6 +725,8 @@ class _NativeAuthPageState extends State<NativeAuthPage> {
         autofill: [
           newPassword ? AutofillHints.newPassword : AutofillHints.password,
         ],
+        // 密码是表单最后一项时用 done，帮助系统识别凭据组并触发保存。
+        textInputAction: newPassword ? TextInputAction.next : TextInputAction.done,
         validator: (value) {
           final text = value ?? '';
           if (newPassword && text.length < 8) {
@@ -738,6 +745,7 @@ class _NativeAuthPageState extends State<NativeAuthPage> {
         '确认密码',
         secret: true,
         autofill: const [AutofillHints.newPassword],
+        textInputAction: TextInputAction.done,
         validator: (value) =>
             value == _password.text && (value ?? '').isNotEmpty
             ? null

@@ -278,70 +278,65 @@ class RoomController extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
-    try {
-      settings = await storage.settings();
-      if (site is SiteClient) {
-        final origin = endpointUri(settings.siteUrl).origin;
-        final reader = await storage.readSecret('reader.$origin');
-        if (reader != null) (site as SiteClient).readerCookies[origin] = reader;
-        final visitor = await storage.readSecret('visitor.$origin');
-        if (visitor != null &&
-            RegExp(r'^tsukuyomi_visitor=[A-Za-z0-9_-]{20,128}$')
-                .hasMatch(visitor)) {
-          (site as SiteClient).visitorCookies[origin] = visitor;
-        }
+    settings = await storage.settings();
+    if (site is SiteClient) {
+      final origin = endpointUri(settings.siteUrl).origin;
+      final reader = await storage.readSecret('reader.$origin');
+      if (reader != null) (site as SiteClient).readerCookies[origin] = reader;
+      final visitor = await storage.readSecret('visitor.$origin');
+      if (visitor != null &&
+          RegExp(r'^tsukuyomi_visitor=[A-Za-z0-9_-]{20,128}$')
+              .hasMatch(visitor)) {
+        (site as SiteClient).visitorCookies[origin] = visitor;
       }
-      if (!kIsWeb) {
-        final hint = await storage.draft(_accountKey);
-        if (hint.isNotEmpty) {
-          try {
-            final j = jsonDecode(hint);
-            account = Account(
-              j['id'],
-              j['username'],
-              nickname: '${j['nickname'] ?? ''}',
-              avatar: '${j['avatar'] ?? ''}',
-            );
-          } catch (_) {}
-        }
-        _setSessionCookie(await storage.readSecret(_sessionKey));
-        verifyingSession = site.cookie != null;
-        await _loadScope();
-        loading = false;
-        _changed();
-        if (site.cookie != null) {
-          try {
-            final verified = await site.me(settings.siteUrl);
-            if (_disposed) return;
-            final differentAccount = account?.id != verified.id;
-            if (differentAccount) stop();
-            account = verified;
-            sessionVerified = true;
-            if (differentAccount) await _loadScope();
-            await _rememberAccount();
-          } on ApiFailure catch (e) {
-            if (e.status == 401 || e.status == 403) {
-              expireSession();
-            }
-            error = e.message;
-          }
-        } else if (account != null) {
-          sessionExpired = true;
-        }
-      }
-      verifyingSession = false;
-      if (loading) await _loadScope();
-      loading = false;
-      _changed();
-      if (account != null) await sync();
-    } catch (_) {
-      error = '无法读取本地设置或安全存储，请检查系统密钥环';
-    } finally {
-      verifyingSession = false;
-      loading = false;
-      _startRetry();
-      _changed();
     }
+    if (!kIsWeb) {
+      final hint = await storage.draft(_accountKey);
+      if (hint.isNotEmpty) {
+        try {
+          final j = jsonDecode(hint);
+          account = Account(
+            j['id'],
+            j['username'],
+            nickname: '${j['nickname'] ?? ''}',
+            avatar: '${j['avatar'] ?? ''}',
+          );
+        } catch (_) {}
+      }
+      _setSessionCookie(await storage.readSecret(_sessionKey));
+      verifyingSession = site.cookie != null;
+      await _loadScope();
+      loading = false;
+      _changed();
+      if (site.cookie != null) {
+        try {
+          final verified = await site.me(settings.siteUrl);
+          if (_disposed) return;
+          final differentAccount = account?.id != verified.id;
+          if (differentAccount) stop();
+          account = verified;
+          sessionVerified = true;
+          if (differentAccount) await _loadScope();
+          await _rememberAccount();
+        } on ApiFailure catch (e) {
+          if (e.status == 401 || e.status == 403) {
+            expireSession();
+          }
+          error = e.message;
+        }
+      } else if (account != null) {
+        sessionExpired = true;
+      }
+    }
+    verifyingSession = false;
+    if (loading) await _loadScope();
+    loading = false;
+    _changed();
+    if (account != null) await sync();
+    verifyingSession = false;
+    loading = false;
+    _startRetry();
+    _changed();
   }
 
   Future<void> _loadScope() async {
