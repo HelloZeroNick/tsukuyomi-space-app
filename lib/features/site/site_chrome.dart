@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/models.dart';
 import '../../core/site_client.dart';
@@ -642,19 +643,22 @@ class SiteBeianLinks extends StatelessWidget {
         if (beian.text.isNotEmpty) link(beian.text, beian.url),
         if (beian.mpsText.isNotEmpty)
           link(beian.mpsText, beian.mpsUrl, mps: true),
-        repoLink('Fork: HelloZeroNick/tsukuyomi-space-app',
-            'https://github.com/HelloZeroNick/tsukuyomi-space-app'),
-        repoLink('Upstream: redchenk/tsukuyomi-space-app',
-            'https://github.com/redchenk/tsukuyomi-space-app'),
+        repoLink(
+          'Fork: HelloZeroNick/tsukuyomi-space-app',
+          'https://github.com/HelloZeroNick/tsukuyomi-space-app',
+        ),
+        repoLink(
+          'Upstream: redchenk/tsukuyomi-space-app',
+          'https://github.com/redchenk/tsukuyomi-space-app',
+        ),
       ],
     );
   }
 
   Widget repoLink(String label, String url) {
-    final controller = SiteChromeScope.maybeOf(context)!;
     return TextButton(
-      onPressed: () =>
-          openSiteLink(controller.room.settings.siteUrl, url),
+      onPressed: () => launchUrl(Uri.parse(url),
+          mode: LaunchMode.externalApplication),
       child: Text(label, textAlign: TextAlign.center, softWrap: true),
     );
   }
