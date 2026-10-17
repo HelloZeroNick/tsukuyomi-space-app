@@ -6,3 +6,7 @@
 - 保留中文输入法组合文字、焦点与选区；补齐取消／失败后草稿恢复、新消息定位和账号隔离检查。
 
 普通Android手机选择arm64-v8a。详细对比、验证记录与真机边界见[Room重构记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-room-refactor-v0.6.21.md)。iOS包仍需自签。
+
+<!-- tsukuyomi-ohos-download -->
+鸿蒙补包：[tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap](https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.21-beta.1/tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap)，适用于 HarmonyOS 6.0.2 / API 22 及以上 ARM64 设备。**未签名，须自行签名后安装**；步骤与校验见 Release 附件 `OHOS-INSTALL.md`、`OHOS-SHA256SUMS.txt`。感谢 [HelloZeroNick](https://github.com/HelloZeroNick/tsukuyomi-space-app/tree/ohos) 贡献移植。
+<!-- /tsukuyomi-ohos-download -->

@@ -155,7 +155,7 @@ flutter build web
 
 ## 鸿蒙适配
 
-HarmonyOS / OpenHarmony 适配维护在官方 [`ohos` 分支](https://github.com/redchenk/tsukuyomi-space-app/tree/ohos)，同步主线功能。感谢 [HelloZeroNick](https://github.com/HelloZeroNick) 贡献移植；工具链、构建与签名限制见 [鸿蒙适配说明](docs/harmonyos.md)。
+HarmonyOS / OpenHarmony 适配维护在官方 [`ohos` 分支](https://github.com/redchenk/tsukuyomi-space-app/tree/ohos)，同步主线功能。[GitHub Releases](https://github.com/redchenk/tsukuyomi-space-app/releases) 提供 `ohos-arm64-unsigned.hap`，适用于 HarmonyOS 6.0.2 / API 22 及以上 ARM64 设备，须自行签名后安装。感谢 [HelloZeroNick](https://github.com/HelloZeroNick) 贡献移植；下载、签名与验收限制见 [鸿蒙适配说明](docs/harmonyos.md)。
 
 ## 贡献者
 

@@ -75,6 +75,8 @@ Windows 命令仅使用 Codex 0.159.0 内置 MXC/PSEC 严格沙箱，不需要�
 
 每次发布只将当版变更写入`docs/release-notes.md`，GitHub Release与应用更新弹窗不附带旧版日志。上一版说明移入[历史更新记录](changelog.md)，安装与许可细节使用链接，避免重复罗列整站功能。
 
+鸿蒙用户选择 Release 的 `ohos-arm64-unsigned.hap`（HarmonyOS 6.0.2 / API 22 及以上 ARM64），需要自行签名后安装，不能使用 Android APK。签名步骤、独立校验文件、构建来源和许可分别见同页的 `OHOS-INSTALL.md`、`OHOS-SHA256SUMS.txt`、`OHOS-BUILD-INFO.json`、`OHOS-THIRD-PARTY-NOTICES.md`。常规五平台发行成功后，`Release HarmonyOS HAP` 自动以该 tag 源码验证并补充这五个附件；鸿蒙流水线失败时可按相同 tag 手动重试，不覆盖已有平台的下载。详见 [鸿蒙下载与安装](harmonyos.md)。
+
 发布流水线先执行代码格式、静态分析、协议及原生模型测试，再编译五个平台。每个平台逐一校验整站图片、游戏字体／音频／资源、模型及着色器进入最终安装包，Android 验证发行签名与原生库依赖。全部 8 个安装包／归档、安装说明和许可说明通过完整性与 SHA-256 校验后，才公开 GitHub Release；失败保留草稿供重试。外部付费 LLM/TTS 的账号、模型权限及设备声卡环境，需使用你的实际服务和设备验收；本次没有内置或借用生产凭据。
 
 若五平台构建与原生检查全部成功、仅 `publish` 失败，可在 Actions 运行 `Recover verified release`，填写原发布任务的 `source_run_id` 和既有草稿的 `tag`。恢复流程核对原提交、全部前置任务和未过期产物，再逐个比较草稿的 11 个文件与原产物的 SHA-256；匹配后按数字 Release ID 公开。原产物不完整、源码有业务变更或摘要不匹配时会停止，并保留草稿。

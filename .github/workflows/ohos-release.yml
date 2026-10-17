@@ -1,0 +1,88 @@
+name: Release HarmonyOS HAP
+on:
+  # workflow_run also fires when the base release was published by GITHUB_TOKEN.
+  workflow_run:
+    workflows: [Release installers]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing published release to supplement with its tagged HAP
+        required: true
+        type: string
+      source_run_id:
+        description: Optional successful official HarmonyOS run to reuse (also supports historical supplements)
+        required: false
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ohos-release-${{ inputs.release_tag || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+jobs:
+  source:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    outputs:
+      ready: ${{ steps.source.outputs.ready }}
+      ref: ${{ steps.source.outputs.ref }}
+      tag: ${{ steps.source.outputs.tag }}
+      artifact_id: ${{ steps.source.outputs.artifact_id }}
+      run_id: ${{ steps.source.outputs.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check release identity and immutable source
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.release_tag }}
+          INPUT_RUN_ID: ${{ inputs.source_run_id }}
+        run: python3 tool/ohos/release.py resolve
+  hap:
+    needs: source
+    if: needs.source.outputs.ready == 'true' && needs.source.outputs.artifact_id == ''
+    uses: ./.github/workflows/ohos.yml
+    with:
+      ref: ${{ needs.source.outputs.ref }}
+  publish:
+    needs: [source, hap]
+    if: >-
+      always() && needs.source.result == 'success' && needs.source.outputs.ready == 'true' &&
+      (needs.hap.result == 'success' ||
+       (needs.hap.result == 'skipped' && needs.source.outputs.artifact_id != ''))
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      # Use the publisher on the default branch, but build only the immutable
+      # release source above. Never execute scripts from a downloaded artifact.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        if: needs.source.outputs.artifact_id == ''
+        with:
+          name: tsukuyomi-space-ohos-unsigned
+          path: artifacts/hap
+      - uses: actions/download-artifact@v4
+        if: needs.source.outputs.artifact_id != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.source.outputs.run_id }}
+          artifact-ids: ${{ needs.source.outputs.artifact_id }}
+          merge-multiple: true
+          path: artifacts/hap
+      - name: Validate HAP and prepare signing guide, notices and checksums
+        env:
+          RELEASE_TAG: ${{ needs.source.outputs.tag }}
+          SOURCE_SHA: ${{ needs.source.outputs.ref }}
+        run: python3 tool/ohos/release.py prepare --artifact artifacts/hap --output dist/ohos-release
+      - name: Add verified downloads without replacing existing release assets
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PUBLISH_TOKEN || github.token }}
+          RELEASE_TAG: ${{ needs.source.outputs.tag }}
+        run: python3 tool/ohos/release.py publish --output dist/ohos-release
