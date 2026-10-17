@@ -23,12 +23,10 @@ jobs:
           java-version: '17'
       - name: Install Flutter for OpenHarmony
         run: |
-          git clone --depth 1 -b oh-3.44.9-dev https://gitcode.com/CPF-Flutter/flutter_flutter.git "$RUNNER_TEMP/flutter"
-          # A shallow clone makes `git describe` return 0.0.0-unknown, which
-          # breaks pub's Flutter SDK constraint checks; unshallow the tags so
-          # git describe resolves to 3.44.9+ohos-...
-          git -C "$RUNNER_TEMP/flutter" fetch --tags --depth 10000
-          git -C "$RUNNER_TEMP/flutter" describe --tags
+          # Full clone (no --depth 1): the ohos flutter derives its version via
+          # `git describe --tags`; a shallow clone yields 0.0.0-unknown and a
+          # tags-only fetch can't describe the branch head, breaking pub get.
+          git clone -b oh-3.44.9-dev https://gitcode.com/CPF-Flutter/flutter_flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
           export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
           flutter config --no-analytics
