@@ -413,7 +413,7 @@ void main() {
           chat.stream!.add('片段 $step，');
           // Hold ten real drags across display frames. tester.drag alone sends
           // its events synchronously and leaves almost no wall-time during
-          // which the scene scheduler can yield to the user's gesture.
+          // which to verify animation continues during the user's gesture.
           if (step % 24 == 0) {
             heldDrag = await tester.startGesture(dragStart);
           }

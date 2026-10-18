@@ -76,55 +76,58 @@ Future<void> settle(Live2DPainter painter) async {
 }
 
 void main() {
-  testWidgets('interaction yields model work and retains the completed frame', (
-    tester,
-  ) async {
-    await tester.runAsync(() async {
-      final recorder = ui.PictureRecorder();
-      Canvas(recorder).drawColor(Colors.white, BlendMode.src);
-      final picture = recorder.endRecording();
-      final texture = await picture.toImage(16, 16);
-      picture.dispose();
-      final model = _Model([texture]), clock = _Clock();
-      final scene = Live2DSceneController(
-        vsync: clock,
-        mobile: true,
-        onTick: (seconds, delta) => model.tick(seconds, delta),
-      )..attach(model);
-      final painter = scene.painter!..rasterPixelBudget = 4096;
-      scene.active = true;
-      try {
-        paint(painter);
-        await settle(painter);
-        final recorded = painter.recordedFrames;
-        final completed = painter.completedFrames;
-        final discarded = painter.discardedFrames;
-        final cached = painter.cachedPaints;
-        scene.interacting = true;
-        for (var i = 0; i < 60; i++) {
-          clock.frame(Duration(milliseconds: 100 + i * 17));
+  testWidgets(
+    'interaction keeps animating while backpressure reuses the completed frame',
+    (tester) async {
+      await tester.runAsync(() async {
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder).drawColor(Colors.white, BlendMode.src);
+        final picture = recorder.endRecording();
+        final texture = await picture.toImage(16, 16);
+        picture.dispose();
+        final model = _Model([texture]), clock = _Clock();
+        final scene = Live2DSceneController(
+          vsync: clock,
+          mobile: true,
+          onTick: (seconds, delta) => model.tick(seconds, delta),
+        )..attach(model);
+        final painter = scene.painter!..rasterPixelBudget = 4096;
+        scene.active = true;
+        try {
           paint(painter);
+          await settle(painter);
+          final recorded = painter.recordedFrames;
+          final completed = painter.completedFrames;
+          final discarded = painter.discardedFrames;
+          final cached = painter.cachedPaints;
+          scene.interacting = true;
+          for (var i = 0; i < 60; i++) {
+            clock.frame(Duration(milliseconds: 100 + i * 17));
+            paint(painter);
+          }
+          await settle(painter);
+          expect(painter.recordedFrames, recorded + 1);
+          expect(scene.modelFrames, 1);
+          expect(scene.backpressureYields, greaterThan(0));
+          expect(painter.completedFrames, completed + 1);
+          expect(painter.discardedFrames, discarded);
+          expect(painter.cachedPaints, cached + 60);
+          scene.interacting = false;
+          clock.frame(const Duration(hours: 3));
+          clock.frame(const Duration(hours: 3, milliseconds: 34));
+          await settle(painter);
+          expect(painter.recordedFrames, recorded + 2);
+          expect(painter.completedFrames, completed + 2);
+          expect(painter.discardedFrames, discarded);
+        } finally {
+          final pending = painter.pendingRasterization;
+          scene.dispose();
+          await pending;
+          texture.dispose();
         }
-        await settle(painter);
-        expect(painter.recordedFrames, recorded);
-        expect(painter.completedFrames, completed);
-        expect(painter.discardedFrames, discarded);
-        expect(painter.cachedPaints, cached + 60);
-        scene.interacting = false;
-        clock.frame(const Duration(hours: 3));
-        clock.frame(const Duration(hours: 3, milliseconds: 34));
-        await settle(painter);
-        expect(painter.recordedFrames, recorded + 1);
-        expect(painter.completedFrames, completed + 1);
-        expect(painter.discardedFrames, discarded);
-      } finally {
-        final pending = painter.pendingRasterization;
-        scene.dispose();
-        await pending;
-        texture.dispose();
-      }
-    });
-  });
+      });
+    },
+  );
   testWidgets(
     'paused visible scene refreshes its frozen pixels after fullscreen resize',
     (tester) async {
