@@ -102,7 +102,7 @@ Future<void> probeAndroidGpu() async {
       maxTextureSize: 3072,
     ) as GpuLive2DModel;
     try {
-      if (gpu.meshCount != 409 || gpu.atlasBytes != 75497472) {
+      if (gpu.meshCount != 409 || gpu.atlasBytes != 100663288) {
         throw StateError('GPU loaded unexpected model');
       }
       runApp(

@@ -241,9 +241,13 @@ JNI_GPU(jdoubleArray) GPU_METHOD(nativeInfo)(JNIEnv* env, jobject, jlong handle)
   TS_LOCK;
   auto* s = reinterpret_cast<GpuScene*>(handle);
   GLint limit = 0; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &limit);
+  const char* extensions = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+  const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  const bool full_npot = (extensions && std::strstr(extensions, "GL_OES_texture_npot")) ||
+    (version && std::strstr(version, "OpenGL ES 3"));
   const double data[] = {s->left, s->top, s->right, s->bottom,
-    static_cast<double>(s->scene->model->GetDrawableCount()), static_cast<double>(limit)};
-  auto result = env->NewDoubleArray(6); env->SetDoubleArrayRegion(result, 0, 6, data); return result;
+    static_cast<double>(s->scene->model->GetDrawableCount()), static_cast<double>(limit), full_npot ? 1.0 : 0.0};
+  auto result = env->NewDoubleArray(7); env->SetDoubleArrayRegion(result, 0, 7, data); return result;
 }
 JNI_GPU(void) GPU_METHOD(nativeTexture)(JNIEnv* env, jobject, jlong handle, jint index, jobject bitmap) {
   TS_LOCK;
@@ -265,6 +269,9 @@ JNI_GPU(void) GPU_METHOD(nativeTexture)(JNIEnv* env, jobject, jlong handle, jint
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, info.width, info.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     AndroidBitmap_unlockPixels(env, bitmap);
+    // The official renderer sets LINEAR_MIPMAP_LINEAR on every atlas draw.
+    // A level-zero-only texture becomes incomplete and samples transparent.
+    glGenerateMipmap(GL_TEXTURE_2D);
     if (glGetError() != GL_NO_ERROR) { glDeleteTextures(1, &texture); throw std::runtime_error("Cannot upload atlas"); }
     s->textures.push_back(texture); s->renderer->BindTexture(index, texture);
   } catch (const std::exception& e) { gpu_error(env, e); }

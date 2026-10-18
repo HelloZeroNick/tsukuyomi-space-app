@@ -50,7 +50,7 @@ void main() {
           'meshCount': 409,
           'bounds': [-1.0, -2.0, 1.0, 2.0],
           'maxSize': 4096,
-          'atlasBytes': 75497472,
+          'atlasBytes': 100663288,
         };
       }
       if (call.method == 'frame') {

@@ -93,15 +93,29 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
                             }) ?: error("Cannot decode atlas")
                         try {
                             val ratio = min(1.0, limit.toDouble() / max(bitmap.width, bitmap.height))
-                            if (ratio < 1) {
+                            var targetWidth = max(1, (bitmap.width * ratio).roundToInt())
+                            var targetHeight = max(1, (bitmap.height * ratio).roundToInt())
+                            // Cubism uses repeat + mipmap filtering. GLES2 without
+                            // full NPOT support requires power-of-two atlases.
+                            if (info[6] == 0.0) {
+                                targetWidth = Integer.highestOneBit(targetWidth)
+                                targetHeight = Integer.highestOneBit(targetHeight)
+                            }
+                            if (targetWidth != bitmap.width || targetHeight != bitmap.height) {
                                 val scaled = Bitmap.createScaledBitmap(bitmap,
-                                    max(1, (bitmap.width * ratio).roundToInt()),
-                                    max(1, (bitmap.height * ratio).roundToInt()), true)
+                                    targetWidth, targetHeight, true)
                                 if (scaled !== bitmap) bitmap.recycle()
                                 bitmap = scaled
                             }
                             nativeTexture(scene.pointer, index, bitmap)
-                            bytes += bitmap.width.toLong() * bitmap.height * 4
+                            var mipWidth = bitmap.width
+                            var mipHeight = bitmap.height
+                            while (true) {
+                                bytes += mipWidth.toLong() * mipHeight * 4
+                                if (mipWidth == 1 && mipHeight == 1) break
+                                mipWidth = max(1, mipWidth / 2)
+                                mipHeight = max(1, mipHeight / 2)
+                            }
                         } finally { bitmap.recycle() }
                     }
                     mapOf("textureId" to producer.id(), "bounds" to info.take(4),

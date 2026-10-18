@@ -55,11 +55,13 @@ def verify(path):
         assert len(bridges) == 1, 'Expected one ABI per APK'
         bridge = apk.read(bridges[0])
         assert len(bridge) > 100000 and b'csmGetVersion' in bridge, 'Cubism Core is missing (stub library)'
+        assert b'Java_space_tsukuyomi_live2d_Live2DGpu_nativeFrame' in bridge, 'Android GPU JNI renderer is missing'
+        assert b'eglSwapBuffers' in bridge and b'glDrawElements' in bridge, 'Cubism GPU rendering/presentation is missing'
         for lib in libs:
             prefix = lib.rsplit('/', 1)[0]
             for dependency in needed(apk.read(lib)):
                 assert dependency in SYSTEM_LIBS or prefix + '/' + dependency in files, f'{lib} requires missing {dependency}'
-    print(f'PASS {path.name}: real Cubism Core, model and native dependencies')
+    print(f'PASS {path.name}: real Cubism Core/GPU renderer, model and native dependencies')
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:

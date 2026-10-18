@@ -18,6 +18,14 @@ Future<Live2DModel> loadLive2D({
   int maxTextureSize = 2048,
   String renderer = 'canvas',
 }) async {
+  if (maxTextureSize < 0) {
+    throw ArgumentError.value(maxTextureSize, 'maxTextureSize');
+  }
+  if (nativeAvailable() != 1) {
+    throw StateError('未安装 Cubism Native SDK。请先运行 tool/setup_live2d.py，再重新构建。');
+  }
+  // Keep the native asset reachable even for an exclusively GPU entrypoint,
+  // and initialize its loader before Android resolves the JNI exports.
   String? fallback;
   if (Platform.isAndroid && renderer != 'canvas') {
     try {
@@ -29,12 +37,6 @@ Future<Live2DModel> loadLive2D({
       if (renderer == 'gpu') rethrow;
       fallback = e.toString();
     }
-  }
-  if (maxTextureSize < 0) {
-    throw ArgumentError.value(maxTextureSize, 'maxTextureSize');
-  }
-  if (nativeAvailable() != 1) {
-    throw StateError('未安装 Cubism Native SDK。请先运行 tool/setup_live2d.py，再重新构建。');
   }
   final json =
       jsonDecode(await rootBundle.loadString(manifest)) as Map<String, dynamic>;
