@@ -40,8 +40,12 @@ void Rendering::CubismRenderer::StaticRelease() {}
 #endif
 // Android's render worker and the Canvas fallback may coexist during a switch.
 // Protect Cubism's process-wide allocator, IDs and framework lifecycle.
+#if defined(CSM_TARGET_ANDROID_ES2)
 static std::recursive_mutex cubism_mutex;
 #define TS_LOCK std::lock_guard<std::recursive_mutex> lock(cubism_mutex)
+#else
+#define TS_LOCK ((void)0)
+#endif
 #if defined(CSM_TARGET_ANDROID_ES2)
 #include "gpu_shaders.h"
 static csmByte* load_shader(const std::string path, csmSizeInt* size) {

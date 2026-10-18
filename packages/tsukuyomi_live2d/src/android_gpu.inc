@@ -28,16 +28,20 @@ struct GpuDevice {
       eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
       if (parking != EGL_NO_SURFACE) eglDestroySurface(display, parking);
       if (context != EGL_NO_CONTEXT) eglDestroyContext(display, context);
-      eglTerminate(display);
+      // Flutter/plugins may use the same default display. Retain our one
+      // process-lifetime initialization; release only our context/surfaces.
     }
-    display = EGL_NO_DISPLAY; context = EGL_NO_CONTEXT; parking = EGL_NO_SURFACE;
+    context = EGL_NO_CONTEXT; parking = EGL_NO_SURFACE;
   }
   void acquire() {
     if (users) { current(parking); ++users; return; }
     try {
-      display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-      if (display == EGL_NO_DISPLAY || !eglInitialize(display, nullptr, nullptr))
-        throw std::runtime_error("Cannot initialize EGL");
+      if (display == EGL_NO_DISPLAY) {
+        EGLDisplay candidate = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        if (candidate == EGL_NO_DISPLAY || !eglInitialize(candidate, nullptr, nullptr))
+          throw std::runtime_error("Cannot initialize EGL");
+        display = candidate;
+      }
       const EGLint attrs[] = {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
         EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8,

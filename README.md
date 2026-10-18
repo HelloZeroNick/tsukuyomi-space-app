@@ -1,6 +1,6 @@
 # 月读空间 · Flutter 原生客户端
 
-Tsukuyomi Space 的独立 Flutter 客户端。0.6.21 Room / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
+Tsukuyomi Space 的独立 Flutter 客户端。0.6.22 Live2D / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
 
 整站原生页面包含入口、Hub、Wiki、图库、附件库、编辑器、像素工坊、辉夜跑酷、友链、公开主页、管理后台和 Live2D 工作台，支持跨设备事件、中文／日语／英语、全站搜索及八千代导览。后台只向有效登录的 admin／super_admin 显示和开放；本地、合并与云端记忆来源跟进原站最新逻辑。实现与验收边界见 [整站迁移记录](docs/native-full-site-implementation-2026-09-30.md)。
 
@@ -8,7 +8,7 @@ Tsukuyomi Space 的独立 Flutter 客户端。0.6.21 Room / 桌面 Agent 测试�
 
 所有平台打开即进入 Room，不播放 Access 动画。默认关闭演示；首次使用在聊天区填写模型地址、名称和 Key，保存后直接真实聊天。已有配置直接可用，本地历史先加载，登录与同步随后执行。升级保留独立演示历史。
 
-0.6.21 重构 Room 状态订阅、聊天列表和输入组件：无关通知不再重建整页，长回复及历史按可见气泡加载；滚动、输入法动画和连续输入时保留清晰的角色缓存画面，暂停多余模型计算，交互结束后继续动画。验证与设备边界见 [Room 重构](docs/native-room-refactor-v0.6.21.md)。
+0.6.22 为 Android 接入 Cubism 官方 OpenGL ES 渲染器和 Flutter 外部纹理，模型更新、物理、遮罩和绘制在原生工作线程完成；自动档使用 3K 图集，保留交互暂停与单帧限流。设置中可切回兼容渲染。其他平台应用清晰度和帧率修正并保留 Canvas。实现与设备验收边界见 [原生 GPU 渲染](docs/native-live2d-gpu.md)。
 
 0.6.20 将 Room 的 Live2D 绘制改为异步帧缓存和有界调度，减少交互时的绘制开销；修复辉夜快跑背景克隆闪烁和下车后的角色动画。保留输入法修复、2048纹理和鼠标追踪关闭。见 [Room 绘制与游戏验证](docs/native-room-pipeline-v0.6.20.md)。
 
@@ -85,9 +85,9 @@ flutter run -d macos
 
 脚本仅复制文件到本项目，不修改来源。SDK 放在 `packages/tsukuyomi_live2d/vendor/cubism/`，模型放在 `assets/live2d/`，二者均被 Git 忽略。更改 SDK 是否存在后必须执行 `flutter clean`，使原生构建钩子重新检测。
 
-加载成功后「角色状态」显示 `Cubism Native`，支持注视、眨眼、呼吸、模型物理、表情和口型。信息按钮显示网格数量及最近一次模型更新耗时；该耗时**不代表 GPU 绘制时间或实际帧率**。桌面默认 60fps、移动端 30fps，并按帧耗时自适应；离开页面或切到后台暂停；纹理着色器缓存复用，遮罩按网格边界裁剪。当前 Mac Release 基准的动画更新约 21fps → 60fps，数值不代表所有设备。
+加载成功后「角色状态」显示当前渲染方式、网格数量及模型更新耗时；Android GPU 路径另显示输出尺寸、有效 DPR 与原生提交计时。它们**不代表 GPU 执行时间或实际帧率**。自动/细节优先目标为 60fps，省电为 30fps，持续负载下会降低帧率；离开页面、后台、最小化和输入交互时暂停。支持眨眼、呼吸、物理、表情与音频口型，鼠标追踪保持关闭。
 
-当前实现采用 **Cubism Native Core + Native Framework 物理计算，Flutter Canvas 绘制纹理三角网格**。没有 WebView、JavaScript 引擎或假角色动画。它用于验证模型与 Flutter 的原生数据链路；不是 Cubism 官方 GPU renderer 的直接封装。
+Android 默认采用 **Cubism Native Core + Framework + 官方 OpenGL ES Renderer → Flutter SurfaceProducer / Texture**。原生工作线程不逐帧传出网格，也不进行 CPU 像素读回。其他平台及兼容模式采用 **Cubism Native + Flutter Canvas**；GPU 初始化或绘制失败时自动回退。没有 WebView 或 JavaScript 引擎。详见 [渲染架构和验证](docs/native-live2d-gpu.md)。
 
 已支持普通/反向遮罩、标准加法/乘法混合、multiply/screen 色彩；明确拒绝 Cubism 5.3 的离屏部件和扩展混合。网站表情与动作预设通过原生参数和舞台变换执行，支持队列、动作过渡、回复情绪反应与设置页 JSON 调试。任意 Cubism motion3 动作文件播放仍未实现。
 

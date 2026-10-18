@@ -33,7 +33,7 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
         // pointer/output are accessed only on worker; available on main.
         var pointer = 0L
         var output: Surface? = null
-        var available = true
+        @Volatile var available = true
     }
     init { channel.setMethodCallHandler(this) }
     private fun task(result: MethodChannel.Result, work: () -> Any?) {
@@ -54,7 +54,10 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
             val scene = Scene(producer)
             scenes[producer.id()] = scene
             producer.setCallback(object : TextureRegistry.SurfaceProducer.Callback {
-                override fun onSurfaceAvailable() { scene.available = true }
+                override fun onSurfaceAvailable() {
+                    scene.available = true
+                    channel.invokeMethod("surfaceAvailable", mapOf("id" to producer.id()))
+                }
                 override fun onSurfaceCleanup() {
                     scene.available = false
                     worker.post {
@@ -123,7 +126,9 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
                 if (width !in 1..4096 || height !in 1..4096 || width.toLong() * height > 8000000) {
                     result.error("size", "Invalid output size", null); return
                 }
-                scene.producer.setSize(width, height)
+                if (scene.producer.width != width || scene.producer.height != height) {
+                    scene.producer.setSize(width, height)
+                }
                 // Never retain an obsolete Surface across resize/background.
                 val surface = scene.producer.surface
                 task(result) {
@@ -132,11 +137,16 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
                         nativeSurface(scene.pointer, surface)
                         scene.output = surface
                     }
-                    val metrics = nativeFrame(scene.pointer,
-                        call.argument<List<String>>("ids")!!.toTypedArray(),
-                        call.argument<DoubleArray>("values")!!,
-                        call.argument<IntArray>("blends")!!,
-                        call.argument<Number>("delta")!!.toDouble())
+                    val metrics = try {
+                        nativeFrame(scene.pointer,
+                            call.argument<List<String>>("ids")!!.toTypedArray(),
+                            call.argument<DoubleArray>("values")!!,
+                            call.argument<IntArray>("blends")!!,
+                            call.argument<Number>("delta")!!.toDouble())
+                    } catch (e: Throwable) {
+                        if (!scene.available) return@task mapOf("paused" to true)
+                        throw e
+                    }
                     mapOf("updateMicros" to metrics[0], "submitMicros" to metrics[1],
                         "presentMicros" to metrics[2], "width" to metrics[3].toInt(), "height" to metrics[4].toInt())
                 }

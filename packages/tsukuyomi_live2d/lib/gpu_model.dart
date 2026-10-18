@@ -15,6 +15,22 @@ const _channel = MethodChannel('space.tsukuyomi/live2d_gpu');
 /// Android Cubism GLES renderer. Atlases cross the channel once at load time;
 /// animation frames contain only one ordered parameter batch and output size.
 class GpuLive2DModel extends Live2DModel {
+  static final _models = <int, GpuLive2DModel>{};
+  static Future<void> _nativeEvent(MethodCall call) async {
+    if (call.method == 'surfaceAvailable') {
+      _models[(call.arguments as Map)['id']]?._refreshSurface();
+    }
+  }
+
+  void _refreshSurface() {
+    if (_disposed || failure != null || width == 0 || height == 0) return;
+    if (_pending) {
+      _resizePending = true;
+    } else if (_parameters.isNotEmpty) {
+      _submit(0);
+    }
+  }
+
   GpuLive2DModel._(Map<dynamic, dynamic> info, this._expressions)
     : textureId = info['textureId'] as int,
       meshCount = info['meshCount'] as int,
@@ -31,6 +47,7 @@ class GpuLive2DModel extends Live2DModel {
     required String manifest,
     required int maxTextureSize,
   }) async {
+    _channel.setMethodCallHandler(_nativeEvent);
     final json = jsonDecode(await rootBundle.loadString(manifest)) as Map;
     final refs = json['FileReferences'] as Map;
     final base = Uri.parse(manifest).resolve('.');
@@ -72,7 +89,9 @@ class GpuLive2DModel extends Live2DModel {
       'maxTextureSize': maxTextureSize == 0 ? 4096 : maxTextureSize,
     });
     if (info == null) throw StateError('Native GPU returned no texture');
-    return GpuLive2DModel._(info, expressions);
+    final model = GpuLive2DModel._(info, expressions);
+    _models[model.textureId] = model;
+    return model;
   }
 
   final int textureId, meshCount, maxSize, atlasBytes;
@@ -89,6 +108,9 @@ class GpuLive2DModel extends Live2DModel {
   double updateMilliseconds = 0;
   double submitMilliseconds = 0, presentMilliseconds = 0, frameMilliseconds = 0;
   int submittedFrames = 0;
+
+  /// Optional benchmark observer; normal rendering does not notify widgets.
+  VoidCallback? onFramePresented;
   int width = 0, height = 0;
   int actualWidth = 0, actualHeight = 0;
   double effectivePixelRatio = 1;
@@ -200,7 +222,8 @@ class GpuLive2DModel extends Live2DModel {
           ..._parameters,
         },
       );
-      if (_disposed || metrics == null || metrics['paused'] == true) return;
+      if (_disposed || metrics?['paused'] == true) return;
+      if (metrics == null) throw StateError('Native GPU returned no frame');
       updateMilliseconds = (metrics['updateMicros'] as num).toDouble() / 1000;
       submitMilliseconds = (metrics['submitMicros'] as num).toDouble() / 1000;
       presentMilliseconds = (metrics['presentMicros'] as num).toDouble() / 1000;
@@ -208,6 +231,7 @@ class GpuLive2DModel extends Live2DModel {
       actualWidth = metrics['width'] as int;
       actualHeight = metrics['height'] as int;
       submittedFrames++;
+      onFramePresented?.call();
     } catch (e) {
       if (!_disposed) {
         failure = e.toString();
@@ -240,6 +264,8 @@ class GpuLive2DModel extends Live2DModel {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    _models.remove(textureId);
+    onFramePresented = null;
     unawaited(
       _channel
           .invokeMethod<void>('dispose', {'id': textureId})

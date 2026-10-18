@@ -2,6 +2,21 @@
 
 GitHub Release只展示对应版本的更新。更早版本的说明保留在本文件；当前版本见[发布说明](release-notes.md)。
 
+0.6.21+28 / v0.6.21-beta.1：重构 Room 交互与聊天渲染。
+
+- 导航、聊天、输入框和舞台分别订阅状态，同步／音乐等无关变化不再重建整个房间。
+- 长回复与对话历史按可见气泡加载，打开大量记录不预先解析全部内容；长 Markdown 分块保留代码、表格和链接，流式回复独立更新。
+- 滚动、键盘开合和连续输入时保留清晰的模型缓存画面，暂停多余模型计算，交互结束后继续动画；保持2048纹理、动作、全屏及关闭鼠标追踪。
+- 保留中文输入法组合文字、焦点与选区；补齐取消／失败后草稿恢复、新消息定位和账号隔离检查。
+
+普通Android手机选择arm64-v8a。详细对比、验证记录与真机边界见[Room重构记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-room-refactor-v0.6.21.md)。iOS包仍需自签。
+
+<!-- tsukuyomi-ohos-download -->
+鸿蒙补包：[tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap](https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.21-beta.1/tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap)，适用于 HarmonyOS 6.0.2 / API 22 及以上 ARM64 设备。**未签名，须自行签名后安装**；步骤与校验见 Release 附件 `OHOS-INSTALL.md`、`OHOS-SHA256SUMS.txt`。感谢 [HelloZeroNick](https://github.com/HelloZeroNick/tsukuyomi-space-app/tree/ohos) 贡献移植。
+<!-- /tsukuyomi-ohos-download -->
+
+---
+
 0.6.20+27 / v0.6.20-beta.2：补齐 Room 异步缓存的暂停与全屏边界。
 
 - 暂停角色后切换全屏、调整窗口或改变画质时，生成一次静态帧，保持角色可见；静态刷新不恢复模型时钟。

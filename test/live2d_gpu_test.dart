@@ -195,4 +195,27 @@ void main() {
       expect(model.failure, isNull);
     },
   );
+  test(
+    'a replacement Surface refreshes a paused pose without advancing time',
+    () async {
+      final model = await load();
+      model.configureSurface(const Size(390, 800), 3, 'auto');
+      await model.settled;
+      final reply = Completer<void>();
+      binding.channelBuffers.push(
+        channel.name,
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('surfaceAvailable', {'id': 7}),
+        ),
+        (_) => reply.complete(),
+      );
+      await reply.future;
+      await model.settled;
+      final frames = calls.where((c) => c.method == 'frame').toList();
+      expect(frames.length, 2);
+      expect(frames.last.arguments['delta'], 0);
+      expect(frames.last.arguments['values'], frames.first.arguments['values']);
+      model.dispose();
+    },
+  );
 }

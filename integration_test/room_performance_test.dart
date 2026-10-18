@@ -147,20 +147,45 @@ void main() {
       var ticks = 0;
       var modelCpuMs = 0.0;
       Live2DModel? model;
+      GpuLive2DModel? gpu;
+      final nativeSubmit = <double>[],
+          nativePresent = <double>[],
+          nativeRoundtrip = <double>[];
       final app = TsukuyomiApp(
         key: ValueKey(repetition),
         controller: room,
         initialPath: '/room',
         modelLoader: () async {
           model = await loadLive2D(
+            renderer: const String.fromEnvironment(
+              'BENCHMARK_RENDERER',
+              defaultValue: 'canvas',
+            ),
             maxTextureSize: const bool.hasEnvironment('BENCHMARK_TEXTURE_SIZE')
                 ? const int.fromEnvironment('BENCHMARK_TEXTURE_SIZE')
                 : Live2DSceneController.textureLimitFor('auto'),
           );
-          model!.addListener(() {
+          void recordTick() {
             ticks++;
             modelCpuMs += model!.updateMilliseconds;
-          });
+            if (gpu != null) {
+              nativeSubmit.add(gpu!.submitMilliseconds);
+              nativePresent.add(gpu!.presentMilliseconds);
+              nativeRoundtrip.add(gpu!.frameMilliseconds);
+            }
+          }
+
+          if (model is GpuLive2DModel) {
+            gpu = model as GpuLive2DModel;
+            gpu!.onFramePresented = recordTick;
+          } else {
+            if (const String.fromEnvironment('BENCHMARK_RENDERER') == 'gpu') {
+              throw StateError(
+                'Requested GPU benchmark must not silently use Canvas',
+              );
+            }
+            model!.addListener(recordTick);
+          }
           return model!;
         },
       );
@@ -219,16 +244,19 @@ void main() {
           .widgetList<CustomPaint>(find.byType(CustomPaint))
           .map((w) => w.painter)
           .whereType<Live2DPainter>()
-          .single;
-      measuredPainter.batchMeshes = !const bool.fromEnvironment(
+          .firstOrNull;
+      measuredPainter?.batchMeshes = !const bool.fromEnvironment(
         'BENCHMARK_NO_BATCH',
       );
-      final paintStart = measuredPainter.paintCount;
-      final drawStart = measuredPainter.totalDrawCalls;
-      final batchStart = measuredPainter.totalBatchedMeshes;
+      final paintStart = (measuredPainter?.paintCount ?? 0);
+      final drawStart = (measuredPainter?.totalDrawCalls ?? 0);
+      final batchStart = (measuredPainter?.totalBatchedMeshes ?? 0);
       frames.clear();
       ticks = 0;
       modelCpuMs = 0;
+      nativeSubmit.clear();
+      nativePresent.clear();
+      nativeRoundtrip.clear();
       final foreground = _ForegroundGuard();
       binding.addObserver(foreground);
       if (desktopBenchmark) windowManager.addListener(foreground);
@@ -452,19 +480,29 @@ void main() {
           .map((w) => w.painter)
           .whereType<Live2DPainter>()
           .toList();
-      expect(painters, hasLength(1));
-      final painter = painters.single;
+      expect(painters, hasLength(gpu == null ? 1 : 0));
+      final painter = painters.firstOrNull;
       final viewport = tester.getSize(
-        find.byWidgetPredicate((w) => w is CustomPaint && w.painter == painter),
+        gpu != null
+            ? find.byType(Live2DGpuView)
+            : find.byWidgetPredicate(
+                (w) => w is CustomPaint && w.painter == painter,
+              ),
       );
       await expectForeground();
-      final boundedPasses = painter.boundedPasses;
-      final downsampledPasses = painter.downsampledPasses;
-      final boundedPixels = painter.rasterizedPixels;
-      final sampledPaints = painter.paintCount - paintStart;
-      final sampledDraws = painter.totalDrawCalls - drawStart;
-      final sampledBatches = painter.totalBatchedMeshes - batchStart;
-      final retainedBatchBytes = painter.retainedBatchBytes;
+      final boundedPasses = painter?.boundedPasses;
+      final downsampledPasses = painter?.downsampledPasses;
+      final boundedPixels = painter?.rasterizedPixels;
+      final sampledPaints = painter == null
+          ? null
+          : painter.paintCount - paintStart;
+      final sampledDraws = painter == null
+          ? null
+          : painter.totalDrawCalls - drawStart;
+      final sampledBatches = painter == null
+          ? null
+          : painter.totalBatchedMeshes - batchStart;
+      final retainedBatchBytes = painter?.retainedBatchBytes;
       final rssBefore = ProcessInfo.currentRss;
       // Cover Room with another route and verify its model clock stops.
       Navigator.of(tester.element(find.byType(Scaffold).first)).push(
@@ -540,19 +578,31 @@ void main() {
         'model_update_mean_ms': recordedTicks == 0
             ? 0
             : recordedModelMs / recordedTicks,
+        'live2d_renderer': gpu == null ? 'canvas' : 'cubism-gles',
+        if (gpu != null) ...{
+          'native_output_width': gpu!.actualWidth,
+          'native_output_height': gpu!.actualHeight,
+          'native_effective_dpr': gpu!.effectivePixelRatio,
+          'native_submit_p95_ms': p95(nativeSubmit..sort()),
+          'native_present_p95_ms': p95(nativePresent..sort()),
+          'native_roundtrip_p95_ms': p95(nativeRoundtrip..sort()),
+          'native_timing_kind': 'CPU wall time / submission, not GPU execution',
+        },
         'live2d_bounded_passes': boundedPasses,
         'live2d_downsampled_passes': downsampledPasses,
         'live2d_rasterized_pixels': boundedPixels,
-        'live2d_pixel_budget': painter.rasterPixelBudget,
-        'live2d_mesh_batching': painter.batchMeshes,
+        'live2d_pixel_budget': painter?.rasterPixelBudget ?? 4000000,
+        'live2d_mesh_batching': painter?.batchMeshes,
         'live2d_paints': sampledPaints,
         'live2d_draw_calls': sampledDraws,
         'live2d_batched_meshes': sampledBatches,
         'live2d_retained_batch_bytes': retainedBatchBytes,
-        'live2d_texture_rgba_bytes': model!.textures.fold<int>(
-          0,
-          (sum, image) => sum + image.width * image.height * 4,
-        ),
+        'live2d_texture_rgba_bytes':
+            gpu?.atlasBytes ??
+            model!.textures.fold<int>(
+              0,
+              (sum, image) => sum + image.width * image.height * 4,
+            ),
         'hidden_model_ticks': hiddenTicks,
       };
       runs.add(run);
