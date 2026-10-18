@@ -45,6 +45,23 @@ Future<void> probeAndroidGpu() async {
       }
     }
     final total = width * height;
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      pixels,
+      width,
+      height,
+      ui.PixelFormat.rgba8888,
+      completer.complete,
+    );
+    final image = await completer.future;
+    try {
+      final png = (await image.toByteData(format: ui.ImageByteFormat.png))!;
+      await File('${directory.path}/$name.png').writeAsBytes(
+        png.buffer.asUint8List(png.offsetInBytes, png.lengthInBytes),
+      );
+    } finally {
+      image.dispose();
+    }
     if (opaque < total * .03 ||
         transparent < total * .1 ||
         partial < 100 ||
@@ -62,23 +79,6 @@ Future<void> probeAndroidGpu() async {
       if (pixels[offset + 3] != 0) {
         throw StateError('GPU background is not transparent');
       }
-    }
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-      pixels,
-      width,
-      height,
-      ui.PixelFormat.rgba8888,
-      completer.complete,
-    );
-    final image = await completer.future;
-    try {
-      final png = (await image.toByteData(format: ui.ImageByteFormat.png))!;
-      await File('${directory.path}/$name.png').writeAsBytes(
-        png.buffer.asUint8List(png.offsetInBytes, png.lengthInBytes),
-      );
-    } finally {
-      image.dispose();
     }
     results.add({
       'pose': name,

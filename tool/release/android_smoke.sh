@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p artifacts
+trap 'adb pull /sdcard/Android/data/space.tsukuyomi.tsukuyomi_space_app/files/live2d-gpu-qa artifacts/live2d-gpu-qa >/dev/null 2>&1 || true' EXIT
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 adb shell settings put secure show_ime_with_hard_keyboard 1
 adb logcat -c || true

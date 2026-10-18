@@ -4,6 +4,7 @@
 #include <EGL/egl.h>
 #include <android/native_window_jni.h>
 #include <android/bitmap.h>
+#include <android/log.h>
 #include <chrono>
 #include <stdexcept>
 #include <vector>
@@ -13,12 +14,30 @@ using Rendering::CubismRenderer;
 using Rendering::CubismRenderer_OpenGLES2;
 
 namespace {
+static GLuint copy_program() {
+  const char* vertex = "attribute vec2 p; varying vec2 uv; void main(){uv=(p+1.0)*0.5;gl_Position=vec4(p,0.0,1.0);}";
+  const char* fragment = "precision mediump float; varying vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}";
+  GLuint program = glCreateProgram();
+  for (int i = 0; i < 2; ++i) {
+    GLuint shader = glCreateShader(i == 0 ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+    const char* source = i == 0 ? vertex : fragment;
+    glShaderSource(shader, 1, &source, nullptr); glCompileShader(shader);
+    GLint ok = 0; glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+    if (!ok) { glDeleteShader(shader); glDeleteProgram(program); throw std::runtime_error("Cannot compile presentation shader"); }
+    glAttachShader(program, shader); glDeleteShader(shader);
+  }
+  glBindAttribLocation(program, 0, "p"); glLinkProgram(program);
+  GLint ok = 0; glGetProgramiv(program, GL_LINK_STATUS, &ok);
+  if (!ok) { glDeleteProgram(program); throw std::runtime_error("Cannot link presentation shader"); }
+  return program;
+}
 struct GpuDevice {
   EGLDisplay display = EGL_NO_DISPLAY;
   EGLContext context = EGL_NO_CONTEXT;
   EGLSurface parking = EGL_NO_SURFACE;
   EGLConfig config = nullptr;
   int users = 0;
+  GLuint copy = 0;
   void current(EGLSurface surface) {
     if (!eglMakeCurrent(display, surface, surface, context))
       throw std::runtime_error("EGL context lost or surface unavailable");
@@ -56,6 +75,7 @@ struct GpuDevice {
       if (context == EGL_NO_CONTEXT || parking == EGL_NO_SURFACE)
         throw std::runtime_error("Cannot create GLES2 context");
       current(parking);
+      copy = copy_program();
       users = 1;
     } catch (...) { close(); throw; }
   }
@@ -63,6 +83,8 @@ struct GpuDevice {
     if (--users == 0) {
       // SDK shader programs are global, shared by all scenes on this context.
       CubismRenderer::StaticRelease();
+      if (copy) glDeleteProgram(copy);
+      copy = 0;
       close();
     }
   }
@@ -76,7 +98,39 @@ struct GpuScene {
   EGLSurface surface = EGL_NO_SURFACE;
   float left = 0, top = 0, right = 0, bottom = 0;
   bool acquired = false;
-  int width = 1, height = 1;
+  int width = 1, height = 1, target_width = 0, target_height = 0;
+  GLuint target = 0, color = 0;
+  void target_size() {
+    if (target_width == width && target_height == height) return;
+    if (!color) glGenTextures(1, &color);
+    glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, color);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    if (!target) glGenFramebuffers(1, &target);
+    glBindFramebuffer(GL_FRAMEBUFFER, target);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color, 0);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+      throw std::runtime_error("Incomplete character render target");
+    target_width = width; target_height = height;
+  }
+  void present() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); glViewport(0, 0, width, height);
+    glDisable(GL_BLEND); glDisable(GL_DEPTH_TEST); glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST); glDisable(GL_CULL_FACE);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glUseProgram(gpu_device.copy);
+    glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, color);
+    glUniform1i(glGetUniformLocation(gpu_device.copy, "image"), 0);
+    const GLfloat quad[] = {-1,-1, 1,-1, -1,1, 1,1};
+    glBindBuffer(GL_ARRAY_BUFFER, 0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, quad);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableVertexAttribArray(0); glUseProgram(0);
+    if (glGetError() != GL_NO_ERROR) throw std::runtime_error("Character presentation failed");
+  }
   void detach() {
     if (surface != EGL_NO_SURFACE) {
       gpu_device.current(gpu_device.parking);
@@ -92,6 +146,8 @@ struct GpuScene {
       eglMakeCurrent(gpu_device.display, gpu_device.parking,
                      gpu_device.parking, gpu_device.context);
       if (renderer) CubismRenderer::Delete(renderer);
+      if (target) glDeleteFramebuffers(1, &target);
+      if (color) glDeleteTextures(1, &color);
       if (!textures.empty()) glDeleteTextures(textures.size(), textures.data());
       if (surface != EGL_NO_SURFACE) eglDestroySurface(gpu_device.display, surface);
       if (window) ANativeWindow_release(window);
@@ -106,7 +162,8 @@ struct GpuScene {
     if (!eglQuerySurface(gpu_device.display, surface, EGL_WIDTH, &width) ||
         !eglQuerySurface(gpu_device.display, surface, EGL_HEIGHT, &height) ||
         width <= 0 || height <= 0) throw std::runtime_error("Invalid output size");
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    target_size();
+    glBindFramebuffer(GL_FRAMEBUFFER, target);
     glViewport(0, 0, width, height);
     glDisable(GL_SCISSOR_TEST);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -247,7 +304,7 @@ JNI_GPU(jdoubleArray) GPU_METHOD(nativeFrame)(JNIEnv* env, jobject, jlong handle
     }
     ts_update(s->scene, delta);
     auto updated = Clock::now();
-    s->draw(); auto submitted = Clock::now();
+    s->draw(); s->present(); auto submitted = Clock::now();
     if (!eglSwapBuffers(gpu_device.display, s->surface)) throw std::runtime_error("EGL presentation failed");
     const double data[] = {micros(start, updated), micros(updated, submitted),
       micros(submitted, Clock::now()), static_cast<double>(s->width), static_cast<double>(s->height)};
@@ -258,10 +315,24 @@ JNI_GPU(jdoubleArray) GPU_METHOD(nativeFrame)(JNIEnv* env, jobject, jlong handle
 JNI_GPU(jbyteArray) GPU_METHOD(nativeSnapshot)(JNIEnv* env, jobject, jlong handle) {
   TS_LOCK;
   try {
-    auto* s = reinterpret_cast<GpuScene*>(handle); s->draw();
+    auto* s = reinterpret_cast<GpuScene*>(handle);
+    gpu_device.current(gpu_device.parking);
+    if (!s->target) throw std::runtime_error("No completed GPU frame");
+    glBindFramebuffer(GL_FRAMEBUFFER, s->target);
+    int visible = 0, unmasked = 0;
+    for (int i = 0; i < s->scene->model->GetDrawableCount(); ++i) {
+      if (s->scene->model->GetDrawableDynamicFlagIsVisible(i)) {
+        ++visible;
+        if (s->scene->model->GetDrawableMaskCounts()[i] == 0) ++unmasked;
+      }
+    }
+    __android_log_print(ANDROID_LOG_INFO, "TsukuyomiGPU",
+      "QA target=%u size=%dx%d visible=%d unmasked=%d atlases=%zu bounds=%.3f,%.3f,%.3f,%.3f",
+      s->target, s->width, s->height, visible, unmasked, s->textures.size(), s->left, s->top, s->right, s->bottom);
     std::vector<uint8_t> pixels(static_cast<size_t>(s->width) * s->height * 4);
     glReadPixels(0, 0, s->width, s->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
     if (glGetError() != GL_NO_ERROR) throw std::runtime_error("QA readback failed");
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     auto result = env->NewByteArray(pixels.size());
     env->SetByteArrayRegion(result, 0, pixels.size(), reinterpret_cast<jbyte*>(pixels.data()));
     return result;
