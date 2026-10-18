@@ -147,11 +147,12 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
                 val surface = scene.producer.surface
                 task(result) {
                     check(scene.pointer != 0L)
-                    if (surface !== scene.output) {
-                        nativeSurface(scene.pointer, surface)
-                        scene.output = surface
-                    }
+                    if (!scene.available) return@task mapOf("paused" to true)
                     val metrics = try {
+                        if (surface !== scene.output) {
+                            nativeSurface(scene.pointer, surface)
+                            scene.output = surface
+                        }
                         nativeFrame(scene.pointer,
                             call.argument<List<String>>("ids")!!.toTypedArray(),
                             call.argument<DoubleArray>("values")!!,

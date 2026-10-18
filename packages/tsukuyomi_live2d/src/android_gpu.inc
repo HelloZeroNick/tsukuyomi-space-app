@@ -10,13 +10,14 @@
 #include <vector>
 #include <limits>
 #include "Rendering/OpenGL/CubismRenderer_OpenGLES2.hpp"
+#include "Rendering/OpenGL/CubismShader_OpenGLES2.hpp"
 using Rendering::CubismRenderer;
 using Rendering::CubismRenderer_OpenGLES2;
 
 namespace {
 static GLuint copy_program() {
-  const char* vertex = "attribute vec2 p; varying vec2 uv; void main(){uv=(p+1.0)*0.5;gl_Position=vec4(p,0.0,1.0);}";
-  const char* fragment = "precision mediump float; varying vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}";
+  const char* vertex = "attribute vec2 p; varying mediump vec2 uv; void main(){uv=(p+1.0)*0.5;gl_Position=vec4(p,0.0,1.0);}";
+  const char* fragment = "precision mediump float; varying mediump vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}";
   GLuint program = glCreateProgram();
   for (int i = 0; i < 2; ++i) {
     GLuint shader = glCreateShader(i == 0 ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
@@ -38,6 +39,7 @@ struct GpuDevice {
   EGLConfig config = nullptr;
   int users = 0;
   GLuint copy = 0;
+  bool shaders_ready = false;
   void current(EGLSurface surface) {
     if (!eglMakeCurrent(display, surface, surface, context))
       throw std::runtime_error("EGL context lost or surface unavailable");
@@ -151,6 +153,15 @@ struct GpuScene {
       if (!textures.empty()) glDeleteTextures(textures.size(), textures.data());
       if (surface != EGL_NO_SURFACE) eglDestroySurface(gpu_device.display, surface);
       if (window) ANativeWindow_release(window);
+      if (gpu_device.users == 1 && gpu_device.shaders_ready) {
+        // The pinned SDK shares legacy programs across blend shader sets,
+        // but its normal cleanup deletes the same GL name repeatedly. Since
+        // the last scene also destroys our entire context, release the CPU
+        // shader cache through the SDK's context-loss API and let EGL reclaim
+        // each program once. Do this before ts_destroy releases Framework.
+        Rendering::CubismShader_OpenGLES2::GetInstance()->ReleaseInvalidShaderProgram();
+        gpu_device.shaders_ready = false;
+      }
       // ts_destroy may release Framework statics, so do it while GL is current.
       ts_destroy(scene);
       gpu_device.release();
@@ -231,6 +242,7 @@ JNI_GPU(jlong) GPU_METHOD(nativeCreate)(JNIEnv* env, jobject, jbyteArray moc, jb
       throw std::runtime_error("Model has no visible bounds");
     value->renderer = static_cast<CubismRenderer_OpenGLES2*>(CubismRenderer::Create(1, 1));
     value->renderer->Initialize(model);
+    gpu_device.shaders_ready = true;
     value->renderer->IsPremultipliedAlpha(true);
     value->renderer->UseHighPrecisionMask(false);
     value->renderer->SetDrawableClippingMaskBufferSize(512, 512);
@@ -272,7 +284,11 @@ JNI_GPU(void) GPU_METHOD(nativeTexture)(JNIEnv* env, jobject, jlong handle, jint
     // The official renderer sets LINEAR_MIPMAP_LINEAR on every atlas draw.
     // A level-zero-only texture becomes incomplete and samples transparent.
     glGenerateMipmap(GL_TEXTURE_2D);
-    if (glGetError() != GL_NO_ERROR) { glDeleteTextures(1, &texture); throw std::runtime_error("Cannot upload atlas"); }
+    const GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+      glDeleteTextures(1, &texture);
+      throw std::runtime_error("Cannot upload atlas: GL error " + std::to_string(error));
+    }
     s->textures.push_back(texture); s->renderer->BindTexture(index, texture);
   } catch (const std::exception& e) { gpu_error(env, e); }
 }
