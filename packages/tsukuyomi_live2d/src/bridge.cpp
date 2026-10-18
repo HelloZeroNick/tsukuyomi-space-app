@@ -48,9 +48,11 @@ static std::recursive_mutex cubism_mutex;
 #endif
 #if defined(CSM_TARGET_ANDROID_ES2)
 #include "gpu_shaders.h"
+static int shader_source_loads = 0;
 static csmByte* load_shader(const std::string path, csmSizeInt* size) {
   const char* source = ts_shader(path);
   if (!source) { *size = 0; return nullptr; }
+  ++shader_source_loads;
   *size = static_cast<csmSizeInt>(std::strlen(source));
   auto* bytes = new csmByte[*size + 1];
   std::memcpy(bytes, source, *size + 1);

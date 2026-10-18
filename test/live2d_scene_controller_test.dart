@@ -356,7 +356,7 @@ void main() {
     expect(scene.painter!.rasterPixelBudget, 0);
   });
 
-  test('interaction yields stop model work without invalidating its cache', () {
+  test('interaction keeps clock advancing without resetting cadence', () {
     final clock = _Clock(), deltas = <double>[];
     final scene = Live2DSceneController(
       vsync: clock,
@@ -368,39 +368,33 @@ void main() {
     scene.active = true;
     clock.frame(Duration.zero);
     clock.frame(const Duration(milliseconds: 34));
-    expect(scene.modelFrames, 1);
     final painter = scene.painter;
     scene.interacting = true;
-    expect(scene.running, false);
-    expect(scene.ticker.isActive, false);
-    // A late display callback and unrelated frame timings cannot advance the
-    // paused model or reduce its sharpness while chat owns the frame budget.
-    for (var i = 0; i < 240; i++) {
+    expect(scene.running, true);
+    expect(scene.ticker.isActive, true);
+    expect(scene.fps, 30);
+    for (var i = 1; i <= 120; i++) {
+      // Frequent input must not reset the next-frame deadline.
+      scene.interacting = false;
+      scene.interacting = true;
       clock.frame(Duration(milliseconds: 34 + i * 16));
     }
+    expect(scene.modelFrames, greaterThan(50));
+    expect(scene.activeSeconds, greaterThan(1.8));
     reportFrames(rasterMicros: 40000, count: 240);
-    expect(scene.modelFrames, 1);
-    expect(scene.effectiveRasterBudget, 2000000);
-    expect(scene.interactionYields, 1);
-    expect(scene.activeSeconds, .034);
     scene.interacting = false;
-    expect(scene.running, true);
+    expect(scene.fps, 60);
     expect(scene.painter, same(painter));
+    expect(scene.effectiveRasterBudget, 2000000);
+    expect(deltas.every((v) => v > 0 && v <= .05), true);
+    scene.active = false;
+    final count = scene.modelFrames;
     clock.frame(const Duration(hours: 1));
-    clock.frame(const Duration(hours: 1, milliseconds: 34));
-    expect(deltas, [.034, .034]);
-    expect(scene.activeSeconds, .068);
-    // Repeated typing bursts preserve one model, painter and the selected texture quality.
-    for (var i = 0; i < 100; i++) {
-      scene.interacting = true;
-      scene.interacting = false;
-    }
-    expect(scene.interactionYields, 101);
-    expect(scene.painter, same(painter));
-    expect(Live2DSceneController.textureLimitFor('auto'), 3072);
+    expect(scene.modelFrames, count);
+    expect(scene.ticker.isActive, false);
   });
 
-  test('load and visibility preserve interaction ownership of the clock', () {
+  test('loading during interaction runs; hidden scenes still stop', () {
     final scene = Live2DSceneController(
       vsync: _Clock(),
       mobile: false,
@@ -410,7 +404,7 @@ void main() {
     scene.interacting = true;
     scene.active = true;
     scene.attach(_Model());
-    expect(scene.ticker.isActive, false);
+    expect(scene.ticker.isActive, true);
     scene.active = false;
     scene.interacting = false;
     expect(scene.ticker.isActive, false);
@@ -420,54 +414,53 @@ void main() {
     expect(scene.ticker.isActive, true);
   });
 
-  testWidgets(
-    'Room activity pauses without a stage rebuild, and queued actions resume',
-    (tester) async {
-      final model = _Model(), animation = RoomAnimation();
-      final activity = ValueNotifier(false);
-      addTearDown(animation.dispose);
-      addTearDown(activity.dispose);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CharacterStage(
-              voice: SilentVoice(),
-              animation: animation,
-              interacting: activity,
-              modelLoader: () async => model,
-            ),
+  testWidgets('Room activity keeps animation and queued actions running', (
+    tester,
+  ) async {
+    final model = _Model(), animation = RoomAnimation();
+    final activity = ValueNotifier(false);
+    addTearDown(animation.dispose);
+    addTearDown(activity.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CharacterStage(
+            voice: SilentVoice(),
+            animation: animation,
+            interacting: activity,
+            modelLoader: () async => model,
           ),
         ),
-      );
-      await tester.pump();
-      for (var i = 0; i < 10; i++) {
-        await tester.pump(const Duration(milliseconds: 34));
-      }
-      expect(model.ticks, greaterThan(0));
-      final paint = find.byWidgetPredicate(
-        (w) => w is CustomPaint && w.painter is Live2DPainter,
-      );
-      final before = tester.widget<CustomPaint>(paint);
-      final ticks = model.ticks;
-      activity.value = true;
-      animation.enqueue({'motion': 'nod', 'durationMs': 1000});
-      await tester.pump(const Duration(seconds: 20));
-      expect(model.ticks, ticks);
-      expect(animation.queue, hasLength(1));
-      expect(tester.widget<CustomPaint>(paint), same(before));
-      activity.value = false;
-      await tester.pump();
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 34));
-      await tester.pump(const Duration(milliseconds: 34));
-      expect(model.ticks, greaterThan(ticks));
-      expect(animation.current, isNotNull);
-      expect(animation.elapsed, lessThan(150));
-      await tester.pumpWidget(const SizedBox());
-      // The disposed stage must have detached from the external activity bus.
-      activity.value = true;
-      expect(tester.takeException(), isNull);
-    },
-  );
+    }
+    expect(model.ticks, greaterThan(0));
+    final paint = find.byWidgetPredicate(
+      (w) => w is CustomPaint && w.painter is Live2DPainter,
+    );
+    final before = tester.widget<CustomPaint>(paint);
+    final ticks = model.ticks;
+    activity.value = true;
+    animation.enqueue({'motion': 'nod', 'durationMs': 1000});
+    await tester.pump(const Duration(milliseconds: 34));
+    expect(model.ticks, greaterThan(ticks));
+    expect(animation.current, isNotNull);
+    expect(tester.widget<CustomPaint>(paint).painter, same(before.painter));
+    activity.value = false;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 34));
+    await tester.pump(const Duration(milliseconds: 34));
+    expect(model.ticks, greaterThan(ticks));
+    expect(animation.current, isNotNull);
+    expect(animation.elapsed, lessThan(150));
+    await tester.pumpWidget(const SizedBox());
+    // The disposed stage must have detached from the external activity bus.
+    activity.value = true;
+    expect(tester.takeException(), isNull);
+  });
 
   for (final mobile in [true, false]) {
     testWidgets(

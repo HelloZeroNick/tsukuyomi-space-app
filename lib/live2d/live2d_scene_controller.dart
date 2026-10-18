@@ -40,16 +40,15 @@ class Live2DSceneController {
   int _slow = 0, _good = 0;
   double _refreshRate = 60;
   bool _active = false, _interacting = false;
-  int _modelFrames = 0, _interactionYields = 0, _backpressureYields = 0;
+  int _modelFrames = 0, _interactionTransitions = 0, _backpressureYields = 0;
 
-  /// Visibility and user interaction are separate. A foreground Room may keep
-  /// its cached character on screen while yielding all Cubism work to a drag,
-  /// keyboard transition or typing burst.
+  /// Interaction keeps animation alive. Native GPU work stays on its worker;
+  /// Canvas temporarily caps cadence while preserving the selected resolution.
   bool get active => _active;
   bool get interacting => _interacting;
-  bool get running => _active && !_interacting && model != null;
+  bool get running => _active && model != null;
   int get modelFrames => _modelFrames;
-  int get interactionYields => _interactionYields;
+  int get interactionTransitions => _interactionTransitions;
   int get backpressureYields => _backpressureYields;
   double get activeSeconds => _seconds;
   int get effectiveRasterBudget => rasterBudgetFor(_quality, mobile: mobile);
@@ -60,8 +59,10 @@ class Live2DSceneController {
   );
 
   int get fps {
-    final limit = _targetFps;
-    return _slow >= 12 ? math.min(limit, limit > 30 ? 30 : 20) : limit;
+    final limit = _interacting && model is! GpuLive2DModel
+        ? math.min(_targetFps, 30)
+        : _targetFps;
+    return _slow >= 12 ? math.min(limit, _targetFps > 30 ? 30 : 20) : limit;
   }
 
   void configure({
@@ -112,12 +113,9 @@ class Live2DSceneController {
   set interacting(bool value) {
     if (_interacting == value) return;
     _interacting = value;
-    if (value && _active) _interactionYields++;
-    // Retain the current raster snapshot rather than disabling the painter.
-    // One already-running GPU snapshot may finish, but no new model updates or
-    // successor snapshots are created until input settles. Frequent keystrokes
-    // therefore do not invalidate and recapture the entire character.
-    _syncClock();
+    if (value && _active) _interactionTransitions++;
+    // Do not stop/reset the clock: repeated gestures and typing must not starve
+    // the next frame or stall queued actions and speech mouth parameters.
   }
 
   void _resetClock() {
@@ -170,9 +168,9 @@ class Live2DSceneController {
   }
 
   void _timings(List<FrameTiming> timings) {
-    // Timings from chat scrolling/IME while the model is frozen must not be
-    // attributed to Live2D or permanently lower its visible quality.
-    if (!running) return;
+    // Chat/IME build costs must not permanently throttle the model. In-flight
+    // backpressure still bounds native/Canvas work during these interactions.
+    if (!running || _interacting) return;
     for (final frame in timings) {
       // Judge the requested animation cadence, not a 120/144Hz display's
       // shorter UI budget. Pressure lowers cadence, never silently blurs the

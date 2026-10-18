@@ -115,7 +115,7 @@ void main() {
     );
   }
   testWidgets(
-    'Android Room yields its model to scrolling, typing and changing insets',
+    'Android Room animates during scrolling, typing and changing insets',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -167,7 +167,7 @@ void main() {
         await gesture.moveBy(const Offset(0, 20));
         await tester.pump(const Duration(milliseconds: 16));
       }
-      expect(model.ticks, dragTicks);
+      expect(model.ticks, greaterThan(dragTicks));
       await gesture.up();
       await tester.pump(const Duration(seconds: 2));
       await tester.pump(const Duration(milliseconds: 200));
@@ -193,11 +193,10 @@ void main() {
       expect(activity.value, true);
       final typingTicks = model.ticks;
       await tester.pump(const Duration(milliseconds: 100));
-      expect(model.ticks, typingTicks);
+      expect(model.ticks, greaterThan(typingTicks));
       await tester.pump(const Duration(milliseconds: 30));
       expect(activity.value, false);
-      // Focus remains in the editor while the model resumes. Yielding is a
-      // transient input policy rather than freezing for the entire focus span.
+      // Animation continues without replacing the focused composing editor.
       await tester.pump(const Duration(milliseconds: 34));
       await tester.pump(const Duration(milliseconds: 34));
       expect(model.ticks, greaterThan(typingTicks));
@@ -210,7 +209,6 @@ void main() {
       for (final inset in [100.0, 180.0, 240.0, 330.0]) {
         tester.view.viewInsets = FakeViewPadding(bottom: inset);
         await tester.pump(const Duration(milliseconds: 32));
-        expect(model.ticks, insetTicks);
       }
       await tester.pump(const Duration(milliseconds: 190));
       expect(activity.value, false);

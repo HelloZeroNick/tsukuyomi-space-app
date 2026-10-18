@@ -5,6 +5,8 @@ import 'package:hooks/hooks.dart';
 import 'package:logging/logging.dart';
 import 'package:native_toolchain_c/native_toolchain_c.dart';
 
+import 'legacy_shaders.dart';
+
 /// Clang target triple per architecture for OpenHarmony/HarmonyOS.
 const Map<String, String> _ohosTriples = {
   'arm64': 'aarch64-linux-ohos',
@@ -134,7 +136,22 @@ void main(List<String> args) async {
                           '/Rendering/CubismRenderer.cpp',
                         )))) &&
             !file.uri.path.endsWith('/CubismUserModel.cpp')) {
-          sources.add(file.path);
+          if (gpu && file.path.endsWith('/CubismShader_OpenGLES2.cpp')) {
+            final specialized = File.fromUri(
+              input.outputDirectory.resolve('CubismShader_Legacy.cpp'),
+            );
+            await specialized.writeAsString(
+              legacyShaderSource(file.readAsStringSync()),
+            );
+            generatedIncludes.add(file.parent.path);
+            output.dependencies.add(file.uri);
+            output.dependencies.add(
+              input.packageRoot.resolve('hook/legacy_shaders.dart'),
+            );
+            sources.add(specialized.path);
+          } else {
+            sources.add(file.path);
+          }
         }
       }
       output.dependencies.add(sdk.resolve(core));

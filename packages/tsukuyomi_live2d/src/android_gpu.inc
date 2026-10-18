@@ -93,6 +93,7 @@ struct GpuDevice {
 } gpu_device;
 
 struct GpuScene {
+  int shader_sources = 0;
   Scene* scene = nullptr;
   CubismRenderer_OpenGLES2* renderer = nullptr;
   std::vector<GLuint> textures;
@@ -241,7 +242,9 @@ JNI_GPU(jlong) GPU_METHOD(nativeCreate)(JNIEnv* env, jobject, jbyteArray moc, jb
     if (!(value->right > value->left && value->bottom > value->top))
       throw std::runtime_error("Model has no visible bounds");
     value->renderer = static_cast<CubismRenderer_OpenGLES2*>(CubismRenderer::Create(1, 1));
+    const int shaders_before = shader_source_loads;
     value->renderer->Initialize(model);
+    value->shader_sources = shader_source_loads - shaders_before;
     gpu_device.shaders_ready = true;
     value->renderer->IsPremultipliedAlpha(true);
     value->renderer->UseHighPrecisionMask(false);
@@ -258,8 +261,9 @@ JNI_GPU(jdoubleArray) GPU_METHOD(nativeInfo)(JNIEnv* env, jobject, jlong handle)
   const bool full_npot = (extensions && std::strstr(extensions, "GL_OES_texture_npot")) ||
     (version && std::strstr(version, "OpenGL ES 3"));
   const double data[] = {s->left, s->top, s->right, s->bottom,
-    static_cast<double>(s->scene->model->GetDrawableCount()), static_cast<double>(limit), full_npot ? 1.0 : 0.0};
-  auto result = env->NewDoubleArray(7); env->SetDoubleArrayRegion(result, 0, 7, data); return result;
+    static_cast<double>(s->scene->model->GetDrawableCount()), static_cast<double>(limit), full_npot ? 1.0 : 0.0,
+    static_cast<double>(s->shader_sources)};
+  auto result = env->NewDoubleArray(8); env->SetDoubleArrayRegion(result, 0, 8, data); return result;
 }
 JNI_GPU(void) GPU_METHOD(nativeTexture)(JNIEnv* env, jobject, jlong handle, jint index, jobject bitmap) {
   TS_LOCK;

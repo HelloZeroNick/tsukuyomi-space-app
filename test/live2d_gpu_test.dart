@@ -2,8 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
+import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
+
+class _GpuClock implements TickerProvider {
+  late TickerCallback frame;
+  @override
+  Ticker createTicker(TickerCallback onTick) {
+    frame = onTick;
+    return Ticker(onTick);
+  }
+}
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -77,6 +88,108 @@ void main() {
     manifest: 'gpu-fixture/model3.json',
     maxTextureSize: 3072,
   );
+
+  test(
+    'independent assets start together and create waits for all of them',
+    () async {
+      final gate = Completer<void>(), requested = <String>[];
+      final original = binding.defaultBinaryMessenger;
+      original.setMockMessageHandler('flutter/assets', (data) async {
+        final path = utf8.decode(
+          data!.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        );
+        requested.add(path);
+        if (path.endsWith('model3.json')) {
+          return ByteData.sublistView(
+            Uint8List.fromList(
+              utf8.encode(
+                jsonEncode({
+                  'FileReferences': {
+                    'Moc': 'm.moc3',
+                    'Physics': 'p.json',
+                    'Textures': ['a.png', 'b.png'],
+                    'Expressions': [
+                      {'Name': 'neutral', 'File': 'e.json'},
+                    ],
+                  },
+                }),
+              ),
+            ),
+          );
+        }
+        await gate.future;
+        return ByteData.sublistView(
+          Uint8List.fromList(
+            utf8.encode(
+              path.endsWith('e.json') ? '{"Parameters":[]}' : 'fixture',
+            ),
+          ),
+        );
+      });
+      final pending = GpuLive2DModel.load(
+        manifest: 'parallel/model3.json',
+        maxTextureSize: 3072,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final allStarted = requested.length;
+      final createdEarly = calls.any((c) => c.method == 'create');
+      gate.complete();
+      final model = await pending;
+      model.dispose();
+      expect(allStarted, 6);
+      expect(createdEarly, false);
+      expect(calls.where((c) => c.method == 'create'), hasLength(1));
+      expect(
+        model.loadMetrics['load_ms'],
+        greaterThanOrEqualTo(model.loadMetrics['assets_ms']!),
+      );
+    },
+  );
+
+  test('GPU keeps animating during interaction with one frame in flight; hidden still pauses', () async {
+    final model = await load(), clock = _GpuClock();
+    model.configureSurface(const Size(390, 800), 3, 'auto');
+    await model.settled;
+    final scene = Live2DSceneController(
+      vsync: clock,
+      mobile: true,
+      onTick: (seconds, delta) => model.tick(seconds, delta),
+    );
+    addTearDown(scene.dispose);
+    scene.attach(model);
+    scene.active = true;
+    scene.interacting = true;
+    expect(scene.fps, 60);
+    clock.frame(Duration.zero);
+    final gate = Completer<Object?>();
+    frame = (_) => gate.future;
+    clock.frame(const Duration(milliseconds: 17));
+    await Future<void>.delayed(Duration.zero);
+    expect(model.framePending, true);
+    clock.frame(const Duration(milliseconds: 34));
+    expect(scene.modelFrames, 1);
+    expect(scene.backpressureYields, 1);
+    gate.complete({
+      'updateMicros': 1,
+      'submitMicros': 1,
+      'presentMicros': 1,
+      'width': 1170,
+      'height': 2400,
+    });
+    await model.settled;
+    frame = null;
+    for (var i = 3; i <= 10; i++) {
+      scene.interacting = false;
+      scene.interacting = true;
+      clock.frame(Duration(milliseconds: i * 17));
+      await model.settled;
+    }
+    expect(scene.modelFrames, 9);
+    expect(model.failure, isNull);
+    scene.active = false;
+    clock.frame(const Duration(seconds: 1));
+    expect(scene.modelFrames, 9);
+  });
 
   test(
     'native output retains phone DPR and caps total pixels / dimensions',

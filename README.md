@@ -1,6 +1,6 @@
 # 月读空间 · Flutter 原生客户端
 
-Tsukuyomi Space 的独立 Flutter 客户端。0.6.22 Live2D / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
+Tsukuyomi Space 的独立 Flutter 客户端。0.6.23 Live2D / 桌面 Agent 测试版提供原生 Room、统一认证、内容阅读与创作、社区、游戏和管理页面，直接连接原网站 API。
 
 整站原生页面包含入口、Hub、Wiki、图库、附件库、编辑器、像素工坊、辉夜跑酷、友链、公开主页、管理后台和 Live2D 工作台，支持跨设备事件、中文／日语／英语、全站搜索及八千代导览。后台只向有效登录的 admin／super_admin 显示和开放；本地、合并与云端记忆来源跟进原站最新逻辑。实现与验收边界见 [整站迁移记录](docs/native-full-site-implementation-2026-09-30.md)。
 
@@ -8,7 +8,7 @@ Tsukuyomi Space 的独立 Flutter 客户端。0.6.22 Live2D / 桌面 Agent 测�
 
 所有平台打开即进入 Room，不播放 Access 动画。默认关闭演示；首次使用在聊天区填写模型地址、名称和 Key，保存后直接真实聊天。已有配置直接可用，本地历史先加载，登录与同步随后执行。升级保留独立演示历史。
 
-0.6.22 为 Android 接入 Cubism 官方 OpenGL ES 渲染器和 Flutter 外部纹理，模型更新、物理、遮罩和绘制在原生工作线程完成；自动档使用 3K 图集，保留交互暂停与单帧限流。设置中可切回兼容渲染。其他平台应用清晰度和帧率修正并保留 Canvas。实现与设备验收边界见 [原生 GPU 渲染](docs/native-live2d-gpu.md)。
+Android 使用 Cubism 官方 OpenGL ES 渲染器和 Flutter 外部纹理，模型更新、物理、遮罩和绘制在原生工作线程完成；自动档使用 3K 图集，保留单帧限流。0.6.23 修复聊天滚动时动画暂停，并减少启动时的着色器编译、并行读取模型资源。设置中可切回兼容渲染。其他平台应用清晰度和帧率修正并保留 Canvas。实现与设备验收边界见 [原生 GPU 渲染](docs/native-live2d-gpu.md)。
 
 0.6.20 将 Room 的 Live2D 绘制改为异步帧缓存和有界调度，减少交互时的绘制开销；修复辉夜快跑背景克隆闪烁和下车后的角色动画。保留输入法修复、2048纹理和鼠标追踪关闭。见 [Room 绘制与游戏验证](docs/native-room-pipeline-v0.6.20.md)。
 

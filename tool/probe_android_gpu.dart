@@ -5,8 +5,19 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
+import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
+
+class _ProbeClock implements TickerProvider {
+  late TickerCallback frame;
+  @override
+  Ticker createTicker(TickerCallback onTick) {
+    frame = onTick;
+    return Ticker(onTick);
+  }
+}
 
 /// Device/CI correctness probe. Software-emulator timings are not performance
 /// acceptance. Explicit readback is confined to this probe, never animation.
@@ -97,11 +108,17 @@ Future<void> probeAndroidGpu() async {
   }
 
   for (var cycle = 0; cycle < 2; cycle++) {
+    final startup = Stopwatch()..start();
     final gpu = await loadLive2D(
       renderer: 'gpu',
       maxTextureSize: 3072,
     ) as GpuLive2DModel;
     try {
+      if (gpu.loadMetrics['shader_source_loads'] != 16) {
+        throw StateError(
+          'Expected 8 official programs, got ${gpu.loadMetrics}',
+        );
+      }
       if (gpu.meshCount != 409 || gpu.atlasBytes != 100663280) {
         throw StateError(
           'GPU loaded unexpected model: meshes=${gpu.meshCount}, atlasBytes=${gpu.atlasBytes}',
@@ -117,6 +134,15 @@ Future<void> probeAndroidGpu() async {
       );
       await WidgetsBinding.instance.endOfFrame;
       await gpu.settled;
+      results.add({
+        'cycle': cycle,
+        'startup': {
+          ...gpu.loadMetrics,
+          'first_frame_ms': startup.elapsedMicroseconds / 1000,
+        },
+      });
+      // ignore: avoid_print
+      print('TSUKUYOMI_GPU_STARTUP cycle=$cycle ${jsonEncode(results.last)}');
       gpu.configureSurface(const Size(390, 800), 2, 'auto');
       await gpu.settled;
       gpu.tick(0, 0);
@@ -150,6 +176,35 @@ Future<void> probeAndroidGpu() async {
       await gpu.settled;
       await capture(gpu, 'cycle-$cycle-recreated-surface');
       if (gpu.failure != null) throw StateError(gpu.failure!);
+      // Exercise the production scheduler against real GLES frames while the
+      // same activity flag used by Room scrolling stays true throughout.
+      final clock = _ProbeClock();
+      final controller = Live2DSceneController(
+        vsync: clock,
+        mobile: true,
+        onTick: (seconds, delta) => gpu.tick(seconds, delta),
+      );
+      controller.attach(gpu);
+      controller.active = true;
+      controller.interacting = true;
+      controller.ticker.stop(); // Drive deterministic timestamps below.
+      final beforeInteraction = gpu.submittedFrames;
+      for (var frame = 0; frame < 6; frame++) {
+        clock.frame(Duration(milliseconds: frame * 34));
+        await gpu.settled;
+      }
+      final interactionFrames = gpu.submittedFrames - beforeInteraction;
+      controller.active = false;
+      final beforeHidden = gpu.submittedFrames;
+      clock.frame(const Duration(seconds: 2));
+      await gpu.settled;
+      controller.model =
+          null; // Keep the probe's model for the remaining checks.
+      controller.dispose();
+      if (interactionFrames < 4 || gpu.submittedFrames != beforeHidden) {
+        throw StateError('GPU interaction/visibility scheduling regression');
+      }
+      results.add({'cycle': cycle, 'interaction_frames': interactionFrames});
       if (cycle == 1) {
         // Give the CI harness a window to capture Flutter's actual composition.
         gpu.configureSurface(const Size(390, 800), 2, 'auto');

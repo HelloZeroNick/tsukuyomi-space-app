@@ -144,7 +144,8 @@ void main() {
       storage.histories[scope] = history;
       await room.initialize();
       room.turns = history;
-      var ticks = 0;
+      var ticks = 0, interactionTicks = 0;
+      ValueListenable<bool>? activity;
       var modelCpuMs = 0.0;
       Live2DModel? model;
       GpuLive2DModel? gpu;
@@ -167,6 +168,7 @@ void main() {
           );
           void recordTick() {
             ticks++;
+            if (activity?.value == true) interactionTicks++;
             modelCpuMs += model!.updateMilliseconds;
             if (gpu != null) {
               nativeSubmit.add(gpu!.submitMilliseconds);
@@ -226,8 +228,7 @@ void main() {
       await tester.runAsync(focusBenchmarkWindow);
       await expectForeground();
       // Prove the visible native model is actually animating before testing
-      // input-priority scheduling. Interaction phases deliberately freeze its
-      // clock; their lower tick count is no longer mistaken for a hidden app.
+      // interaction scheduling, then separately count completed frames during input.
       final idleTickStart = ticks;
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(seconds: 2)),
@@ -271,7 +272,6 @@ void main() {
         'BENCHMARK_INTERACTION_EXPECTED',
         defaultValue: true,
       );
-      ValueListenable<bool>? activity;
       try {
         // The exact same workload can be copied to the pre-refactor checkout.
         // Its stage has no activity bus; this dynamic lookup changes only the
@@ -285,15 +285,15 @@ void main() {
         expect(expectsInteraction, false);
       }
       if (expectsInteraction) expect(activity, isNotNull);
-      var yieldTransitions = 0, yieldedMicros = 0;
-      int? yieldStarted;
+      var interactionTransitions = 0, interactionMicros = 0;
+      int? interactionStarted;
       void activityChanged() {
         if (activity!.value) {
-          yieldTransitions++;
-          yieldStarted = sample.elapsedMicroseconds;
-        } else if (yieldStarted != null) {
-          yieldedMicros += sample.elapsedMicroseconds - yieldStarted!;
-          yieldStarted = null;
+          interactionTransitions++;
+          interactionStarted = sample.elapsedMicroseconds;
+        } else if (interactionStarted != null) {
+          interactionMicros += sample.elapsedMicroseconds - interactionStarted!;
+          interactionStarted = null;
         }
       }
 
@@ -439,8 +439,8 @@ void main() {
       );
       SchedulerBinding.instance.removeTimingsCallback(timings);
       activity?.removeListener(activityChanged);
-      if (yieldStarted != null) {
-        yieldedMicros += sample.elapsedMicroseconds - yieldStarted!;
+      if (interactionStarted != null) {
+        interactionMicros += sample.elapsedMicroseconds - interactionStarted!;
       }
       sample.stop();
       removeForegroundGuard();
@@ -468,11 +468,16 @@ void main() {
       );
       if (expectsInteraction) {
         expect(
-          yieldTransitions,
+          interactionTransitions,
           greaterThan(0),
-          reason: 'Scrolling or typing must yield native model work',
+          reason: 'The workload must contain scrolling or typing',
         );
-        expect(yieldedMicros, greaterThan(500000));
+        expect(interactionMicros, greaterThan(500000));
+        expect(
+          interactionTicks,
+          greaterThan(0),
+          reason: 'Animation must continue during interaction',
+        );
       }
       final recordedModelMs = modelCpuMs;
       final painters = tester
@@ -532,9 +537,10 @@ void main() {
         'run': repetition + 1,
         'native_platform': Platform.operatingSystem,
         'idle_model_ticks_2_seconds': idleTicks,
-        'interaction_yield_transitions': yieldTransitions,
-        'interaction_yield_wall_ms': yieldedMicros / 1000,
-        'interaction_priority_expected': expectsInteraction,
+        'interaction_transitions': interactionTransitions,
+        'interaction_model_frames': interactionTicks,
+        'interaction_wall_ms': interactionMicros / 1000,
+        'interaction_expected': expectsInteraction,
         'scroll_gestures': ime ? 0 : 10,
         'held_drag_frames_per_gesture': ime ? 0 : 18,
         'chat_scroll_workload': const bool.fromEnvironment(

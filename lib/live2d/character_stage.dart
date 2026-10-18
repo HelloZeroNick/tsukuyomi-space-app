@@ -49,8 +49,8 @@ class CharacterStage extends StatefulWidget {
   final VoidCallback? onWorld, onVoiceSettings;
   final bool loadNative, mobile, keyboardOpen;
 
-  /// The Room activity bus yields animation work during active gestures and
-  /// brief input/keyboard transitions without rebuilding the stage subtree.
+  /// The Room activity bus adjusts Canvas cadence during active gestures and
+  /// brief input/keyboard transitions without rebuilding or freezing the stage.
   final ValueListenable<bool>? interacting;
   final VoidCallback? onSettings, onMusic;
   final String musicTitle;
@@ -267,8 +267,9 @@ class _CharacterStageState extends State<CharacterStage>
     final gpu = model is GpuLive2DModel ? model : null;
     return '${gpu == null ? "Flutter Canvas" : "Cubism GPU · OpenGL ES"} · ${gpu?.meshCount ?? model.meshes.length} 个网格\n'
         '最近模型更新 ${model.updateMilliseconds.toStringAsFixed(1)} ms\n'
+        '${gpu == null ? "" : "模型加载 ${((gpu.loadMetrics['load_ms'] ?? 0) / 1000).toStringAsFixed(2)} s\n"}'
         '${gpu == null ? "" : "输出 ${gpu.actualWidth} × ${gpu.actualHeight} · DPR ${gpu.effectivePixelRatio.toStringAsFixed(2)}\n原生提交 ${gpu.submitMilliseconds.toStringAsFixed(1)} ms · 帧往返 ${gpu.frameMilliseconds.toStringAsFixed(1)} ms\n"}'
-        '更新上限 ${_sceneController.fps} fps · 交互避让 ${_sceneController.interactionYields} 次\n'
+        '更新上限 ${_sceneController.fps} fps · 交互 ${_sceneController.interactionTransitions} 次\n'
         '计时为 CPU/提交耗时，非 GPU 执行时间。'
         '${model.rendererFallbackReason == null ? "" : "\nGPU 回退：${model.rendererFallbackReason}"}';
   }

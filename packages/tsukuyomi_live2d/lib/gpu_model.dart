@@ -47,6 +47,7 @@ class GpuLive2DModel extends Live2DModel {
     required String manifest,
     required int maxTextureSize,
   }) async {
+    final watch = Stopwatch()..start();
     _channel.setMethodCallHandler(_nativeEvent);
     final json = jsonDecode(await rootBundle.loadString(manifest)) as Map;
     final refs = json['FileReferences'] as Map;
@@ -66,35 +67,53 @@ class GpuLive2DModel extends Live2DModel {
       return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     }
 
-    final expressions = <String, List<Map<String, dynamic>>>{};
-    for (final entry in refs['Expressions'] as List? ?? []) {
-      final value = jsonDecode(
-        await rootBundle.loadString(asset(entry['File'] as String)),
-      ) as Map;
-      expressions[entry['Name'] as String] = (value['Parameters'] as List)
-          .cast<Map>()
-          .map((v) => Map<String, dynamic>.from(v))
-          .toList();
-    }
-    final textures = <Uint8List>[];
-    for (final path in refs['Textures'] as List) {
-      textures.add(await bytes(path as String));
-    }
+    // Independent bundle reads must not serialize each expression and atlas.
+    // Await everything before creating a native scene, including error paths.
+    final (moc, physics, textures, expressionEntries) = await (
+      bytes(refs['Moc'] as String),
+      refs['Physics'] is String
+          ? bytes(refs['Physics'] as String)
+          : Future.value(Uint8List(0)),
+      Future.wait(
+        (refs['Textures'] as List).map((path) => bytes(path as String)),
+      ),
+      Future.wait(
+        (refs['Expressions'] as List? ?? []).map((entry) async {
+          final value = jsonDecode(
+            await rootBundle.loadString(asset(entry['File'] as String)),
+          ) as Map;
+          return MapEntry(
+            entry['Name'] as String,
+            (value['Parameters'] as List)
+                .cast<Map>()
+                .map((v) => Map<String, dynamic>.from(v))
+                .toList(),
+          );
+        }),
+      ),
+    ).wait;
+    final assetMilliseconds = watch.elapsedMicroseconds / 1000;
     final info = await _channel.invokeMapMethod<dynamic, dynamic>('create', {
-      'moc': await bytes(refs['Moc'] as String),
-      'physics': refs['Physics'] is String
-          ? await bytes(refs['Physics'] as String)
-          : Uint8List(0),
+      'moc': moc,
+      'physics': physics,
       'textures': textures,
       'maxTextureSize': maxTextureSize == 0 ? 4096 : maxTextureSize,
     });
     if (info == null) throw StateError('Native GPU returned no texture');
-    final model = GpuLive2DModel._(info, expressions);
+    final model = GpuLive2DModel._(info, Map.fromEntries(expressionEntries));
+    model.loadMetrics.addAll({
+      'assets_ms': assetMilliseconds,
+      'load_ms': watch.elapsedMicroseconds / 1000,
+      ...Map<String, num>.from(info['loadMetrics'] as Map? ?? const {}),
+    });
     _models[model.textureId] = model;
     return model;
   }
 
   final int textureId, meshCount, maxSize, atlasBytes;
+
+  /// Startup wall timings (not GPU timer queries), for device diagnostics/QA.
+  final Map<String, num> loadMetrics = {};
   final Map<String, List<Map<String, dynamic>>> _expressions;
   @override
   final ui.Rect bounds;

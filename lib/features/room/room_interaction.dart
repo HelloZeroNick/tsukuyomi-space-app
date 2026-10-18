@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 /// A single interaction bus shared with the scene clock. Ballistic scrolling,
-/// typing bursts and changing IME insets yield model work independently.
+/// typing bursts and changing IME insets inform cadence without pausing animation.
 class RoomInteraction extends ValueNotifier<bool> {
   RoomInteraction() : super(false);
   bool _scrolling = false, _typing = false, _keyboard = false;

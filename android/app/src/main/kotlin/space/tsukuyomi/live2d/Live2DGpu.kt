@@ -70,10 +70,13 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
             })
             task(result) {
                 try {
+                    val started = System.nanoTime()
                     System.loadLibrary("tsukuyomi_live2d")
                     scene.pointer = nativeCreate(call.argument<ByteArray>("moc")!!,
                         call.argument<ByteArray>("physics") ?: byteArrayOf())
                     val info = nativeInfo(scene.pointer)
+                    val initialized = System.nanoTime()
+                    var uploadNanos = 0L
                     val limit = min(call.argument<Int>("maxTextureSize") ?: 3072, info[5].toInt())
                     require(limit > 0) { "Invalid texture limit" }
                     var bytes = 0L
@@ -107,7 +110,9 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
                                 if (scaled !== bitmap) bitmap.recycle()
                                 bitmap = scaled
                             }
+                            val uploadStart = System.nanoTime()
                             nativeTexture(scene.pointer, index, bitmap)
+                            uploadNanos += System.nanoTime() - uploadStart
                             var mipWidth = bitmap.width
                             var mipHeight = bitmap.height
                             while (true) {
@@ -120,7 +125,12 @@ class Live2DGpu(engine: FlutterEngine) : MethodChannel.MethodCallHandler {
                     }
                     mapOf("textureId" to producer.id(), "bounds" to info.take(4),
                         "meshCount" to info[4].toInt(), "maxSize" to min(4096, info[5].toInt()),
-                        "atlasBytes" to bytes)
+                        "atlasBytes" to bytes,
+                        "loadMetrics" to mapOf(
+                            "native_init_ms" to (initialized - started) / 1e6,
+                            "atlas_decode_ms" to (System.nanoTime() - initialized - uploadNanos) / 1e6,
+                            "atlas_upload_ms" to uploadNanos / 1e6,
+                            "shader_source_loads" to info[7].toInt()))
                 } catch (e: Throwable) {
                     if (scene.pointer != 0L) nativeDestroy(scene.pointer)
                     scene.pointer = 0
