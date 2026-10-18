@@ -17,3 +17,17 @@
 首次 HAP 尝试因构建脚本未识别中文的缺少签名提示而失败，未接受或发布该次产物。补齐识别后，仍要求新生成的完整 unsigned HAP 通过检查才放行；没有使用无条件忽略构建错误。定位插件采用实际包名作为直接依赖，确保选择正确实现。
 
 **尚未验收**：无 HarmonyOS 真机或签名材料，未进行安装、输入法、登录、音频、定位、文件选择、游戏与 Live2D 性能验收。此 HAP 需要自行签名，并未作为可直接安装的正式 Release 发布。QQ 回调、桌面 Agent、HAP 应用内安装以及存储适配的边界见 [构建说明](../../../tool/ohos/README.md)。
+
+## Release 补包（2026-10-18）
+
+上述首次验收记录保留。现已将新一轮 [官方构建 39043882026](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/39043882026) 的 HAP 发布到 [v0.6.21-beta.1](https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.21-beta.1)，附带签名安装步骤、第三方说明、独立校验文件和构建来源，共五个新增附件。[发行任务 39081131338](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/39081131338) 已通过；原有 11 个附件的 ID、大小与服务端摘要均保持一致。
+
+HAP 实际源码为 `41f9855bcc3be01ff158924b277c97667ab68a52`，原发行 tag 仍指向 `098e2d55bbc60e4adf2bbd09036de5cd05d75e87`，两者版本均为 `0.6.21+28`。本次为历史补包，不移动 tag。HAP 包内 Release 模式、最低 HarmonyOS 6.0.2 / API 22、ARM64 原生库、模型和纹理已验证；Live2D 库包含 10 个项目导出和 55 个 Cubism 导出。
+
+```text
+dcbee7f152b21d672850ad89a07db8608e51be1b7fa4e980f256c12655ffdbd8  tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap
+```
+
+24 项鸿蒙工具测试、38 项原发行工具测试及 actionlint 1.7.12 通过，覆盖版本、源码和产物归属、过期构建、同名冲突、摘要不符、中断重试及重复上传。公开下载校验与附件证据见 [release-v0.6.21.json](release-v0.6.21.json)。后续常规发行已配置按 tag 自动构建补包；本次验证了复用固定构建的发布路径，首次新 tag 的全自动触发仍待下一次发行。
+
+**签名与真机边界不变**：Release 中提供的是未签名 HAP，仍需自行签名后安装；尚未完成鸿蒙真机验收。普通 `main` 的 Flutter 依赖及应用代码在本次发行流程修改中没有变化。

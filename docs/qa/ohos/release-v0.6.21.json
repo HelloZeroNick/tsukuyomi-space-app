@@ -1,0 +1,123 @@
+{
+  "verified_at": "2026-10-18T00:02:04.817489+00:00",
+  "release_tag": "v0.6.21-beta.1",
+  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.21-beta.1",
+  "release_commit": "098e2d55bbc60e4adf2bbd09036de5cd05d75e87",
+  "build_source": "41f9855bcc3be01ff158924b277c97667ab68a52",
+  "version": "0.6.21+28",
+  "signed": false,
+  "run_id": 39043882026,
+  "artifact_id": 12105391202,
+  "artifact_zip_digest": "sha256:b07e2515f3e60fb6763f172daccd913a3a449455710e8bfc761c8850376b7106",
+  "publication_run_id": 39081131338,
+  "publication_conclusion": "success",
+  "original_asset_count": 11,
+  "original_asset_identity_size_digest_preserved": true,
+  "release_asset_count": 16,
+  "public_downloads": [
+    {
+      "file": "OHOS-BUILD-INFO.json",
+      "http_status": 200,
+      "download_host": "release-assets.githubusercontent.com",
+      "size": 559,
+      "sha256": "61657d890a0abf5e86b5ff7b2bbe3adb4555624e31a5d22bad7d5ddc489d6fd4",
+      "verified": true,
+      "asset_id": 651936651
+    },
+    {
+      "file": "OHOS-INSTALL.md",
+      "http_status": 200,
+      "download_host": "release-assets.githubusercontent.com",
+      "size": 1845,
+      "sha256": "e75aa8934371e9e771a73e69c0aea456959adc14f647f8c471e7fb20876e5806",
+      "verified": true,
+      "asset_id": 651936721
+    },
+    {
+      "file": "OHOS-SHA256SUMS.txt",
+      "http_status": 200,
+      "download_host": "release-assets.githubusercontent.com",
+      "size": 379,
+      "sha256": "b33af38f96d28c888e0c6dd92c7bc5b49c1f9a3710eca96954c738883dbbc868",
+      "verified": true,
+      "asset_id": 651946869
+    },
+    {
+      "file": "OHOS-THIRD-PARTY-NOTICES.md",
+      "http_status": 200,
+      "download_host": "release-assets.githubusercontent.com",
+      "size": 6515,
+      "sha256": "f40218b95181490fad7505d9a0cea6e499b861a007ebca1943cec1e90ce96370",
+      "verified": true,
+      "asset_id": 651936753
+    },
+    {
+      "file": "tsukuyomi-space-0.6.21-28-ohos-arm64-unsigned.hap",
+      "http_status": 200,
+      "download_host": "release-assets.githubusercontent.com",
+      "size": 148781359,
+      "sha256": "dcbee7f152b21d672850ad89a07db8608e51be1b7fa4e980f256c12655ffdbd8",
+      "verified": true,
+      "asset_id": 651946648
+    }
+  ],
+  "native_libraries": [
+    {
+      "path": "libs/arm64-v8a/libflutter.so",
+      "elf_machine": 183,
+      "bridge_exports": 0,
+      "cubism_exports": 0,
+      "dynamic_dependencies": [
+        "libnative_window.so",
+        "libnative_drawing.so",
+        "libnative_vsync.so",
+        "libdeviceinfo_ndk.z.so",
+        "libace_napi.z.so",
+        "libace_ndk.z.so",
+        "libhilog_ndk.z.so",
+        "libuv.so",
+        "librawfile.z.so",
+        "libEGL.so",
+        "libGLESv3.so",
+        "libimage_ndk.z.so",
+        "libnative_image.so",
+        "libpixelmap_ndk.z.so",
+        "libpixelmap.so",
+        "libimage_source.so",
+        "libqos.so",
+        "libnative_color_space_manager.so",
+        "libhitrace_ndk.z.so",
+        "libhiappevent_ndk.z.so",
+        "libnative_buffer.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "libs/arm64-v8a/libapp.so",
+      "elf_machine": 183,
+      "bridge_exports": 0,
+      "cubism_exports": 0,
+      "dynamic_dependencies": []
+    },
+    {
+      "path": "libs/arm64-v8a/libtsukuyomi_live2d.so",
+      "elf_machine": 183,
+      "bridge_exports": 10,
+      "cubism_exports": 55,
+      "dynamic_dependencies": [
+        "libc.so"
+      ]
+    }
+  ],
+  "focused_validation": {
+    "ohos_python_tests": 24,
+    "release_python_tests": 38,
+    "actionlint": "1.7.12"
+  },
+  "limits": [
+    "Unsigned HAP; developer signing required for installation.",
+    "No HarmonyOS physical-device installation or performance acceptance.",
+    "Historical supplemental source is recorded separately; original tag is unchanged.",
+    "Future automatic publishing is configured and linted; its first new-tag run is pending."
+  ]
+}
