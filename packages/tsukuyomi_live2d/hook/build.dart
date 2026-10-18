@@ -136,7 +136,7 @@ void main(List<String> args) async {
                           '/Rendering/CubismRenderer.cpp',
                         )))) &&
             !file.uri.path.endsWith('/CubismUserModel.cpp')) {
-          if (gpu && file.path.endsWith('/CubismShader_OpenGLES2.cpp')) {
+          if (gpu && file.uri.path.endsWith('/CubismShader_OpenGLES2.cpp')) {
             final specialized = File.fromUri(
               input.outputDirectory.resolve('CubismShader_Legacy.cpp'),
             );
