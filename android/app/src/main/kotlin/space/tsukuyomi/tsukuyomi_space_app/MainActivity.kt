@@ -11,10 +11,18 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import space.tsukuyomi.live2d.Live2DGpu
 
 class MainActivity : FlutterActivity() {
+    private var live2dGpu: Live2DGpu? = null
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        live2dGpu?.dispose()
+        live2dGpu = null
+        super.cleanUpFlutterEngine(flutterEngine)
+    }
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        live2dGpu = Live2DGpu(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "space.tsukuyomi/app_update")
             .setMethodCallHandler { call, result ->
                 if (call.method == "supportedAbis") {

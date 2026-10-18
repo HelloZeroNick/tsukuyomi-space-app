@@ -61,4 +61,7 @@ jobs:
         if: always()
         with:
           name: android-native-smoke
-          path: artifacts/android-smoke.log
+          path: |
+            artifacts/android-smoke.log
+            artifacts/android-gpu-composition.png
+            artifacts/live2d-gpu-qa/

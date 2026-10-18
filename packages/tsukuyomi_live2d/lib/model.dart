@@ -34,6 +34,7 @@ class LiveMesh {
 }
 
 abstract class Live2DModel extends ChangeNotifier {
+  String? rendererFallbackReason;
   ui.FragmentProgram? get tintProgram => null;
   Map<String, double> parameterOverrides = {};
   List<LiveMesh> get meshes;

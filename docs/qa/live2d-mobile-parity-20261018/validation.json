@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-18",
+  "base_commit": "79aae01",
+  "release_status": "local_unreleased",
+  "platform": "macOS 27.0.1 / Apple M5",
+  "renderer": "Impeller MetalSDF",
+  "flutter": "3.47.5",
+  "focused_regressions": {
+    "passed": 110,
+    "skipped": 1,
+    "real_cubism": true
+  },
+  "analyze": "passed",
+  "format": "passed",
+  "git_diff_check": "passed",
+  "sharpness": "passed",
+  "native_async_max_channel_delta": 0,
+  "room_profile": {
+    "accepted": true,
+    "driver_exit_code": 0,
+    "repetitions": 3,
+    "source": "performance-after.json"
+  },
+  "device_acceptance": {
+    "android": false,
+    "ios": false,
+    "new_apk_built": false,
+    "new_release_published": false
+  },
+  "limits": [
+    "macOS mobile layout is not a physical mobile device",
+    "Higher quality increases decoded texture memory and compositing pixels",
+    "No matched before/after performance claim",
+    "The user has not yet confirmed the installed app version or quality setting"
+  ]
+}

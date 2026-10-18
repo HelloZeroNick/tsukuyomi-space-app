@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -7,14 +8,28 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 
 import 'bindings.dart';
-import 'blink.dart';
+import 'animation_parameters.dart';
+import 'gpu_model.dart';
 import 'model.dart';
 import 'shading.dart';
 
 Future<Live2DModel> loadLive2D({
   String manifest = 'assets/live2d/character.model3.json',
   int maxTextureSize = 2048,
+  String renderer = 'canvas',
 }) async {
+  String? fallback;
+  if (Platform.isAndroid && renderer != 'canvas') {
+    try {
+      return await GpuLive2DModel.load(
+        manifest: manifest,
+        maxTextureSize: maxTextureSize,
+      );
+    } catch (e) {
+      if (renderer == 'gpu') rethrow;
+      fallback = e.toString();
+    }
+  }
   if (maxTextureSize < 0) {
     throw ArgumentError.value(maxTextureSize, 'maxTextureSize');
   }
@@ -107,7 +122,8 @@ Future<Live2DModel> loadLive2D({
       );
     });
     if (ptr == nullptr) throw StateError('模型无效，或使用了尚未支持的 Cubism 5.3 离屏混合。');
-    final result = _NativeModel(ptr, textures, expressions, tintProgram);
+    final result = _NativeModel(ptr, textures, expressions, tintProgram)
+      ..rendererFallbackReason = fallback;
     result.tick(0, 1 / 60);
     result._calculateBounds();
     return result;
@@ -160,31 +176,15 @@ class _NativeModel extends Live2DModel {
     if (_ptr == nullptr) return;
     final timer = Stopwatch()..start();
     nativeBegin(_ptr);
-    parameter('ParamAngleX', lookX * 18 + math.sin(seconds * .43) * 3);
-    parameter('ParamAngleY', lookY * 12 + math.sin(seconds * .37) * 2);
-    parameter('ParamAngleZ', math.sin(seconds * .61) * 2);
-    parameter('ParamBodyAngleX', math.sin(seconds * .4) * 2);
-    parameter('ParamBreath', .5 + math.sin(seconds * 1.6) * .45);
-    final blink = naturalBlinkOpen(seconds);
-    parameter('ParamEyeLOpen', blink);
-    parameter('ParamEyeROpen', blink);
-    parameter('ParamEyeBallX', lookX * .7);
-    parameter('ParamEyeBallY', lookY * .7);
-    for (final p in _expressions[expression] ?? <Map<String, dynamic>>[]) {
-      parameter(
-        p['Id'] as String,
-        (p['Value'] as num).toDouble(),
-        switch (p['Blend']) {
-          'Add' => 1,
-          'Multiply' => 2,
-          _ => 0,
-        },
-      );
-    }
-    for (final p in parameterOverrides.entries) {
-      parameter(p.key, p.value);
-    }
-    parameter('ParamMouthOpenY', mouth.clamp(0, 1));
+    applyLive2DParameters(
+      parameter,
+      seconds: seconds,
+      mouth: mouth,
+      lookX: lookX,
+      lookY: lookY,
+      expression: _expressions[expression] ?? const [],
+      overrides: parameterOverrides,
+    );
     nativeUpdate(_ptr, delta);
     if (nativeMeshes(_ptr, _nativeMeshes, _count) != 1) {
       throw StateError('模型网格数据无效');

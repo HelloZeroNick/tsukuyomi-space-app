@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <new>
+#include <mutex>
 
 #if defined(_WIN32)
 #include <malloc.h>
@@ -33,8 +34,33 @@ struct Mesh {
 using namespace Live2D::Cubism::Framework;
 namespace Core = Live2D::Cubism::Core;
 
-// This renderer uses Flutter's canvas, and owns no SDK renderer GPU resources.
+#if !defined(CSM_TARGET_ANDROID_ES2)
+// Canvas-only platforms own no SDK renderer GPU resources.
 void Rendering::CubismRenderer::StaticRelease() {}
+#endif
+// Android's render worker and the Canvas fallback may coexist during a switch.
+// Protect Cubism's process-wide allocator, IDs and framework lifecycle.
+static std::recursive_mutex cubism_mutex;
+#define TS_LOCK std::lock_guard<std::recursive_mutex> lock(cubism_mutex)
+#if defined(CSM_TARGET_ANDROID_ES2)
+#include "gpu_shaders.h"
+static csmByte* load_shader(const std::string path, csmSizeInt* size) {
+  const char* source = ts_shader(path);
+  if (!source) { *size = 0; return nullptr; }
+  *size = static_cast<csmSizeInt>(std::strlen(source));
+  auto* bytes = new csmByte[*size + 1];
+  std::memcpy(bytes, source, *size + 1);
+  return bytes;
+}
+static void release_shader(csmByte* bytes) { delete[] bytes; }
+static CubismFramework::Option framework_options = [] {
+  CubismFramework::Option value{};
+  value.LoggingLevel = CubismFramework::Option::LogLevel_Off;
+  value.LoadFileFunction = load_shader;
+  value.ReleaseBytesFunction = release_shader;
+  return value;
+}();
+#endif
 
 class Allocator final : public ICubismAllocator {
  public:
@@ -65,9 +91,13 @@ static void shutdown_if_idle() {
   }
 }
 API int ts_available() { return 1; }
-API void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int physics_size) {
+API void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int physics_size) { TS_LOCK;
   if (!bytes || size < 4 || size > 64 * 1024 * 1024) return nullptr;
-  if (!CubismFramework::IsStarted()) { CubismFramework::StartUp(&allocator); CubismFramework::Initialize(); }
+  if (!CubismFramework::IsStarted()) { CubismFramework::StartUp(&allocator
+#if defined(CSM_TARGET_ANDROID_ES2)
+    , &framework_options
+#endif
+    ); CubismFramework::Initialize(); }
   auto* moc = CubismMoc::Create(bytes, size, true);
   if (!moc) { shutdown_if_idle(); return nullptr; }
   auto* model = moc->CreateModel();
@@ -79,15 +109,15 @@ API void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int 
   auto* scene = new Scene{moc, model, physics_size > 0 ? CubismPhysics::Create(physics, physics_size) : nullptr};
   ++instances; model->SaveParameters(); model->Update(); return scene;
 }
-API void ts_destroy(void* ptr) {
+API void ts_destroy(void* ptr) { TS_LOCK;
   if (!ptr) return;
   auto* s = static_cast<Scene*>(ptr);
   if (s->physics) CubismPhysics::Delete(s->physics);
   s->moc->DeleteModel(s->model); CubismMoc::Delete(s->moc); delete s;
   --instances; shutdown_if_idle();
 }
-API void ts_begin(void* ptr) { if (ptr) static_cast<Scene*>(ptr)->model->LoadParameters(); }
-API void ts_parameter(void* ptr, const char* id, float value, int blend) {
+API void ts_begin(void* ptr) { TS_LOCK; if (ptr) static_cast<Scene*>(ptr)->model->LoadParameters(); }
+API void ts_parameter(void* ptr, const char* id, float value, int blend) { TS_LOCK;
   if (!ptr || !id || !std::isfinite(value)) return;
   auto* m = static_cast<Scene*>(ptr)->model;
   auto key = CubismFramework::GetIdManager()->GetId(id);
@@ -95,7 +125,7 @@ API void ts_parameter(void* ptr, const char* id, float value, int blend) {
   else if (blend == 2) m->MultiplyParameterValue(key, value);
   else m->SetParameterValue(key, value);
 }
-API void ts_update(void* ptr, float delta) {
+API void ts_update(void* ptr, float delta) { TS_LOCK;
   if (!ptr) return;
   auto* s = static_cast<Scene*>(ptr);
   if (s->physics) s->physics->Evaluate(s->model, std::clamp(delta, 0.0f, 0.05f));
@@ -104,8 +134,8 @@ API void ts_update(void* ptr, float delta) {
   Core::csmResetDrawableDynamicFlags(s->model->GetModel());
   Core::csmUpdateModel(s->model->GetModel());
 }
-API int ts_mesh_count(void* ptr) { return ptr ? static_cast<Scene*>(ptr)->model->GetDrawableCount() : 0; }
-API int ts_mesh(void* ptr, int index, Mesh* out) {
+API int ts_mesh_count(void* ptr) { TS_LOCK; return ptr ? static_cast<Scene*>(ptr)->model->GetDrawableCount() : 0; }
+API int ts_mesh(void* ptr, int index, Mesh* out) { TS_LOCK;
   if (!ptr || !out || index < 0 || index >= ts_mesh_count(ptr)) return 0;
   auto* m = static_cast<Scene*>(ptr)->model; auto* core = m->GetModel();
   out->vertices = m->GetDrawableVertexCount(index);
@@ -126,11 +156,14 @@ API int ts_mesh(void* ptr, int index, Mesh* out) {
   out->screen[0] = scr.X; out->screen[1] = scr.Y; out->screen[2] = scr.Z; out->screen[3] = scr.W;
   return 1;
 }
-API int ts_meshes(void* ptr, Mesh* out, int count) {
+API int ts_meshes(void* ptr, Mesh* out, int count) { TS_LOCK;
   if (!ptr || !out || count != ts_mesh_count(ptr)) return 0;
   for (int i = 0; i < count; ++i) if (!ts_mesh(ptr, i, out + i)) return 0;
   return 1;
 }
+#if defined(CSM_TARGET_ANDROID_ES2)
+#include "android_gpu.inc"
+#endif
 #else
 API int ts_available() { return 0; }
 API void* ts_create(const uint8_t*, int, const uint8_t*, int) { return nullptr; }

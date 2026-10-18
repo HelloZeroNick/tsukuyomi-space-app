@@ -1,0 +1,207 @@
+{
+  "label": "mobile-parity-after",
+  "passed": true,
+  "detail_probe": {
+    "different_bytes": 0,
+    "passes": [
+      0,
+      1
+    ],
+    "before": [
+      244,
+      244,
+      244,
+      255
+    ],
+    "after": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "async_native": {
+    "max_channel_delta": 0,
+    "raster_failures": 0,
+    "cache_record_timings": [
+      {
+        "pose": 0,
+        "reference_record_us": 2209,
+        "cached_record_us": 145,
+        "paints": 10,
+        "async_preparation_us": 753,
+        "async_elapsed_us": 2441,
+        "completed_frames": 1,
+        "discarded_frames": 0,
+        "extra_model_records": 0,
+        "extra_rasterizations": 0
+      },
+      {
+        "pose": 1,
+        "reference_record_us": 2707,
+        "cached_record_us": 134,
+        "paints": 10,
+        "async_preparation_us": 493,
+        "async_elapsed_us": 9646,
+        "completed_frames": 2,
+        "discarded_frames": 0,
+        "extra_model_records": 0,
+        "extra_rasterizations": 0
+      },
+      {
+        "pose": 2,
+        "reference_record_us": 3864,
+        "cached_record_us": 142,
+        "paints": 10,
+        "async_preparation_us": 769,
+        "async_elapsed_us": 13994,
+        "completed_frames": 3,
+        "discarded_frames": 0,
+        "extra_model_records": 0,
+        "extra_rasterizations": 0
+      }
+    ],
+    "frozen_resize": {
+      "max_channel_delta": 0,
+      "extra_model_records": 0,
+      "extra_rasterizations": 0
+    }
+  },
+  "captures": [
+    {
+      "scenario": "mobile",
+      "mode": "full",
+      "viewport": {
+        "width": 585.0,
+        "height": 760.0,
+        "dpr": 3.0
+      },
+      "mean_absolute_rgba_error_to_original": 0.0,
+      "bounded_passes": 0,
+      "downsampled_passes": 0,
+      "rasterized_pixels": 0,
+      "pixel_budget": 0,
+      "decoded_rgba_bytes": 134217728
+    },
+    {
+      "scenario": "mobile",
+      "mode": "auto",
+      "viewport": {
+        "width": 585.0,
+        "height": 760.0,
+        "dpr": 3.0
+      },
+      "mean_absolute_rgba_error_to_original": 1.1632564360878705,
+      "bounded_passes": 4,
+      "downsampled_passes": 1,
+      "rasterized_pixels": 2595221,
+      "pixel_budget": 2000000,
+      "decoded_rgba_bytes": 75497472
+    },
+    {
+      "scenario": "mobile",
+      "mode": "economy",
+      "viewport": {
+        "width": 585.0,
+        "height": 760.0,
+        "dpr": 3.0
+      },
+      "mean_absolute_rgba_error_to_original": 2.962882566243216,
+      "bounded_passes": 4,
+      "downsampled_passes": 3,
+      "rasterized_pixels": 752437,
+      "pixel_budget": 225000,
+      "decoded_rgba_bytes": 33554432
+    },
+    {
+      "scenario": "desktop",
+      "mode": "full",
+      "viewport": {
+        "width": 730.0,
+        "height": 685.0,
+        "dpr": 2.0
+      },
+      "mean_absolute_rgba_error_to_original": 0.0,
+      "bounded_passes": 0,
+      "downsampled_passes": 0,
+      "rasterized_pixels": 0,
+      "pixel_budget": 0,
+      "decoded_rgba_bytes": 134217728
+    },
+    {
+      "scenario": "desktop",
+      "mode": "auto",
+      "viewport": {
+        "width": 730.0,
+        "height": 685.0,
+        "dpr": 2.0
+      },
+      "mean_absolute_rgba_error_to_original": 0.8342266454496349,
+      "bounded_passes": 0,
+      "downsampled_passes": 0,
+      "rasterized_pixels": 0,
+      "pixel_budget": 2000000,
+      "decoded_rgba_bytes": 75497472
+    },
+    {
+      "scenario": "desktop",
+      "mode": "economy",
+      "viewport": {
+        "width": 730.0,
+        "height": 685.0,
+        "dpr": 2.0
+      },
+      "mean_absolute_rgba_error_to_original": 2.371862545334721,
+      "bounded_passes": 4,
+      "downsampled_passes": 1,
+      "rasterized_pixels": 667620,
+      "pixel_budget": 450000,
+      "decoded_rgba_bytes": 33554432
+    },
+    {
+      "scenario": "fullscreen",
+      "mode": "full",
+      "viewport": {
+        "width": 2074.0,
+        "height": 929.0,
+        "dpr": 2.0
+      },
+      "mean_absolute_rgba_error_to_original": 0.0,
+      "bounded_passes": 0,
+      "downsampled_passes": 0,
+      "rasterized_pixels": 0,
+      "pixel_budget": 0,
+      "decoded_rgba_bytes": 134217728
+    },
+    {
+      "scenario": "fullscreen",
+      "mode": "auto",
+      "viewport": {
+        "width": 2074.0,
+        "height": 929.0,
+        "dpr": 2.0
+      },
+      "mean_absolute_rgba_error_to_original": 0.8261014871692534,
+      "bounded_passes": 4,
+      "downsampled_passes": 0,
+      "rasterized_pixels": 1916720,
+      "pixel_budget": 2000000,
+      "decoded_rgba_bytes": 75497472
+    },
+    {
+      "scenario": "fullscreen",
+      "mode": "economy",
+      "viewport": {
+        "width": 2074.0,
+        "height": 929.0,
+        "dpr": 2.0
+      },
+      "mean_absolute_rgba_error_to_original": 2.374771527443919,
+      "bounded_passes": 4,
+      "downsampled_passes": 1,
+      "rasterized_pixels": 846454,
+      "pixel_budget": 450000,
+      "decoded_rgba_bytes": 33554432
+    }
+  ]
+}

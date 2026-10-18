@@ -16,6 +16,7 @@ import 'package:tsukuyomi_space_app/core/app_update_installer.dart';
 import '../test/support/live2d_render_probe.dart';
 import '../test/support/kaguya_riding_probe.dart';
 import 'probe_room_keyboard.dart';
+import 'probe_android_gpu.dart';
 
 // Run this release entrypoint on devices, not only with the host test runner.
 Future<void> main() async {
@@ -107,7 +108,11 @@ Future<void> main() async {
     final batches = await probeLive2DBatching();
     final nativeBatches = await probeNativeLive2DBatching(model);
     final asyncSynthetic = await probeLive2DBatching(asynchronous: true);
-    final asyncNative = await probeNativeLive2DAsync(model);
+    final asyncNative = await probeNativeLive2DAsync(
+      model,
+      rasterPixelBudget: painter.rasterPixelBudget,
+      pixelRatio: painter.pixelRatio,
+    );
     if (asyncSynthetic['max_channel_delta'] > 2 ||
         asyncNative['max_channel_delta'] > 2 ||
         asyncNative['raster_failures'] != 0 ||
@@ -140,12 +145,12 @@ Future<void> main() async {
     );
     if (detail['different_bytes'] != 0 ||
         detail['after'][3] != 0 ||
-        model.textures.any((t) => t.width != 2048 || t.height != 2048)) {
+        model.textures.any((t) => t.width != 3072 || t.height != 3072)) {
       throw StateError('Native character detail mismatch: $detail');
     }
     // ignore: avoid_print
     print(
-      'TSUKUYOMI_LIVE2D_DETAIL_OK 2048px atlases, narrow viewport detail and deformed crop verified',
+      'TSUKUYOMI_LIVE2D_DETAIL_OK 3072px atlases, narrow viewport detail and deformed crop verified',
     );
     for (var pixel = 0; pixel < 4; pixel++) {
       for (var channel = 0; channel < 4; channel++) {
@@ -222,6 +227,7 @@ Future<void> main() async {
       // offscreen probe from also capturing every Room animation notification.
       painter.dispose();
       await probeAndroidRoomKeyboard(model);
+      await probeAndroidGpu();
     }
     // ignore: avoid_print
     print('TSUKUYOMI_LIVE2D_OK meshes=$meshCount textures=$textureCount');

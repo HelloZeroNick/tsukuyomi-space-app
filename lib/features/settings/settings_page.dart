@@ -965,6 +965,10 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
   Widget _model() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      _selectOption('live2dRenderer', siteTr(context, 'nativeLive2dRenderer'), {
+        'auto': siteTr(context, 'nativeLive2dRendererAuto'),
+        'canvas': siteTr(context, 'nativeLive2dRendererCanvas'),
+      }, fallback: 'auto'),
       _selectOption(
         'live2dRenderQuality',
         siteTr(context, 'nativeLive2dQuality'),

@@ -1,0 +1,198 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
+
+void main() {
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  const channel = MethodChannel('space.tsukuyomi/live2d_gpu');
+  final calls = <MethodCall>[];
+  Future<Object?> Function(MethodCall)? frame;
+  setUp(() {
+    calls.clear();
+    frame = null;
+    binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', (
+      data,
+    ) async {
+      final path = utf8.decode(
+        data!.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      );
+      final bytes = utf8.encode(
+        path.endsWith('model3.json')
+            ? jsonEncode({
+                'FileReferences': {
+                  'Moc': 'model.moc3',
+                  'Textures': ['texture.png'],
+                  'Expressions': [
+                    {'Name': 'happy', 'File': 'happy.exp3.json'},
+                  ],
+                },
+              })
+            : path.endsWith('exp3.json')
+            ? jsonEncode({
+                'Parameters': [
+                  {'Id': 'ParamEyeLOpen', 'Value': .6, 'Blend': 'Multiply'},
+                ],
+              })
+            : 'fixture',
+      );
+      return ByteData.sublistView(Uint8List.fromList(bytes));
+    });
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      calls.add(call);
+      if (call.method == 'create') {
+        return {
+          'textureId': 7,
+          'meshCount': 409,
+          'bounds': [-1.0, -2.0, 1.0, 2.0],
+          'maxSize': 4096,
+          'atlasBytes': 75497472,
+        };
+      }
+      if (call.method == 'frame') {
+        if (frame != null) return frame!(call);
+        return {
+          'updateMicros': 1000.0,
+          'submitMicros': 500.0,
+          'presentMicros': 200.0,
+          'width': call.arguments['width'],
+          'height': call.arguments['height'],
+        };
+      }
+      return null;
+    });
+  });
+  tearDown(() {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+    binding.defaultBinaryMessenger.setMockMessageHandler(
+      'flutter/assets',
+      null,
+    );
+  });
+  Future<GpuLive2DModel> load() => GpuLive2DModel.load(
+    manifest: 'gpu-fixture/model3.json',
+    maxTextureSize: 3072,
+  );
+
+  test(
+    'native output retains phone DPR and caps total pixels / dimensions',
+    () {
+      expect(GpuLive2DModel.outputSize(const Size(390, 800), 3, 'auto'), (
+        1170,
+        2400,
+        3.0,
+      ));
+      for (final quality in ['auto', 'economy', 'full']) {
+        final (w, h, _) = GpuLive2DModel.outputSize(
+          const Size(2000, 4000),
+          4,
+          quality,
+        );
+        expect(
+          w * h,
+          lessThanOrEqualTo(switch (quality) {
+            'auto' => 4000000,
+            'full' => 8000000,
+            _ => 1000000,
+          }),
+        );
+        expect(h, lessThanOrEqualTo(4096));
+      }
+      expect(GpuLive2DModel.outputSize(Size.zero, 3, 'auto'), (0, 0, 1));
+    },
+  );
+
+  test('one parameter batch preserves expression / override / mouth order, without meshes', () async {
+    final model = await load();
+    model.configureSurface(const Size(390, 800), 3, 'auto');
+    await model.settled;
+    model.parameterOverrides = {'ParamEyeLOpen': .25, 'ParamMouthOpenY': 0};
+    model.tick(3, .016, mouth: .9, expression: 'happy');
+    await model.settled;
+    final args = calls.last.arguments as Map;
+    expect(args['ids'].last, 'ParamMouthOpenY');
+    expect(args['values'].last, .9);
+    final indices = [
+      for (var i = 0; i < args['ids'].length; i++)
+        if (args['ids'][i] == 'ParamEyeLOpen') i,
+    ];
+    expect(indices.length, 3);
+    expect(args['blends'][indices[1]], 2);
+    expect(args['values'][indices.last], .25);
+    expect(model.meshes, isEmpty);
+    expect(model.textures, isEmpty);
+    expect(model.submittedFrames, 2);
+    expect(model.actualWidth, 1170);
+    model.dispose();
+    await Future<void>.delayed(Duration.zero);
+    expect(calls.last.method, 'dispose');
+  });
+
+  test(
+    'backpressure drops overlapping ticks and coalesces frozen resizes',
+    () async {
+      final model = await load();
+      final gate = Completer<Object?>();
+      frame = (_) => gate.future;
+      model.configureSurface(const Size(300, 600), 2, 'auto');
+      await Future<void>.delayed(Duration.zero);
+      for (var i = 0; i < 100; i++) {
+        model.tick(i.toDouble(), .016);
+      }
+      model.configureSurface(const Size(400, 700), 2, 'auto');
+      model.configureSurface(const Size(500, 800), 2, 'auto');
+      expect(calls.where((c) => c.method == 'frame').length, 1);
+      frame = null;
+      gate.complete({
+        'updateMicros': 1000,
+        'submitMicros': 500,
+        'presentMicros': 200,
+        'width': 600,
+        'height': 1200,
+      });
+      await model.settled;
+      final frames = calls.where((c) => c.method == 'frame').toList();
+      expect(frames.length, 2);
+      expect(frames.last.arguments['width'], 1000);
+      expect(frames.last.arguments['height'], 1600);
+      expect(frames.last.arguments['delta'], 0);
+      model.dispose();
+    },
+  );
+
+  test('native failure stops submission and notifies fallback once', () async {
+    final model = await load();
+    var errors = 0;
+    model.addListener(() => errors++);
+    frame = (_) async =>
+        throw PlatformException(code: 'gpu', message: 'context lost');
+    model.configureSurface(const Size(390, 800), 3, 'auto');
+    await model.settled;
+    expect(model.failure, contains('context lost'));
+    expect(errors, 1);
+    model.tick(1, .016);
+    expect(calls.where((c) => c.method == 'frame').length, 1);
+    model.dispose();
+  });
+
+  test(
+    'late native completion after disposal does not notify or resubmit',
+    () async {
+      final model = await load();
+      final gate = Completer<Object?>();
+      frame = (_) => gate.future;
+      model.configureSurface(const Size(390, 800), 3, 'auto');
+      await Future<void>.delayed(Duration.zero);
+      model.configureSurface(const Size(800, 390), 3, 'auto');
+      model.dispose();
+      gate.completeError(PlatformException(code: 'gpu'));
+      await model.settled;
+      expect(calls.where((c) => c.method == 'frame').length, 1);
+      expect(model.failure, isNull);
+    },
+  );
+}

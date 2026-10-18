@@ -13,10 +13,21 @@ void main() {
   testWidgets(
     'real model async snapshots match reference and reuse cached paints',
     (tester) async {
-      final model = (await tester.runAsync(() => loadLive2D()))!;
+      final model = (await tester.runAsync(
+        () => loadLive2D(
+          maxTextureSize: Live2DSceneController.textureLimitFor('auto'),
+        ),
+      ))!;
       try {
         final result = (await tester.runAsync(
-          () => probeNativeLive2DAsync(model),
+          () => probeNativeLive2DAsync(
+            model,
+            rasterPixelBudget: Live2DSceneController.rasterBudgetFor(
+              'auto',
+              mobile: true,
+            ),
+            pixelRatio: 3,
+          ),
         ))!;
         expect(result['max_channel_delta'], lessThanOrEqualTo(2));
         expect(result['raster_failures'], 0);
@@ -103,7 +114,7 @@ void main() {
       scene.dispose();
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
-  testWidgets('saved full quality also decodes 2048 textures', (tester) async {
+  testWidgets('detail priority decodes original 4096 textures', (tester) async {
     final model = (await tester.runAsync(
       () => loadLive2D(
         maxTextureSize: Live2DSceneController.textureLimitFor('full'),
@@ -111,7 +122,7 @@ void main() {
     ))!;
     try {
       expect(
-        model.textures.every((t) => t.width == 2048 && t.height == 2048),
+        model.textures.every((t) => t.width == 4096 && t.height == 4096),
         true,
       );
     } finally {
@@ -119,7 +130,7 @@ void main() {
     }
   }, skip: !const bool.fromEnvironment('RUN_CUBISM_TESTS'));
   testWidgets(
-    'default character quality uses 2K atlases and 32 MiB on both platforms',
+    'default character quality uses 3K atlases and 72 MiB on both platforms',
     (tester) async {
       final model = (await tester.runAsync(
         () => loadLive2D(
@@ -128,7 +139,7 @@ void main() {
       ))!;
       try {
         expect(
-          model.textures.every((t) => t.width == 2048 && t.height == 2048),
+          model.textures.every((t) => t.width == 3072 && t.height == 3072),
           true,
         );
         expect(
@@ -136,7 +147,7 @@ void main() {
             0,
             (total, t) => total + t.width * t.height * 4,
           ),
-          32 * 1024 * 1024,
+          72 * 1024 * 1024,
         );
       } finally {
         model.dispose();

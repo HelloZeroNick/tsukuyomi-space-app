@@ -73,59 +73,70 @@ void main() {
   }
 
   for (final quality in ['auto', 'full', 'economy']) {
-    test(
-      '120Hz mobile compositing adapts and recovers without changing the texture cap: $quality',
-      () {
-        final scene = Live2DSceneController(
-          vsync: _Clock(),
-          mobile: true,
-          onTick: (_, _) {},
-        );
-        addTearDown(scene.dispose);
-        scene.configure(quality: quality, refreshRate: 120);
-        scene.attach(_Model());
-        scene.active = true;
-        final base = Live2DSceneController.rasterBudgetFor(
-          quality,
-          mobile: true,
-        );
-        expect(scene.painter!.rasterPixelBudget, base);
-        reportFrames(rasterMicros: 12000);
-        expect(scene.effectiveRasterBudget, (base * .75).round());
-        expect(scene.painter!.rasterPixelBudget, scene.effectiveRasterBudget);
-        reportFrames(rasterMicros: 12000, count: 80);
-        expect(scene.effectiveRasterBudget, (base * .5).round());
-        expect(scene.fps, 30);
-        expect(Live2DSceneController.textureLimitFor(quality), 2048);
-        scene.active = false;
-        reportFrames(rasterMicros: 1000, count: 400);
-        expect(scene.effectiveRasterBudget, (base * .5).round());
-        scene.active = true;
-        reportFrames(rasterMicros: 1000, count: 180);
-        expect(scene.effectiveRasterBudget, (base * .75).round());
-        reportFrames(rasterMicros: 1000, count: 180);
-        expect(scene.effectiveRasterBudget, base);
-      },
-    );
-  }
-  test(
-    'mobile quality reacts to raster load rather than an isolated UI spike',
-    () {
+    test('120Hz does not silently blur the selected quality: $quality', () {
       final scene = Live2DSceneController(
         vsync: _Clock(),
         mobile: true,
         onTick: (_, _) {},
       );
       addTearDown(scene.dispose);
-      scene.configure(refreshRate: 120);
+      scene.configure(quality: quality, refreshRate: 120);
       scene.attach(_Model());
       scene.active = true;
-      reportFrames(rasterMicros: 1000, buildMicros: 40000, count: 30);
-      expect(scene.effectiveRasterBudget, 450000);
-      reportFrames(rasterMicros: 12000);
-      scene.configure(quality: 'full');
-      expect(scene.effectiveRasterBudget, 900000);
-      expect(scene.painter!.rasterPixelBudget, 900000);
+      final base = scene.effectiveRasterBudget;
+      final target = quality == 'economy' ? 30 : 60;
+      // 12ms is slow for a 120Hz UI, but meets a 60fps animation budget.
+      reportFrames(rasterMicros: 12000, count: 240);
+      expect(scene.effectiveRasterBudget, base);
+      expect(scene.painter!.rasterPixelBudget, base);
+      expect(scene.fps, target);
+      reportFrames(rasterMicros: 40000, count: 12);
+      expect(scene.fps, quality == 'economy' ? 20 : 30);
+      expect(scene.effectiveRasterBudget, base);
+      scene.interacting = true;
+      reportFrames(rasterMicros: 1000, count: 400);
+      expect(scene.fps, quality == 'economy' ? 20 : 30);
+      scene.interacting = false;
+      reportFrames(rasterMicros: 1000, count: 240);
+      expect(scene.fps, target);
+      expect(scene.effectiveRasterBudget, base);
+    });
+  }
+  test('isolated spikes do not accumulate into permanent throttling', () {
+    final scene = Live2DSceneController(
+      vsync: _Clock(),
+      mobile: true,
+      onTick: (_, _) {},
+    )..attach(_Model());
+    addTearDown(scene.dispose);
+    scene.active = true;
+    for (var i = 0; i < 30; i++) {
+      reportFrames(rasterMicros: 40000, count: 1);
+      reportFrames(rasterMicros: 12000, count: 1);
+    }
+    expect(scene.fps, 60);
+    scene.configure(frameLimit: 30, refreshRate: 120);
+    reportFrames(rasterMicros: 24000, count: 30);
+    expect(scene.fps, 30);
+    expect(scene.effectiveRasterBudget, 2000000);
+  });
+  test(
+    'slow offscreen snapshots throttle even when visible frames are cheap',
+    () {
+      final scene = Live2DSceneController(
+        vsync: _Clock(),
+        mobile: true,
+        onTick: (_, _) {},
+      )..attach(_Model());
+      addTearDown(scene.dispose);
+      scene.active = true;
+      scene.painter!.lastRasterizationMicros = 40000;
+      reportFrames(rasterMicros: 1000, count: 12);
+      expect(scene.fps, 30);
+      expect(scene.effectiveRasterBudget, 2000000);
+      scene.painter!.lastRasterizationMicros = 4000;
+      reportFrames(rasterMicros: 1000, count: 240);
+      expect(scene.fps, 60);
     },
   );
   test('desktop compositing retains the configured quality budget', () {
@@ -139,8 +150,9 @@ void main() {
     scene.attach(_Model());
     scene.active = true;
     reportFrames(rasterMicros: 40000, count: 30);
-    expect(scene.effectiveRasterBudget, 600000);
-    expect(scene.painter!.rasterPixelBudget, 600000);
+    expect(scene.effectiveRasterBudget, 2000000);
+    expect(scene.painter!.rasterPixelBudget, 2000000);
+    expect(scene.fps, 30);
   });
   for (final mobile in [true, false]) {
     testWidgets(
@@ -280,23 +292,27 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
-  test(
-    'every quality, including saved full mode, is bounded on both platforms',
-    () {
-      for (final quality in ['auto', 'full', 'economy', 'unknown']) {
-        expect(Live2DSceneController.textureLimitFor(quality), 2048);
-        for (final mobile in [true, false]) {
-          expect(
-            Live2DSceneController.rasterBudgetFor(quality, mobile: mobile),
-            inInclusiveRange(1, 900000),
-          );
-        }
-      }
-    },
-  );
-  for (final refresh in [60, 90, 120, 144]) {
+  test('detail priority preserves native density while auto stays bounded', () {
+    expect(Live2DSceneController.textureLimitFor('economy'), 2048);
+    expect(Live2DSceneController.textureLimitFor('full'), 4096);
+    for (final quality in ['auto', 'unknown']) {
+      expect(Live2DSceneController.textureLimitFor(quality), 3072);
+    }
+    for (final mobile in [true, false]) {
+      expect(Live2DSceneController.rasterBudgetFor('full', mobile: mobile), 0);
+      expect(
+        Live2DSceneController.rasterBudgetFor('auto', mobile: mobile),
+        2000000,
+      );
+      expect(
+        Live2DSceneController.rasterBudgetFor('economy', mobile: mobile),
+        mobile ? 225000 : 450000,
+      );
+    }
+  });
+  for (final refresh in [59.94, 60, 90, 120, 144]) {
     for (final mobile in [false, true]) {
-      test('clock keeps ${mobile ? 30 : 60} fps on $refresh Hz display', () {
+      test('clock keeps 60 fps on $refresh Hz display (mobile=$mobile)', () {
         final clock = _Clock(), deltas = <double>[];
         final scene = Live2DSceneController(
           vsync: clock,
@@ -309,7 +325,7 @@ void main() {
         for (var i = 0; i <= refresh * 2; i++) {
           clock.frame(Duration(microseconds: (i * 1000000 / refresh).round()));
         }
-        expect(deltas.length, closeTo(mobile ? 60 : 120, 2));
+        expect(deltas.length, closeTo(120, 2));
         expect(deltas.every((v) => v > 0 && v <= .05), true);
       });
     }
@@ -337,7 +353,7 @@ void main() {
     clock.frame(const Duration(hours: 1, milliseconds: 34));
     expect(deltas, [.034, .034]);
     scene.configure(quality: 'full');
-    expect(scene.painter!.rasterPixelBudget, 900000);
+    expect(scene.painter!.rasterPixelBudget, 0);
   });
 
   test('interaction yields stop model work without invalidating its cache', () {
@@ -364,7 +380,7 @@ void main() {
     }
     reportFrames(rasterMicros: 40000, count: 240);
     expect(scene.modelFrames, 1);
-    expect(scene.effectiveRasterBudget, 450000);
+    expect(scene.effectiveRasterBudget, 2000000);
     expect(scene.interactionYields, 1);
     expect(scene.activeSeconds, .034);
     scene.interacting = false;
@@ -374,14 +390,14 @@ void main() {
     clock.frame(const Duration(hours: 1, milliseconds: 34));
     expect(deltas, [.034, .034]);
     expect(scene.activeSeconds, .068);
-    // Repeated typing bursts preserve one model, painter and 2K texture policy.
+    // Repeated typing bursts preserve one model, painter and the selected texture quality.
     for (var i = 0; i < 100; i++) {
       scene.interacting = true;
       scene.interacting = false;
     }
     expect(scene.interactionYields, 101);
     expect(scene.painter, same(painter));
-    expect(Live2DSceneController.textureLimitFor('auto'), 2048);
+    expect(Live2DSceneController.textureLimitFor('auto'), 3072);
   });
 
   test('load and visibility preserve interaction ownership of the clock', () {

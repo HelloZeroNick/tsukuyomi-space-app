@@ -5,14 +5,18 @@ import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 
 /// Owns the single clock/model/painter shared by the embedded and full scene.
 class Live2DSceneController {
-  // Apply the cap even to an existing full-quality preference. Two RGBA8
-  // atlases occupy 32 MiB instead of 72/128 MiB at 3072/4096 pixels.
-  static int textureLimitFor(String quality) => 2048;
+  // Keep a real detail tier. Downscaling every atlas to 2K permanently loses
+  // hair/eye detail before the renderer sees it, even on high-density phones.
+  static int textureLimitFor(String quality) => switch (quality) {
+    'economy' => 2048,
+    'full' => 4096,
+    _ => 3072,
+  };
   static int rasterBudgetFor(String quality, {required bool mobile}) =>
       switch (quality) {
-        'full' => 900000,
+        'full' => 0, // Native device density; no intermediate downsampling.
         'economy' => mobile ? 225000 : 450000,
-        _ => mobile ? 450000 : 600000,
+        _ => 2000000,
       };
   Live2DSceneController({
     required TickerProvider vsync,
@@ -34,7 +38,6 @@ class Live2DSceneController {
   double _pixelRatio = 1;
   double _seconds = 0;
   int _slow = 0, _good = 0;
-  int _rasterSlow = 0, _rasterGood = 0, _budgetStep = 0;
   double _refreshRate = 60;
   bool _active = false, _interacting = false;
   int _modelFrames = 0, _interactionYields = 0, _backpressureYields = 0;
@@ -49,14 +52,16 @@ class Live2DSceneController {
   int get interactionYields => _interactionYields;
   int get backpressureYields => _backpressureYields;
   double get activeSeconds => _seconds;
-  int get effectiveRasterBudget {
-    final base = rasterBudgetFor(_quality, mobile: mobile);
-    return mobile ? (base * const [1.0, .75, .5][_budgetStep]).round() : base;
-  }
+  int get effectiveRasterBudget => rasterBudgetFor(_quality, mobile: mobile);
+
+  int get _targetFps => math.min(
+    _frameLimit == 0 ? (_quality == 'economy' ? 30 : 60) : _frameLimit,
+    _refreshRate.round(),
+  );
 
   int get fps {
-    final limit = _frameLimit == 0 ? (mobile ? 30 : 60) : _frameLimit;
-    return _slow >= 12 ? math.min(limit, mobile ? 20 : 30) : limit;
+    final limit = _targetFps;
+    return _slow >= 12 ? math.min(limit, limit > 30 ? 30 : 20) : limit;
   }
 
   void configure({
@@ -65,14 +70,15 @@ class Live2DSceneController {
     double? pixelRatio,
     double? refreshRate,
   }) {
-    if (_quality != quality) {
-      _budgetStep = _rasterSlow = _rasterGood = 0;
+    final nextLimit = const [30, 60].contains(frameLimit) ? frameLimit : 0;
+    if (_quality != quality || _frameLimit != nextLimit) {
+      _slow = _good = 0;
     }
     _quality = quality;
     if (pixelRatio != null && pixelRatio.isFinite && pixelRatio > 0) {
       _pixelRatio = pixelRatio;
     }
-    _frameLimit = const [30, 60].contains(frameLimit) ? frameLimit : 0;
+    _frameLimit = nextLimit;
     if (refreshRate != null && refreshRate.isFinite && refreshRate > 0) {
       _refreshRate = refreshRate.clamp(30, 240);
     }
@@ -87,8 +93,10 @@ class Live2DSceneController {
     painter?.dispose();
     model?.dispose();
     model = value;
-    painter = Live2DPainter(value, asynchronousRasterization: true);
-    painter!.renderingEnabled = _active;
+    painter = value is GpuLive2DModel
+        ? null
+        : Live2DPainter(value, asynchronousRasterization: true);
+    painter?.renderingEnabled = _active;
     configure(quality: _quality, frameLimit: _frameLimit);
     _syncClock();
   }
@@ -97,7 +105,7 @@ class Live2DSceneController {
     if (_active == value) return;
     _active = value;
     painter?.renderingEnabled = value;
-    _rasterSlow = _rasterGood = 0;
+    _slow = _good = 0;
     _syncClock();
   }
 
@@ -131,7 +139,8 @@ class Live2DSceneController {
     if (!running) return;
     // The GPU is still preparing the previous coherent snapshot. Updating
     // Cubism again would consume UI time for geometry that cannot be displayed.
-    if (painter?.rasterizationPending == true) {
+    if (painter?.rasterizationPending == true ||
+        (model is GpuLive2DModel && (model as GpuLive2DModel).framePending)) {
       _backpressureYields++;
       return;
     }
@@ -165,41 +174,34 @@ class Live2DSceneController {
     // attributed to Live2D or permanently lower its visible quality.
     if (!running) return;
     for (final frame in timings) {
-      if (mobile) {
-        // Chat/IME animations use the display cadence even while the model is
-        // capped at 30fps. Reduce compositing work, keeping both atlases at 2K.
-        final budget = 1000000 / _refreshRate;
-        final raster = frame.rasterDuration.inMicroseconds;
-        if (raster > budget * 1.1) {
-          _rasterGood = 0;
-          if (++_rasterSlow >= 8) {
-            _rasterSlow = 0;
-            _budgetStep = math.min(2, _budgetStep + 1);
-            painter?.rasterPixelBudget = effectiveRasterBudget;
-          }
-        } else if (raster < budget * .7) {
-          if (++_rasterGood >= 180) {
-            _rasterGood = _rasterSlow = 0;
-            _budgetStep = math.max(0, _budgetStep - 1);
-            painter?.rasterPixelBudget = effectiveRasterBudget;
-          }
-        } else {
-          _rasterGood = 0;
-        }
-      }
+      // Judge the requested animation cadence, not a 120/144Hz display's
+      // shorter UI budget. Pressure lowers cadence, never silently blurs the
+      // selected quality. Include snapshot latency: toImage work can fall
+      // outside Flutter's visible-frame raster timings.
+      final snapshotWork = model is GpuLive2DModel
+          ? ((model as GpuLive2DModel).frameMilliseconds * 1000).round()
+          : (model!.updateMilliseconds * 1000).round() +
+                (painter?.lastPreparationMicros ?? 0) +
+                (painter?.lastRasterizationMicros ?? 0);
       final work = math.max(
-        frame.buildDuration.inMicroseconds,
-        frame.rasterDuration.inMicroseconds,
+        snapshotWork,
+        math.max(
+          frame.buildDuration.inMicroseconds,
+          frame.rasterDuration.inMicroseconds,
+        ),
       );
-      if (work > (mobile ? 33333 : 16667)) {
+      final budget = 1000000 / _targetFps;
+      if (work > budget * 1.1) {
         _slow = (_slow + 1).clamp(0, 12);
         _good = 0;
-      } else if (work < (mobile ? 24000 : 12000)) {
+      } else if (work < budget * .7) {
+        if (_slow < 12) _slow = 0;
         if (++_good >= 240) {
           _slow = 0;
           _good = 0;
         }
       } else {
+        if (_slow < 12) _slow = 0;
         _good = 0;
       }
     }

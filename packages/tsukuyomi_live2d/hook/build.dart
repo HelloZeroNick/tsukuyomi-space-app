@@ -89,13 +89,50 @@ void main(List<String> args) async {
     }
     if (requireCore.existsSync()) output.dependencies.add(requireCore.uri);
     final sources = <String>['src/bridge.cpp', 'src/audio_envelope.cpp'];
+    final gpu = enabled && os == OS.android;
+    final generatedIncludes = <String>[];
+    if (gpu) {
+      // Embed the pinned SDK's GLES shaders in the native library. They must
+      // not depend on a working directory or an Android asset path at runtime.
+      final shaders = Directory.fromUri(
+        sdk.resolve('Framework/src/Rendering/OpenGL/Shaders/StandardES/'),
+      );
+      final header = File.fromUri(
+        input.outputDirectory.resolve('gpu_shaders.h'),
+      );
+      final source = StringBuffer(
+        '#include <cstring>\n#include <string>\n'
+        'static const char* ts_shader(const std::string& name) {\n',
+      );
+      final files = shaders.listSync().whereType<File>().toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
+      for (final file in files) {
+        if (!file.path.endsWith('.frag') && !file.path.endsWith('.vert')) {
+          continue;
+        }
+        final content = file.readAsStringSync();
+        source.writeln(
+          'if (name == "${file.uri.pathSegments.last}") return R"TS_SHADER($content)TS_SHADER";',
+        );
+        output.dependencies.add(file.uri);
+      }
+      source.writeln('return nullptr; }');
+      await header.writeAsString(source.toString());
+      generatedIncludes.add(header.parent.path);
+      output.dependencies.add(input.packageRoot.resolve('src/android_gpu.inc'));
+    }
     if (enabled) {
       final framework = Directory.fromUri(sdk.resolve('Framework/src/'));
       for (final file
           in framework.listSync(recursive: true).whereType<File>()) {
         if (file.path.endsWith('.cpp') &&
             (!file.uri.path.contains('/Rendering/') ||
-                file.uri.path.endsWith('/csmBlendMode.cpp')) &&
+                file.uri.path.endsWith('/csmBlendMode.cpp') ||
+                (gpu &&
+                    (file.uri.path.contains('/Rendering/OpenGL/') ||
+                        file.uri.path.endsWith(
+                          '/Rendering/CubismRenderer.cpp',
+                        )))) &&
             !file.uri.path.endsWith('/CubismUserModel.cpp')) {
           sources.add(file.path);
         }
@@ -116,9 +153,13 @@ void main(List<String> args) async {
           ? [
               sdk.resolve('Core/include').toFilePath(),
               sdk.resolve('Framework/src').toFilePath(),
+              ...generatedIncludes,
             ]
           : [],
-      defines: {'TS_HAS_CUBISM': enabled ? '1' : '0'},
+      defines: {
+        'TS_HAS_CUBISM': enabled ? '1' : '0',
+        if (gpu) 'CSM_TARGET_ANDROID_ES2': '1',
+      },
       flags: os == OS.windows
           ? ['/std:c++17', '/MD']
           : [
@@ -136,6 +177,7 @@ void main(List<String> args) async {
           os == OS.windows ? 'Live2DCubismCore_MD' : 'Live2DCubismCore',
         // PCM decoding needs libm even in development builds without Cubism.
         if (os == OS.android) ...['m', 'log'],
+        if (gpu) ...['EGL', 'GLESv2', 'android', 'jnigraphics'],
       ],
       libraryDirectories: enabled
           ? [sdk.resolve(core).resolve('.').toFilePath()]

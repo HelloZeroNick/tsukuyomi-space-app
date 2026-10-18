@@ -36,7 +36,7 @@ Future<void> main() async {
     models.add(auto);
     final full = await loadLive2D(
       maxTextureSize:
-          0, // QA-only original 4096 reference, never a scene preset.
+          0, // Original-size reference, bypassing every texture cap.
     );
     models.add(full);
     final economy = await loadLive2D(
@@ -127,9 +127,21 @@ Future<void> main() async {
         }
       }
     }
-    passed = detail['different_bytes'] == 0 && detail['after'][3] == 0;
+    final asyncNative = await probeNativeLive2DAsync(
+      auto,
+      rasterPixelBudget: Live2DSceneController.rasterBudgetFor(
+        'auto',
+        mobile: true,
+      ),
+      pixelRatio: 3,
+    );
+    passed =
+        detail['different_bytes'] == 0 &&
+        detail['after'][3] == 0 &&
+        asyncNative['max_channel_delta'] <= 2 &&
+        asyncNative['raster_failures'] == 0;
     await File('${output.path}/results.json').writeAsString(
-      '${const JsonEncoder.withIndent('  ').convert({'label': label, 'passed': passed, 'detail_probe': detail, 'captures': captures})}\n',
+      '${const JsonEncoder.withIndent('  ').convert({'label': label, 'passed': passed, 'detail_probe': detail, 'async_native': asyncNative, 'captures': captures})}\n',
     );
   } finally {
     for (final model in models) {

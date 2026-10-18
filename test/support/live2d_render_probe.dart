@@ -57,14 +57,18 @@ Future<Uint8List> _batchPixels(Live2DPainter painter, Size size) async {
 
 /// Compare the production async pipeline with the bounded reference path.
 /// Cache timings measure paint-recording work only, never device/GPU FPS.
-Future<Map<String, dynamic>> probeNativeLive2DAsync(Live2DModel model) async {
+Future<Map<String, dynamic>> probeNativeLive2DAsync(
+  Live2DModel model, {
+  int rasterPixelBudget = 450000,
+  double pixelRatio = 2,
+}) async {
   const size = Size(390, 800);
   final direct = Live2DPainter(model)
-    ..rasterPixelBudget = 450000
-    ..pixelRatio = 2;
+    ..rasterPixelBudget = rasterPixelBudget
+    ..pixelRatio = pixelRatio;
   final cached = Live2DPainter(model, asynchronousRasterization: true)
-    ..rasterPixelBudget = 450000
-    ..pixelRatio = 2;
+    ..rasterPixelBudget = rasterPixelBudget
+    ..pixelRatio = pixelRatio;
   var maxDelta = 0;
   final timings = <Map<String, dynamic>>[];
   void record(Live2DPainter painter) {

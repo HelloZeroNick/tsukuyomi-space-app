@@ -89,6 +89,7 @@ class _CharacterStageState extends State<CharacterStage>
   DesktopWindowController? _window;
   String _expression = 'neutral';
   int _loadRevision = 0;
+  String? _gpuFailure;
   int _textureLimit(RoomSettings settings) =>
       Live2DSceneController.textureLimitFor(
         settings.option('live2dRenderQuality', 'auto'),
@@ -135,19 +136,38 @@ class _CharacterStageState extends State<CharacterStage>
     if (widget.loadNative) unawaited(_load());
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool canvasFallback = false}) async {
     if (!mounted) return;
     final revision = ++_loadRevision;
     _updateScene(() => _failure = null);
     try {
       final model =
           await (widget.modelLoader?.call() ??
-              loadLive2D(maxTextureSize: _textureLimit(widget.settings)));
+              loadLive2D(
+                maxTextureSize: _textureLimit(widget.settings),
+                renderer: canvasFallback
+                    ? 'canvas'
+                    : widget.settings.option('live2dRenderer', 'auto'),
+              ));
       if (!mounted || revision != _loadRevision) {
         model.dispose();
         return;
       }
+      if (canvasFallback) model.rendererFallbackReason = _gpuFailure;
       _updateScene(() => _sceneController.attach(model));
+      if (model is GpuLive2DModel) {
+        var recovering = false;
+        model.addListener(() {
+          if (!recovering &&
+              mounted &&
+              identical(_model, model) &&
+              model.failure != null) {
+            recovering = true;
+            _gpuFailure = model.failure;
+            unawaited(_load(canvasFallback: true));
+          }
+        });
+      }
       if (widget.animation != null) widget.animation!.ready = true;
       widget.onReady?.call(true);
       _syncTicker();
@@ -209,7 +229,9 @@ class _CharacterStageState extends State<CharacterStage>
     }
     if (widget.loadNative &&
         widget.modelLoader == null &&
-        _textureLimit(oldWidget.settings) != _textureLimit(widget.settings)) {
+        (_textureLimit(oldWidget.settings) != _textureLimit(widget.settings) ||
+            oldWidget.settings.option('live2dRenderer', 'auto') !=
+                widget.settings.option('live2dRenderer', 'auto'))) {
       unawaited(_load());
     }
     // The fullscreen route is outside this widget's subtree.
@@ -240,6 +262,17 @@ class _CharacterStageState extends State<CharacterStage>
     super.dispose();
   }
 
+  String _rendererDiagnostics() {
+    final model = _model!;
+    final gpu = model is GpuLive2DModel ? model : null;
+    return '${gpu == null ? "Flutter Canvas" : "Cubism GPU · OpenGL ES"} · ${gpu?.meshCount ?? model.meshes.length} 个网格\n'
+        '最近模型更新 ${model.updateMilliseconds.toStringAsFixed(1)} ms\n'
+        '${gpu == null ? "" : "输出 ${gpu.actualWidth} × ${gpu.actualHeight} · DPR ${gpu.effectivePixelRatio.toStringAsFixed(2)}\n原生提交 ${gpu.submitMilliseconds.toStringAsFixed(1)} ms · 帧往返 ${gpu.frameMilliseconds.toStringAsFixed(1)} ms\n"}'
+        '更新上限 ${_sceneController.fps} fps · 交互避让 ${_sceneController.interactionYields} 次\n'
+        '计时为 CPU/提交耗时，非 GPU 执行时间。'
+        '${model.rendererFallbackReason == null ? "" : "\nGPU 回退：${model.rendererFallbackReason}"}';
+  }
+
   void _diagnostics() => showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
@@ -247,7 +280,7 @@ class _CharacterStageState extends State<CharacterStage>
       content: Text(
         _model == null
             ? (_failure ?? '正在载入原生 Live2D 模型…')
-            : 'Cubism Native · ${_model!.meshes.length} 个网格\n最近模型更新 ${_model!.updateMilliseconds.toStringAsFixed(1)} ms\n更新上限 ${_sceneController.fps} fps · 交互避让 ${_sceneController.interactionYields} 次\n自适应帧率，此数值不包含 GPU 绘制耗时。',
+            : _rendererDiagnostics(),
       ),
       actions: [
         TextButton(
@@ -286,7 +319,15 @@ class _CharacterStageState extends State<CharacterStage>
                 // and blinking do not need to rebuild the transform widgets.
                 animation: _poseRevision,
                 child: RepaintBoundary(
-                  child: CustomPaint(painter: _sceneController.painter),
+                  child: _model is GpuLive2DModel
+                      ? Live2DGpuView(
+                          model: _model! as GpuLive2DModel,
+                          quality: widget.settings.option(
+                            'live2dRenderQuality',
+                            'auto',
+                          ),
+                        )
+                      : CustomPaint(painter: _sceneController.painter),
                 ),
                 builder: (context, child) {
                   final a = widget.animation;
