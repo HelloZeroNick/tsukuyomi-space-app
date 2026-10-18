@@ -1,13 +1,15 @@
 # Android 原生 GPU 渲染
 
-这一版在 Android 默认使用 **Cubism Native OpenGL ES Renderer → EGL window surface → Flutter SurfaceProducer → Texture**。iOS、macOS、Windows、Linux 和 HarmonyOS 继续使用 Canvas 渲染。可以在「房间设置 → 角色 → 角色渲染方式」选择兼容渲染，进行同设备 A/B 对比。
+这一版在 Android 默认使用 **Cubism Native OpenGL ES Renderer → RGBA 渲染纹理 → EGL window surface → Flutter SurfaceProducer → Texture**。iOS、macOS、Windows、Linux 和 HarmonyOS 继续使用 Canvas 渲染。可以在「房间设置 → 角色 → 角色渲染方式」选择兼容渲染，进行同设备 A/B 对比。
 
 ## 数据与线程
 
 - `Live2DGpu.kt` 注册 Flutter 外部纹理。一个进程共享一条 `Tsukuyomi-Cubism-GPU` 线程和一个 EGL context，适配 Cubism 的全局 shader 缓存。
 - `.moc3`、物理配置和压缩图集只在加载时交给原生。图集在工作线程解码、按档位缩放并上传 GPU，随后释放 CPU bitmap。
+- 按官方 renderer 的 mipmap 采样要求，在上传时生成完整 mip 链；旧 GLES2 缺少完整 NPOT 支持时使用向下取整的二次幂图集尺寸。两张 3K RGBA 图集连同 mip 链约占 96 MiB，状态和基准中的图集估算包含这些层级，不包含输出纹理、窗口缓冲及驱动额外内存。
 - Dart 保留已有动画、表情和音频幅度的控制逻辑，每帧按原顺序提交一批参数（基础姿态 → 表情 → 动作覆盖 → 实际音频口型）。物理、Cubism 求值、遮罩和全部 ArtMesh 绘制都在原生线程执行。
 - GPU 路径不调用 `ts_meshes`，不创建 Dart 网格或 Flutter `Vertices`，不调用 `Picture.toImage`。生产帧不使用 `glReadPixels`；该接口只供显式测试截图使用。
+- 场景复用一个 RGBA 输出纹理和 FBO，仅在尺寸变化时重新分配。绘制完成后用 GPU 全屏拷贝提交到窗口 Surface；测试读取保留的输出纹理，避免读取已交换的窗口缓冲。
 - 普通遮罩使用官方预处理，mask buffer 为 512 × 512，未启用高精度遮罩。继续拒绝目前应用未支持的 Cubism 5.3 离屏/高级混合模型，避免改变资源兼容范围。
 - 资源和原生模型生命周期受同一锁保护，Canvas 回退与 GPU 场景短暂共存时不并发访问 Cubism 的全局状态。
 
