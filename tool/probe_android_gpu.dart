@@ -130,7 +130,14 @@ Future<void> probeAndroidGpu() async {
         MaterialApp(
           home: ColoredBox(
             color: const Color(0xffb7d8d0),
-            child: Live2DGpuView(model: gpu, quality: 'auto'),
+            child: Center(
+              child: AspectRatio(
+                // Pixel assertions below explicitly request portrait targets.
+                // Keep the visible QA surface at the same aspect on desktops.
+                aspectRatio: 390 / 800,
+                child: Live2DGpuView(model: gpu, quality: 'auto'),
+              ),
+            ),
           ),
         ),
       );

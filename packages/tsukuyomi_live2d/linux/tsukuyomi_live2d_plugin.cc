@@ -98,7 +98,13 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
                          uint32_t* width, uint32_t* height, GError** error) {
   auto* s = reinterpret_cast<TsTexture*>(texture)->state;
   std::lock_guard<std::mutex> lock(s->mutex);
-  if (s->closed || !s->model) return FALSE;
+  // The pinned Linux embedder dereferences GError whenever populate returns
+  // FALSE. The widget can be painted before Dart's post-frame size callback.
+  if (s->closed || !s->model || (!s->pending && !s->color)) {
+    g_set_error_literal(error, g_quark_from_static_string("ts-live2d"), 1,
+        "Live2D is waiting for its first frame or has been disposed");
+    return FALSE;
+  }
   if (!s->pending && s->color) {
     *target = GL_TEXTURE_2D; *name = s->color; *width = s->width; *height = s->height;
     return TRUE;
@@ -184,7 +190,7 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
       put(result, "presentMicros", fl_value_new_float(present));
       s->finish(result);
     }
-    if (!s->color) return FALSE;
+    require(s->color != 0, "No completed Live2D frame");
     *target = GL_TEXTURE_2D; *name = s->color; *width = s->width; *height = s->height;
     return TRUE;
   } catch (const std::exception& e) {
