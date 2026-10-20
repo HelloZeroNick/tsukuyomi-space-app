@@ -132,7 +132,7 @@ void main(List<String> args) async {
           content = coreGlShader(content, vertex: file.path.endsWith('.vert'));
         }
         source.writeln(
-          'if (base == "${file.uri.pathSegments.last}") return R"TS_SHADER($content)TS_SHADER";',
+          'if (base == "${file.uri.pathSegments.last}") return ${shaderLiteral(content)};',
         );
         output.dependencies.add(file.uri);
       }
@@ -284,7 +284,7 @@ void main(List<String> args) async {
         if (linuxGl) 'CSM_TARGET_LINUX_GL': '1',
       },
       flags: os == OS.windows
-          ? ['/std:c++17', '/MD', '/EHsc', '@$sourceResponse']
+          ? ['/std:c++17', '/MD', '/EHsc', '/utf-8', '@$sourceResponse']
           : [
               '-std=c++17',
               if (metal) ...[

@@ -150,7 +150,8 @@ struct Plugin {
       fl_texture_registrar_unregister_texture(registry, FL_TEXTURE(entry.second));
       g_object_unref(entry.second);
     }
-    g_object_unref(registry); g_object_unref(view);
+    g_object_unref(registry);
+    if (view) g_object_remove_weak_pointer(G_OBJECT(view), reinterpret_cast<gpointer*>(&view));
   }
 };
 struct CreateWork {
@@ -169,6 +170,7 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
       try {
         s->api = reinterpret_cast<const TsGpuApi*>(fl_value_get_int(at(args, "nativeApi")));
         require(s->api && s->api->version == 1, "Native GPU ABI unavailable");
+        require(plugin->view && gtk_widget_get_window(GTK_WIDGET(plugin->view)), "Flutter view unavailable");
         GError* error = nullptr;
         s->context = gdk_window_create_gl_context(gtk_widget_get_window(GTK_WIDGET(plugin->view)), &error);
         if (error) { std::string message = error->message; g_error_free(error); throw std::runtime_error(message); }
@@ -284,7 +286,7 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
       Current current(s->context);
       glBindFramebuffer(GL_FRAMEBUFFER, s->target);
       std::vector<uint8_t> pixels(size_t(s->width) * s->height * 4), bottom_up(pixels.size());
-      glReadPixels(0, 0, s->width, s->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+      glReadPixels(0, 0, s->width, s->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
       require(glGetError() == GL_NO_ERROR, "QA readback failed");
       for (int y = 0; y < s->height; ++y) std::copy_n(pixels.data() + size_t(y) * s->width * 4,
           s->width * 4, bottom_up.data() + size_t(s->height - 1 - y) * s->width * 4);
@@ -296,7 +298,10 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
 void tsukuyomi_live2d_plugin_register_with_registrar(FlPluginRegistrar* registrar) {
   auto plugin = std::shared_ptr<Plugin>(new Plugin{
     FL_TEXTURE_REGISTRAR(g_object_ref(fl_plugin_registrar_get_texture_registrar(registrar))),
-    FL_VIEW(g_object_ref(fl_plugin_registrar_get_view(registrar))), {}});
+    fl_plugin_registrar_get_view(registrar), {}});
+  // The view owns the engine/channel. A strong reference here would keep both
+  // the engine and all live Cubism scenes alive after closing the window.
+  if (plugin->view) g_object_add_weak_pointer(G_OBJECT(plugin->view), reinterpret_cast<gpointer*>(&plugin->view));
   g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
   g_autoptr(FlMethodChannel) channel = fl_method_channel_new(fl_plugin_registrar_get_messenger(registrar),
       "space.tsukuyomi/live2d_gpu", FL_METHOD_CODEC(codec));

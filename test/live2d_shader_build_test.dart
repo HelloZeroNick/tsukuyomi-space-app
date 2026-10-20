@@ -6,6 +6,16 @@ import '../packages/tsukuyomi_live2d/hook/legacy_shaders.dart';
 import '../packages/tsukuyomi_live2d/hook/platform_shaders.dart';
 
 void main() {
+  test('embedded shaders preserve UTF-8 through bounded MSVC literals', () {
+    final source = '日本語 shader\n"\\ 😀' * 3000;
+    final literals = RegExp(
+      r'R"TS_SHADER\((.*?)\)TS_SHADER"',
+      dotAll: true,
+    ).allMatches(shaderLiteral(source)).map((match) => match[1]!).toList();
+    expect(literals.join(), source);
+    expect(literals.every((part) => part.runes.length <= 3000), true);
+    expect(() => shaderLiteral(')TS_SHADER"'), throwsStateError);
+  });
   final shader = File(
     'packages/tsukuyomi_live2d/vendor/cubism/Framework/src/Rendering/OpenGL/CubismShader_OpenGLES2.cpp',
   );
@@ -91,8 +101,9 @@ void main() {
     for (final file in Directory(
       '${shader.parent.path}/Shaders/Standard',
     ).listSync().whereType<File>()) {
-      if (!file.path.endsWith('.vert') && !file.path.endsWith('.frag'))
+      if (!file.path.endsWith('.vert') && !file.path.endsWith('.frag')) {
         continue;
+      }
       final source = coreGlShader(
         file.readAsStringSync(),
         vertex: file.path.endsWith('.vert'),
@@ -113,6 +124,8 @@ void main() {
       expect(result, contains('CSM_SET_SHADER_52(Mult)'));
       expect(result, contains('PixelMaskedInvertedPremult)'));
       expect(result, isNot(contains('CSM_SET_SHADER_53(Normal, Out)')));
+      expect(result, contains('throw std::runtime_error'));
+      expect(result, isNot(contains('CSM_ASSERT(0)')));
       expect(() => d3dShaderSource(result), throwsStateError);
     },
   );

@@ -11,7 +11,7 @@ Windows uses D3D11 shared surfaces, and Linux uses OpenGL/FlTextureGL.
 Canvas models remain owned by the Flutter UI isolate. GPU models are owned by
 the platform rendering path. A process-wide recursive mutex serializes Cubism
 allocator, model and renderer access during transitions. Dispose models to free
-native resources. CPU pixel readback is restricted to explicit QA snapshots.
+native resources. Per-frame CPU pixel readback is restricted to explicit QA snapshots.
 
 Run the root project's `tool/setup_live2d.py` to prepare the SDK and model. When
 the selected SDK/platform ABI is absent, the library reports `nativeAvailable=0`;

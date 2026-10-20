@@ -4,6 +4,7 @@ on:
     paths:
       - 'packages/tsukuyomi_live2d/**'
       - 'tool/probe*gpu.dart'
+      - 'tool/release/native_gpu_smoke.py'
       - '.github/workflows/native-gpu-platforms.yml'
   push:
     branches: ['codex/live2d-native-platforms']
@@ -40,7 +41,7 @@ jobs:
       - if: matrix.target == 'linux'
         run: |
           bash tool/release/setup_linux.sh
-          sudo apt-get install -y xvfb mesa-utils
+          sudo apt-get install -y xvfb mesa-utils scrot
       - if: matrix.target == 'windows'
         uses: NuGet/setup-nuget@v2
       - run: python tool/release/prepare_assets.py
@@ -52,15 +53,13 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: |
-          xvfb-run -a dbus-run-session -- flutter run -d linux -t tool/probe_native_gpu.dart --dart-define=NATIVE_GPU_QA_DIR=artifacts/native-gpu/linux
-          test -f artifacts/native-gpu/linux/metrics.json
+          xvfb-run -a -s "-screen 0 1280x1024x24" dbus-run-session -- python tool/release/native_gpu_smoke.py linux
       - if: matrix.target == 'windows'
         name: D3D11 native texture probe (WARP software rendering)
         env:
           TSUKUYOMI_GPU_QA_WARP: '1'
         run: |
-          flutter run -d windows -t tool/probe_native_gpu.dart --dart-define=NATIVE_GPU_QA_DIR=artifacts/native-gpu/windows
-          if (!(Test-Path artifacts/native-gpu/windows/metrics.json)) { throw "Native GPU probe did not pass" }
+          python tool/release/native_gpu_smoke.py windows
       - if: matrix.target == 'ios'
         name: Compile iOS device Metal and Flutter texture bridge
         run: flutter build ios --release --no-codesign -t tool/probe_native_gpu.dart

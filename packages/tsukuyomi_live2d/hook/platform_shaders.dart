@@ -1,5 +1,19 @@
 /// Generated specializations of the pinned 5-r.5 SDK. Never edit vendor files.
 /// Models using advanced/offscreen blending are rejected in ts_create.
+String shaderLiteral(String source) {
+  if (source.contains(')TS_SHADER"')) {
+    throw StateError('Shader contains the raw string delimiter');
+  }
+  // MSVC limits each literal to 16 KiB. Four-byte Unicode code points still
+  // fit in this bound; adjacent C++ literals concatenate without a separator.
+  final points = source.runes.toList();
+  return [
+    for (var i = 0; i < points.length; i += 3000)
+      'R"TS_SHADER(${String.fromCharCodes(points.skip(i).take(3000))})TS_SHADER"',
+    if (points.isEmpty) '""',
+  ].join('\n');
+}
+
 String replaceOnce(String source, String before, String after) {
   if (before.allMatches(source).length != 1) {
     throw StateError('Cubism source changed; review shader specialization');
@@ -68,7 +82,15 @@ String d3dShaderSource(String source) {
   if (start < 0 || finish <= start) {
     throw StateError('Unsupported Cubism D3D11 shader source');
   }
-  return source.replaceRange(start, finish, '');
+  source = source.replaceRange(start, finish, '');
+  source = replaceOnce(
+    source,
+    '''        CubismLogError("Fail Compile shader");
+        CSM_ASSERT(0);
+        return;''',
+    '''        throw std::runtime_error("Cannot compile Cubism D3D11 shaders");''',
+  );
+  return '#include <stdexcept>\n$source';
 }
 
 String coreGlShader(String source, {required bool vertex}) {
