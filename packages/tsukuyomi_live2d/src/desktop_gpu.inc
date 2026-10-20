@@ -52,6 +52,18 @@ struct NativeGpuScene {
     ts_destroy(model);
   }
 };
+void initialize_renderer(NativeGpuScene* s) {
+    s->renderer = static_cast<PlatformRenderer*>(Rendering::CubismRenderer::Create(1, 1));
+    ++gpu_instances;
+    s->renderer->Initialize(s->model->model);
+    s->renderer->IsPremultipliedAlpha(true);
+    s->renderer->UseHighPrecisionMask(false);
+#if defined(TS_GPU_METAL)
+    s->renderer->SetDrawbleClippingMaskBufferSize(512, 512);
+#else
+    s->renderer->SetDrawableClippingMaskBufferSize(512, 512);
+#endif
+}
 #if defined(CSM_TARGET_LINUX_GL)
 thread_local NativeGpuScene* drawing_scene = nullptr;
 #endif
@@ -93,15 +105,8 @@ void* gpu_create(const uint8_t* moc, int32_t size, const uint8_t* physics,
 #else
     (void)device;
 #endif
-    s->renderer = static_cast<PlatformRenderer*>(Rendering::CubismRenderer::Create(1, 1));
-    ++gpu_instances;
-    s->renderer->Initialize(model);
-    s->renderer->IsPremultipliedAlpha(true);
-    s->renderer->UseHighPrecisionMask(false);
-#if defined(TS_GPU_METAL)
-    s->renderer->SetDrawbleClippingMaskBufferSize(512, 512);
-#else
-    s->renderer->SetDrawableClippingMaskBufferSize(512, 512);
+#if !defined(CSM_TARGET_LINUX_GL)
+    initialize_renderer(s.get());
 #endif
     s->info.mesh_count = model->GetDrawableCount();
     *info = s->info;
@@ -111,7 +116,9 @@ void* gpu_create(const uint8_t* moc, int32_t size, const uint8_t* physics,
 int32_t gpu_bind(void* handle, int32_t index, void* texture) {
   TS_LOCK;
   if (!handle || !texture || index < 0) { gpu_last_error = "Invalid atlas"; return 0; }
+  try {
   auto* s = static_cast<NativeGpuScene*>(handle);
+  if (!s->renderer) initialize_renderer(s);
 #if defined(TS_GPU_METAL)
   s->renderer->BindTexture(index, (id<MTLTexture>)texture);
 #elif defined(TS_GPU_D3D11)
@@ -120,6 +127,7 @@ int32_t gpu_bind(void* handle, int32_t index, void* texture) {
   s->renderer->BindTexture(index, static_cast<GLuint>(reinterpret_cast<uintptr_t>(texture)));
 #endif
   return 1;
+  } catch (const std::exception& e) { gpu_last_error = e.what(); return 0; }
 }
 int32_t gpu_draw(void* handle, const TsGpuFrame* f, double* metrics) {
   TS_LOCK;
@@ -150,8 +158,10 @@ int32_t gpu_draw(void* handle, const TsGpuFrame* f, double* metrics) {
 #if defined(CSM_TARGET_LINUX_GL)
     // Flutter imports GL textures with a top-left image origin.
     matrix[5] = -matrix[5]; matrix[13] = -matrix[13];
-    if (!s->vao) glGenVertexArrays(1, &s->vao);
-    glBindVertexArray(s->vao);
+    if (epoxy_gl_version() >= 30) {
+      if (!s->vao) glGenVertexArrays(1, &s->vao);
+      glBindVertexArray(s->vao);
+    }
     drawing_scene = s;
 #endif
     CubismMatrix44 mvp;

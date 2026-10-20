@@ -83,9 +83,9 @@ void main() {
       expect(() => metalShaderSource(result), throwsStateError);
     },
   );
-  test('Linux core profile keeps every drawable and uses VBO indices', () {
+  test('Linux EGL renderer keeps every drawable and uses VBO indices', () {
     if (!shader.existsSync()) return;
-    final result = coreGlSource(
+    final result = streamGlSource(
       legacyShaderSource(shader.readAsStringSync()),
       shader: true,
     );
@@ -95,22 +95,9 @@ void main() {
     final renderer = File(
       'packages/tsukuyomi_live2d/vendor/cubism/Framework/src/Rendering/OpenGL/CubismRenderer_OpenGLES2.cpp',
     );
-    final drawing = coreGlSource(renderer.readAsStringSync(), shader: false);
+    final drawing = streamGlSource(renderer.readAsStringSync(), shader: false);
     expect(RegExp(r'ts_gl_indices\(').allMatches(drawing).length, 4);
     expect(drawing, isNot(contains('glDrawElements(')));
-    for (final file in Directory(
-      '${shader.parent.path}/Shaders/Standard',
-    ).listSync().whereType<File>()) {
-      if (!file.path.endsWith('.vert') && !file.path.endsWith('.frag')) {
-        continue;
-      }
-      final source = coreGlShader(
-        file.readAsStringSync(),
-        vertex: file.path.endsWith('.vert'),
-      );
-      expect(source, isNot(contains('#version 120')));
-      expect(source, isNot(contains('gl_FragColor')));
-    }
   });
   test(
     'D3D11 retains old normal additive multiply and inverted mask variants',

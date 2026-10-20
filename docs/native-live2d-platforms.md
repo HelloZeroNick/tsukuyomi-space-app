@@ -7,12 +7,12 @@
 | Android | OpenGL ES → SurfaceProducer | 保留已有 EGL 工作线程、窗口 Surface 重建 |
 | iOS/macOS | Metal → IOSurface/CVPixelBuffer → FlutterTexture | 共用串行工作队列；最多三个输出缓冲；命令完成后通知 Flutter；Flutter 持有的缓冲不能复用 |
 | Windows | D3D11 → DXGI shared handle → GpuSurfaceTexture | 共用工作线程/device；复用私有渲染目标；GPU 拷贝到不可变共享帧，完成查询后交付 |
-| Linux | OpenGL → FlTextureGL | 私有 GDK 共享上下文；模型加载/图集上传在工作池；有待处理帧时在纹理回调绘制，保存/恢复 Flutter 上下文，跨上下文同步 |
+| Linux | OpenGL ES / EGL → FlTextureGL | 模型计算在工作池；首个纹理回调创建与 Flutter 共享的 EGL 上下文并上传图集；后续回调绘制并恢复 Flutter 上下文 |
 | HarmonyOS | 现有 Native Core + Canvas | 本次不注册 GPU 插件；自动模式说明回退原因；强制 GPU 报错 |
 
 所有新平台通过进程内 `TsGpuApi` 使用 native-assets 中同一份 Cubism。Dart 只在创建时传 API 地址与模型/图集资源，每帧仍是一批有序参数，不传网格或像素。版本检查避免接口不匹配。Apple 的原生资源库名称与 CocoaPods 插件不同，避免 framework 覆盖导致 FFI 找不到 Core 符号。
 
-Apple/Windows 的正常帧没有 CPU 像素读回；Linux 同样不读回，但它的提交发生在 Flutter 的原生纹理回调中，GPU 同步可能占用 raster 时间，不能将它描述为完全独立的渲染线程。隐藏窗口不消费纹理时，500 ms 内解除待处理帧的背压，不推进隐藏场景。实际性能收益需要同设备 A/B。
+Apple/Windows 的正常帧没有 CPU 像素读回；Linux 插件也不读回，但它的提交发生在 Flutter 的原生纹理回调中，GPU 同步可能占用 raster 时间，不能将它描述为完全独立的渲染线程。隐藏窗口不消费纹理时，500 ms 内解除待处理帧的背压，不推进隐藏场景。Flutter 3.47.5 的 X11 窗口合成本身包含 CPU 拷贝，Wayland 使用 EGLImage；插件不能将 X11 的完整显示链路宣称为零拷贝。实际性能收益需要同设备 A/B。
 
 Windows 的 registrar 释放回调仅表示完成纹理导入，后续仍可能读取描述信息和采样纹理。因此描述信息保留到下次回调，已交付的共享纹理不覆写；每帧额外创建共享呈现纹理并做 GPU 拷贝。私有 Cubism 渲染目标只在 resize 时重建。这项分配成本是当前适配的性能限制，不能宣称 Windows 已实现全程复用或零拷贝。
 
@@ -22,7 +22,7 @@ SDK vendor 文件保持原样。构建时对固定 SDK 生成源码：
 
 - Metal 内嵌官方基础 shader，按 device 编译，去掉不支持的高级混合预热，并补齐共享 shader/pipeline 的去重释放。
 - D3D11 内嵌官方 FX，保留普通、加算、乘算、正反遮罩，去掉高级混合预热。
-- Linux 使用 libepoxy 与 GTK 相同的上下文分派；将官方 GLSL 120 转换为 core profile 的 GLSL 150，使用可复用 VAO/VBO/EBO 代替 client arrays，兼容 GTK 的 core context。掩码与混合算法保持官方实现。
+- Linux 对齐固定 Flutter 3.47.5 的 EGL/OpenGL ES embedder，使用官方 StandardES shader。libepoxy 分派到当前上下文，使用可复用 VBO/EBO（ES 3 上另有 VAO），不依赖 GTK 的 GLX 纹理共享。掩码与混合算法保持官方实现。
 - 源码匹配不符合固定 SDK 结构时构建失败，要求复核 SDK 更新。
 
 ## 验证
@@ -49,3 +49,6 @@ flutter run -d <iOS设备或模拟器ID> -t tool/probe_native_gpu.dart
 - [Flutter Windows GPU surface descriptor](https://api.flutter.dev/windows-embedder/struct_flutter_desktop_gpu_surface_descriptor.html)
 - [Flutter Linux FlTextureGL](https://api.flutter.dev/linux-embedder/struct___fl_texture_g_l_class.html)
 - [Cubism Native Framework](https://github.com/Live2D/CubismNativeFramework)
+
+- [固定 Flutter 3.47.5 EGL 管理](https://github.com/flutter/flutter/blob/6a19cca56475dbfba1478ee68d7bd0c2ef891da1/engine/src/flutter/shell/platform/linux/fl_opengl_manager.cc)
+- [固定 Flutter 3.47.5 X11/Wayland 合成差异](https://github.com/flutter/flutter/blob/6a19cca56475dbfba1478ee68d7bd0c2ef891da1/engine/src/flutter/shell/platform/linux/fl_view_renderer.cc)

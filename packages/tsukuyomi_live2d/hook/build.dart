@@ -105,7 +105,7 @@ void main(List<String> args) async {
         sdk.resolve(
           d3d
               ? 'Framework/src/Rendering/D3D11/Shaders/'
-              : 'Framework/src/Rendering/OpenGL/Shaders/${linuxGl ? 'Standard' : 'StandardES'}/',
+              : 'Framework/src/Rendering/OpenGL/Shaders/StandardES/',
         ),
       );
       final header = File.fromUri(
@@ -127,10 +127,6 @@ void main(List<String> args) async {
           continue;
         }
         var content = file.readAsStringSync();
-        if (linuxGl &&
-            (file.path.endsWith('.vert') || file.path.endsWith('.frag'))) {
-          content = coreGlShader(content, vertex: file.path.endsWith('.vert'));
-        }
         final literal = d3d
             ? shaderLiteral(content)
             : 'R"TS_SHADER($content)TS_SHADER"';
@@ -194,7 +190,7 @@ void main(List<String> args) async {
             );
             await specialized.writeAsString(
               linuxGl
-                  ? coreGlSource(
+                  ? streamGlSource(
                       legacyShaderSource(file.readAsStringSync()),
                       shader: true,
                     )
@@ -228,7 +224,7 @@ void main(List<String> args) async {
               input.outputDirectory.resolve('CubismRenderer_CoreGL.cpp'),
             );
             await generated.writeAsString(
-              coreGlSource(file.readAsStringSync(), shader: false),
+              streamGlSource(file.readAsStringSync(), shader: false),
             );
             generatedIncludes.add(file.parent.path);
             output.dependencies.add(file.uri);

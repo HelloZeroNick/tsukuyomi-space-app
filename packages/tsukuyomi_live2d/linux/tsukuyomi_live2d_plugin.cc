@@ -1,6 +1,7 @@
 #include "include/tsukuyomi_live2d/tsukuyomi_live2d_plugin.h"
 #include "../src/gpu_api.h"
 #include <epoxy/gl.h>
+#include <epoxy/egl.h>
 #include <algorithm>
 #include <chrono>
 #include <map>
@@ -10,18 +11,29 @@
 #include <vector>
 
 namespace {
+std::mutex share_mutex;
+EGLContext shader_share = EGL_NO_CONTEXT;
+int shared_scenes = 0;
 void require(bool value, const char* message) { if (!value) throw std::runtime_error(message); }
 FlValue* at(FlValue* args, const char* key) {
   auto* value = fl_value_lookup_string(args, key);
   require(value != nullptr, "Missing GPU argument"); return value;
 }
 void put(FlValue* map, const char* key, FlValue* value) { fl_value_set_string_take(map, key, value); }
-// Preserve Flutter's raster context; all Cubism state is in a private shared
-// context, including FBOs/VAOs. No GL state leaks into Flutter.
+// Flutter 3.47 renders in EGL, while GTK on X11 can still use GLX. Save the
+// actual EGL context, not GDK's unrelated thread-local paint context.
 struct Current {
-  GdkGLContext* previous = gdk_gl_context_get_current();
-  explicit Current(GdkGLContext* context) { gdk_gl_context_make_current(context); }
-  ~Current() { if (previous) gdk_gl_context_make_current(previous); else gdk_gl_context_clear_current(); }
+  EGLDisplay display, previous_display = eglGetCurrentDisplay();
+  EGLContext previous = eglGetCurrentContext();
+  EGLSurface draw = eglGetCurrentSurface(EGL_DRAW), read = eglGetCurrentSurface(EGL_READ);
+  explicit Current(EGLDisplay d, EGLContext context) : display(d) {
+    require(eglMakeCurrent(d, EGL_NO_SURFACE, EGL_NO_SURFACE, context) == EGL_TRUE,
+        "Cannot acquire shared EGL context");
+  }
+  ~Current() {
+    if (previous != EGL_NO_CONTEXT) eglMakeCurrent(previous_display, draw, read, previous);
+    else eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  }
 };
 struct Reply { FlMethodCall* call; FlValue* value; std::string error; };
 void respond(FlMethodCall* call, FlValue* value, const std::string& error = {}) {
@@ -38,7 +50,9 @@ void respond(FlMethodCall* call, FlValue* value, const std::string& error = {}) 
 }
 struct State {
   std::mutex mutex;
-  GdkGLContext* context = nullptr;
+  EGLDisplay display = EGL_NO_DISPLAY;
+  EGLContext context = EGL_NO_CONTEXT;
+  FlValue* pending_atlases = nullptr;
   const TsGpuApi* api = nullptr;
   void* model = nullptr;
   GLuint target = 0, color = 0;
@@ -50,17 +64,30 @@ struct State {
     if (pending) { respond(pending, value, error); g_object_unref(pending); pending = nullptr; }
     else if (value) fl_value_unref(value);
   }
-  ~State() {
-    std::lock_guard<std::mutex> lock(mutex);
+  void close() {
     closed = true; finish(nullptr, "Renderer disposed");
-    if (context) {
-      Current current(context);
-      if (model) api->destroy(model);
+    if (context != EGL_NO_CONTEXT) {
+      // Registrar destruction happens before the engine's EGL display teardown.
+      Current current(display, context);
+      if (model) { api->destroy(model); model = nullptr; }
       if (target) glDeleteFramebuffers(1, &target);
       if (color) glDeleteTextures(1, &color);
       if (!atlases.empty()) glDeleteTextures(static_cast<GLsizei>(atlases.size()), atlases.data());
+    } else if (model) {
+      api->destroy(model); model = nullptr; // No GPU resources before first populate.
     }
-    if (context) g_object_unref(context);
+    if (context != EGL_NO_CONTEXT) {
+      eglDestroyContext(display, context); context = EGL_NO_CONTEXT;
+      std::lock_guard<std::mutex> shared_lock(share_mutex);
+      if (--shared_scenes == 0) shader_share = EGL_NO_CONTEXT;
+    }
+    target = color = 0; atlases.clear();
+    if (pending_atlases) { fl_value_unref(pending_atlases); pending_atlases = nullptr; }
+  }
+  ~State() {
+    std::lock_guard<std::mutex> lock(mutex);
+    // close() normally runs before unregistering, while the EGL display lives.
+    try { close(); } catch (const std::exception& e) { g_warning("Live2D teardown: %s", e.what()); }
   }
 };
 }
@@ -72,11 +99,50 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
   auto* s = reinterpret_cast<TsTexture*>(texture)->state;
   std::lock_guard<std::mutex> lock(s->mutex);
   if (s->closed || !s->model) return FALSE;
+  if (!s->pending && s->color) {
+    *target = GL_TEXTURE_2D; *name = s->color; *width = s->width; *height = s->height;
+    return TRUE;
+  }
   try {
-    GLsync previous_use = s->pending ? glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0) : nullptr;
-    if (previous_use) glFlush();
-    Current current(s->context);
-    if (previous_use) { glWaitSync(previous_use, 0, GL_TIMEOUT_IGNORED); glDeleteSync(previous_use); }
+    if (s->context == EGL_NO_CONTEXT) {
+      s->display = eglGetCurrentDisplay();
+      EGLContext shared = eglGetCurrentContext();
+      require(s->display != EGL_NO_DISPLAY && shared != EGL_NO_CONTEXT, "Flutter EGL context unavailable");
+      std::lock_guard<std::mutex> shared_lock(share_mutex);
+      // The SDK's shader singleton may only be reused within one share group.
+      require(shader_share == EGL_NO_CONTEXT || shader_share == shared,
+          "Another Flutter engine owns Cubism EGL resources");
+      EGLint config_id = 0, count = 0;
+      require(eglQueryContext(s->display, shared, EGL_CONFIG_ID, &config_id), "Cannot query Flutter EGL config");
+      EGLint attributes[] = {EGL_CONFIG_ID, config_id, EGL_NONE};
+      EGLConfig config = nullptr;
+      require(eglChooseConfig(s->display, attributes, &config, 1, &count) && count == 1, "Cannot share Flutter EGL config");
+      const EGLint options[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
+      s->context = eglCreateContext(s->display, config, shared, options);
+      require(s->context != EGL_NO_CONTEXT, "Cannot create shared EGL context");
+      shader_share = shared; ++shared_scenes;
+    }
+    // The embedder exposes no consumer fence. Finish previous Flutter reads
+    // before overwriting its shared image, then restore its context on return.
+    glFinish();
+    Current current(s->display, s->context);
+    if (s->pending_atlases) {
+      GLint max_size = 0; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+      for (size_t i = 0; i < fl_value_get_length(s->pending_atlases); ++i) {
+        auto* atlas_data = fl_value_get_list_value(s->pending_atlases, i);
+        int w = static_cast<int>(fl_value_get_int(at(atlas_data, "width")));
+        int h = static_cast<int>(fl_value_get_int(at(atlas_data, "height")));
+        require(w <= max_size && h <= max_size, "Atlas exceeds GPU texture limit");
+        auto* rgba = at(atlas_data, "rgba");
+        GLuint atlas = 0; glGenTextures(1, &atlas); s->atlases.push_back(atlas);
+        glBindTexture(GL_TEXTURE_2D, atlas);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, fl_value_get_uint8_list(rgba));
+        glGenerateMipmap(GL_TEXTURE_2D);
+        require(glGetError() == GL_NO_ERROR, "Cannot upload atlas");
+        if (!s->api->bind(s->model, static_cast<int32_t>(i), reinterpret_cast<void*>(uintptr_t(atlas)))) throw std::runtime_error(s->api->error());
+      }
+      fl_value_unref(s->pending_atlases); s->pending_atlases = nullptr;
+    }
     if (s->pending) {
       FlValue* args = fl_method_call_get_args(s->pending);
       int w = static_cast<int>(fl_value_get_int(at(args, "width")));
@@ -89,7 +155,7 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         if (!s->target) glGenFramebuffers(1, &s->target);
         glBindFramebuffer(GL_FRAMEBUFFER, s->target);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, s->color, 0);
@@ -140,18 +206,23 @@ static void ts_texture_init(TsTexture* self) { self->state = new State; }
 namespace {
 struct Plugin {
   FlTextureRegistrar* registry;
-  FlView* view;
   std::map<int64_t, TsTexture*> scenes;
-  ~Plugin() {
+  bool closed = false;
+  void close() {
+    if (closed) return;
+    closed = true;
     for (auto& entry : scenes) {
       { std::lock_guard<std::mutex> lock(entry.second->state->mutex);
-        entry.second->state->closed = true;
-        entry.second->state->finish(nullptr, "Renderer closed"); }
+        try { entry.second->state->close(); }
+        catch (const std::exception& e) { g_warning("Live2D teardown: %s", e.what()); } }
       fl_texture_registrar_unregister_texture(registry, FL_TEXTURE(entry.second));
       g_object_unref(entry.second);
     }
+    scenes.clear();
+  }
+  ~Plugin() {
+    close();
     g_object_unref(registry);
-    if (view) g_object_remove_weak_pointer(G_OBJECT(view), reinterpret_cast<gpointer*>(&view));
   }
 };
 struct CreateWork {
@@ -162,6 +233,7 @@ struct CreateWork {
 void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
   auto plugin = *static_cast<std::shared_ptr<Plugin>*>(user_data);
   try {
+    require(!plugin->closed, "Renderer closed");
     std::string method = fl_method_call_get_name(call);
     FlValue* args = fl_method_call_get_args(call);
     if (method == "create") {
@@ -170,22 +242,12 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
       try {
         s->api = reinterpret_cast<const TsGpuApi*>(fl_value_get_int(at(args, "nativeApi")));
         require(s->api && s->api->version == 1, "Native GPU ABI unavailable");
-        require(plugin->view && gtk_widget_get_window(GTK_WIDGET(plugin->view)), "Flutter view unavailable");
-        GError* error = nullptr;
-        s->context = gdk_window_create_gl_context(gtk_widget_get_window(GTK_WIDGET(plugin->view)), &error);
-        if (error) { std::string message = error->message; g_error_free(error); throw std::runtime_error(message); }
-        require(s->context != nullptr, "No OpenGL context");
-        gdk_gl_context_set_required_version(s->context, 3, 2);
-        gdk_gl_context_set_use_es(s->context, FALSE);
-        if (!gdk_gl_context_realize(s->context, &error)) {
-          std::string message = error ? error->message : "Cannot realize OpenGL context";
-          g_clear_error(&error); throw std::runtime_error(message);
-        }
         require(fl_texture_registrar_register_texture(plugin->registry, FL_TEXTURE(texture)), "Cannot register GL texture");
       } catch (...) { g_object_unref(texture); throw; }
       int64_t id = fl_texture_get_id(FL_TEXTURE(texture));
       plugin->scenes[id] = texture;
-      // Decode and initialize on GLib's worker pool; platform/raster stay free.
+      // Evaluate model bounds on the worker pool. EGL resources are created only
+      // when Flutter first consumes this texture on its raster thread.
       auto* task = g_task_new(texture, nullptr, nullptr, nullptr);
       g_task_set_task_data(task, new CreateWork{FL_METHOD_CALL(g_object_ref(call)), plugin},
           [](gpointer p) { delete static_cast<CreateWork*>(p); });
@@ -196,15 +258,13 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
         std::lock_guard<std::mutex> lock(state->mutex);
         try {
           require(!state->closed, "Renderer closed");
-          Current current(state->context);
           auto* a = fl_method_call_get_args(request);
           auto* moc = at(a, "moc"); auto* physics = at(a, "physics");
           TsGpuInfo info{};
           state->model = state->api->create(fl_value_get_uint8_list(moc), static_cast<int32_t>(fl_value_get_length(moc)),
               fl_value_get_uint8_list(physics), static_cast<int32_t>(fl_value_get_length(physics)), nullptr, &info);
           require(state->model != nullptr, state->api->error());
-          GLint max_size = 0; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
-          int limit = static_cast<int>(std::clamp<int64_t>(fl_value_get_int(at(a, "maxTextureSize")), 1, std::min(max_size, 4096)));
+          int limit = static_cast<int>(std::clamp<int64_t>(fl_value_get_int(at(a, "maxTextureSize")), 1, 4096));
           int64_t atlas_bytes = 0;
           auto* textures = at(a, "atlases");
           for (size_t i = 0; i < fl_value_get_length(textures); ++i) {
@@ -214,24 +274,17 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
             auto* rgba = at(atlas_data, "rgba");
             require(w > 0 && h > 0 && w <= limit && h <= limit &&
                 fl_value_get_length(rgba) == size_t(w) * h * 4, "Invalid decoded atlas");
-            const auto* pixels = fl_value_get_uint8_list(rgba);
-            GLuint atlas = 0; glGenTextures(1, &atlas); state->atlases.push_back(atlas);
-            glBindTexture(GL_TEXTURE_2D, atlas);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-            glGenerateMipmap(GL_TEXTURE_2D);
-            require(glGetError() == GL_NO_ERROR, "Cannot upload atlas");
-            if (!state->api->bind(state->model, static_cast<int32_t>(i), reinterpret_cast<void*>(uintptr_t(atlas)))) throw std::runtime_error(state->api->error());
             for (;;) { atlas_bytes += int64_t(w) * h * 4; if (w == 1 && h == 1) break;
               w = std::max(1, w / 2); h = std::max(1, h / 2); }
           }
-          glFinish();
+          state->pending_atlases = fl_value_ref(textures);
           FlValue* value = fl_value_new_map();
           put(value, "textureId", fl_value_new_int(fl_texture_get_id(FL_TEXTURE(t))));
           put(value, "meshCount", fl_value_new_int(info.mesh_count));
           FlValue* bounds = fl_value_new_list();
           for (double bound : info.bounds) fl_value_append_take(bounds, fl_value_new_float(bound));
-          put(value, "bounds", bounds); put(value, "maxSize", fl_value_new_int(std::min(max_size, 4096)));
-          put(value, "atlasBytes", fl_value_new_int(atlas_bytes)); put(value, "backend", fl_value_new_string("OpenGL"));
+          put(value, "bounds", bounds); put(value, "maxSize", fl_value_new_int(4096));
+          put(value, "atlasBytes", fl_value_new_int(atlas_bytes)); put(value, "backend", fl_value_new_string("OpenGL ES / EGL"));
           respond(request, value);
         } catch (const std::exception& e) {
           respond(request, nullptr, e.what());
@@ -256,7 +309,7 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
     require(found != plugin->scenes.end(), "Unknown renderer");
     auto* texture = found->second; auto* s = texture->state;
     if (method == "dispose") {
-      { std::lock_guard<std::mutex> lock(s->mutex); s->closed = true; s->finish(nullptr, "Renderer disposed"); }
+      { std::lock_guard<std::mutex> lock(s->mutex); s->close(); }
       fl_texture_registrar_unregister_texture(plugin->registry, FL_TEXTURE(texture));
       plugin->scenes.erase(found); g_object_unref(texture); respond(call, nullptr); return;
     }
@@ -283,7 +336,7 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
       });
     } else if (method == "snapshot") {
       require(s->color != 0, "No completed frame");
-      Current current(s->context);
+      Current current(s->display, s->context);
       glBindFramebuffer(GL_FRAMEBUFFER, s->target);
       std::vector<uint8_t> pixels(size_t(s->width) * s->height * 4), bottom_up(pixels.size());
       glReadPixels(0, 0, s->width, s->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
@@ -297,14 +350,14 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
 }
 void tsukuyomi_live2d_plugin_register_with_registrar(FlPluginRegistrar* registrar) {
   auto plugin = std::shared_ptr<Plugin>(new Plugin{
-    FL_TEXTURE_REGISTRAR(g_object_ref(fl_plugin_registrar_get_texture_registrar(registrar))),
-    fl_plugin_registrar_get_view(registrar), {}});
-  // The view owns the engine/channel. A strong reference here would keep both
-  // the engine and all live Cubism scenes alive after closing the window.
-  if (plugin->view) g_object_add_weak_pointer(G_OBJECT(plugin->view), reinterpret_cast<gpointer*>(&plugin->view));
+    FL_TEXTURE_REGISTRAR(g_object_ref(fl_plugin_registrar_get_texture_registrar(registrar))), {}});
   g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
   g_autoptr(FlMethodChannel) channel = fl_method_channel_new(fl_plugin_registrar_get_messenger(registrar),
       "space.tsukuyomi/live2d_gpu", FL_METHOD_CODEC(codec));
   fl_method_channel_set_method_call_handler(channel, handle, new std::shared_ptr<Plugin>(plugin),
-      [](gpointer p) { delete static_cast<std::shared_ptr<Plugin>*>(p); });
+      [](gpointer p) {
+        auto* owner = static_cast<std::shared_ptr<Plugin>*>(p);
+        (*owner)->close();  // Before FlEngine terminates its EGL display.
+        delete owner;
+      });
 }

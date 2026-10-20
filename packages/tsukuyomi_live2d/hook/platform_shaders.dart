@@ -93,24 +93,7 @@ String d3dShaderSource(String source) {
   return '#include <stdexcept>\n$source';
 }
 
-String coreGlShader(String source, {required bool vertex}) {
-  // Shared blend helper snippets have no version directive or entry point.
-  if (!source.contains('#version')) return source;
-  source = replaceOnce(source, '#version 120', '#version 150');
-  source = source.replaceAll('attribute ', 'in ');
-  source = source.replaceAll('varying ', vertex ? 'out ' : 'in ');
-  source = source.replaceAll('texture2D(', 'texture(');
-  if (!vertex) {
-    source = source.replaceFirst(
-      '#version 150',
-      '#version 150\nout vec4 ts_fragColor;',
-    );
-    source = source.replaceAll('gl_FragColor', 'ts_fragColor');
-  }
-  return source;
-}
-
-String coreGlSource(String source, {required bool shader}) {
+String streamGlSource(String source, {required bool shader}) {
   if (shader) {
     const start = 'void CubismShader_OpenGLES2::ReleaseShaderProgram()';
     const end = 'void CubismShader_OpenGLES2::ReleaseInvalidShaderProgram()';
