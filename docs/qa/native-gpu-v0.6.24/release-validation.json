@@ -147,5 +147,9 @@
     "iOS IPA and HarmonyOS HAP require user signing",
     "No physical phone or Windows/Linux hardware GPU performance acceptance",
     "No 15-minute thermal/power or same-device Room A/B acceptance"
-  ]
+  ],
+  "main_ci_run": 39412166151,
+  "main_ci_conclusion": "success",
+  "main_ci_attempt": 2,
+  "main_ci_retry_reason": "Initial Android Debug build could not resolve Kotlin artifacts from Gradle Plugin Portal; rerunning the same source succeeded."
 }
