@@ -41,7 +41,7 @@ jobs:
       - if: matrix.target == 'linux'
         run: |
           bash tool/release/setup_linux.sh
-          sudo apt-get install -y xvfb mesa-utils scrot
+          sudo apt-get install -y xvfb mesa-utils scrot gdb
       - if: matrix.target == 'windows'
         uses: NuGet/setup-nuget@v2
       - run: python tool/release/prepare_assets.py

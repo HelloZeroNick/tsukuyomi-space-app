@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 target = sys.argv[1]
 output = pathlib.Path("artifacts/native-gpu", target).resolve()
 output.mkdir(parents=True, exist_ok=True)
@@ -57,4 +58,16 @@ with (output / "probe.log").open("w", encoding="utf-8") as log:
         passed |= "TSUKUYOMI_LIVE2D_GPU_OK" in line
     code = process.wait()
 if code or not passed or not metrics.exists():
+    if target == "linux" and shutil.which("gdb"):
+        binary = pathlib.Path("build/linux/x64/debug/bundle/tsukuyomi_space_app").resolve()
+        if binary.exists():
+            with (output / "native-backtrace.log").open("w", encoding="utf-8") as log:
+                try:
+                    subprocess.run([
+                        "gdb", "--batch", "-ex", "set env GDK_SYNCHRONIZE 1",
+                        "-ex", "run", "-ex", "thread apply all bt",
+                        "--args", str(binary),
+                    ], stdout=log, stderr=subprocess.STDOUT, timeout=90)
+                except subprocess.TimeoutExpired:
+                    print("Native diagnostic run timed out", flush=True)
     raise SystemExit(f"Native {target} GPU probe failed (exit {code})")

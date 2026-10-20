@@ -131,8 +131,11 @@ void main(List<String> args) async {
             (file.path.endsWith('.vert') || file.path.endsWith('.frag'))) {
           content = coreGlShader(content, vertex: file.path.endsWith('.vert'));
         }
+        final literal = d3d
+            ? shaderLiteral(content)
+            : 'R"TS_SHADER($content)TS_SHADER"';
         source.writeln(
-          'if (base == "${file.uri.pathSegments.last}") return ${shaderLiteral(content)};',
+          'if (base == "${file.uri.pathSegments.last}") return $literal;',
         );
         output.dependencies.add(file.uri);
       }

@@ -7099,7 +7099,8 @@ const nativeSiteSupplementalMessages = <String, Map<String, String>>{
     "nativeLive2dLoadFailed": "Live2D could not load",
     "nativeLive2dRetry": "Try again",
     "nativeLive2dRenderer": "Character renderer",
-    "nativeLive2dRendererAuto": "Native GPU (where supported, automatic fallback)",
+    "nativeLive2dRendererAuto":
+        "Native GPU (where supported, automatic fallback)",
     "nativeLive2dRendererCanvas": "Compatibility (Flutter Canvas)",
     "nativeLive2dQuality": "Character quality",
     "nativeLive2dQualityAuto": "Automatic (recommended)",
