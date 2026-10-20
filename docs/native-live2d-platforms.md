@@ -7,7 +7,7 @@
 | Android | OpenGL ES → SurfaceProducer | 保留已有 EGL 工作线程、窗口 Surface 重建 |
 | iOS/macOS | Metal → IOSurface/CVPixelBuffer → FlutterTexture | 共用串行工作队列；最多三个输出缓冲；命令完成后通知 Flutter；Flutter 持有的缓冲不能复用 |
 | Windows | D3D11 → DXGI shared handle → GpuSurfaceTexture | 共用工作线程/device；复用私有渲染目标；GPU 拷贝到不可变共享帧，完成查询后交付 |
-| Linux | OpenGL ES / EGL → FlTextureGL | 模型计算在工作池；首个纹理回调创建与 Flutter 共享的 EGL 上下文并上传图集；后续回调绘制并恢复 Flutter 上下文 |
+| Linux x64 | OpenGL ES / EGL → FlTextureGL | 模型初始化在工作池；首个纹理回调创建与 Flutter 共享的 EGL 上下文并上传图集；后续回调计算、绘制并恢复 Flutter 上下文 |
 | HarmonyOS | 现有 Native Core + Canvas | 本次不注册 GPU 插件；自动模式说明回退原因；强制 GPU 报错 |
 
 所有新平台通过进程内 `TsGpuApi` 使用 native-assets 中同一份 Cubism。Dart 只在创建时传 API 地址与模型/图集资源，每帧仍是一批有序参数，不传网格或像素。版本检查避免接口不匹配。Apple 的原生资源库名称与 CocoaPods 插件不同，避免 framework 覆盖导致 FFI 找不到 Core 符号。
@@ -25,6 +25,8 @@ SDK vendor 文件保持原样。构建时对固定 SDK 生成源码：
 - Linux 对齐固定 Flutter 3.47.5 的 EGL/OpenGL ES embedder，使用官方 StandardES shader。libepoxy 分派到当前上下文，使用可复用 VBO/EBO（ES 3 上另有 VAO），不依赖 GTK 的 GLX 纹理共享。掩码与混合算法保持官方实现。
 - 源码匹配不符合固定 SDK 结构时构建失败，要求复核 SDK 更新。
 
+Linux 在 Dart 尚未提交尺寸时交付透明首帧，避免空纹理导入阻断后续刷新。正常绘制恢复 Flutter 的 EGL 上下文；诊断读回和销毁还会保存并恢复平台线程的 EGL API 与 GTK GLX 绑定。`populate` 失败时始终提供 `GError`，符合固定 embedder 的错误处理约定。
+
 ## 验证
 
 `tool/probe_native_gpu.dart` 强制请求 GPU，回退不能算通过。复用 Android 探针检查 409 个网格、3K 图集、透明边角、半透明/亮色发丝、眨眼和口型像素变化、横竖输出、隐藏暂停、交互帧提交，以及两轮销毁后重建。`snapshot` 只供显式 QA，生产帧不调用。输出 PNG 与 `metrics.json`；只有全部通过才写出 metrics。
@@ -41,7 +43,23 @@ flutter run -d <iOS设备或模拟器ID> -t tool/probe_native_gpu.dart
 
 `.github/workflows/native-gpu-platforms.yml` 编译 iOS 无签名设备包，并运行 Linux Mesa / Windows WARP 图像验证。WARP 只通过显式测试环境变量 `TSUKUYOMI_GPU_QA_WARP=1` 启用；普通应用不自动切换软件 D3D。CI 软件 GPU 验证只证明功能，不能代表真实设备的帧率、功耗或温度。
 
-2026-10-20 本机 macOS Metal 已通过两轮图像探针，检查了导出的角色图像；其余平台的最终构建/运行结果随本次验证补充。物理 iPhone、Windows/Linux 显卡、15 分钟持续运行、后台恢复及同设备 Room A/B 仍需目标设备验证。
+2026-10-20 验证记录：
+
+| 验证环境 | 结果 |
+| --- | --- |
+| macOS / 本机 Metal | 两轮图像探针通过，人工检查导出的角色图像 |
+| iPhone 18 Pro / iOS 27 模拟器 | 两轮 Metal 图像探针通过，人工检查透明与方向 |
+| iOS arm64 / CI 设备构建 | `flutter build ios --release --no-codesign` 通过；产物未签名 |
+| Windows 2022 / D3D11 WARP | 两轮图像探针通过，并检查实际 Flutter 合成截图 |
+| Linux x64 / Mesa llvmpipe / X11 | 两轮图像探针通过，并检查实际 Flutter 合成截图 |
+| Android 35 x86_64 / SwiftShader | 现有 mobile-native 流程通过，包括 GPU 两轮重建与 Room 回归 |
+| 本机 Dart / Native Core | 全套测试 947 通过、40 跳过；额外启用实际 Cubism 的测试通过；最新 GPU/Shader 专项 15 项通过；静态分析无问题 |
+
+探针的逐帧计时包含调试模式、同步与软件 GPU 开销，不用于跨设备性能比较。物理 iPhone、Windows/Linux 显卡、15 分钟持续运行、系统后台恢复及同设备 Room A/B 仍需目标设备验证。Linux 同一 Flutter engine 可共享 SDK shader 资源；多个独立 engine 同时请求 GPU 时，后者会明确报错并由自动模式回退 Canvas，避免跨 EGL share group 误用资源。
+
+中立姿态的 macOS/iOS 模拟器 RGBA 像素一致；Windows/Linux 与 Metal 的角色 alpha 边界一致，逐通道全图平均绝对差均小于 0.5/255。该检查验证方向、构图与基本颜色一致性，不代替所有动作、遮罩模型和真实显卡的验收。
+
+CI 记录：[新平台构建与图像探针](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/39409888614)（实现提交 `1d9b39a`）、[Android 原生/Room 回归](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/39404470002)。本机图像与指标保存在忽略的 `artifacts/native-gpu/` 下；CI 附件包括 PNG、`metrics.json`、日志和桌面合成截图。
 
 ## 一手接口
 
@@ -49,6 +67,6 @@ flutter run -d <iOS设备或模拟器ID> -t tool/probe_native_gpu.dart
 - [Flutter Windows GPU surface descriptor](https://api.flutter.dev/windows-embedder/struct_flutter_desktop_gpu_surface_descriptor.html)
 - [Flutter Linux FlTextureGL](https://api.flutter.dev/linux-embedder/struct___fl_texture_g_l_class.html)
 - [Cubism Native Framework](https://github.com/Live2D/CubismNativeFramework)
-
 - [固定 Flutter 3.47.5 EGL 管理](https://github.com/flutter/flutter/blob/6a19cca56475dbfba1478ee68d7bd0c2ef891da1/engine/src/flutter/shell/platform/linux/fl_opengl_manager.cc)
 - [固定 Flutter 3.47.5 X11/Wayland 合成差异](https://github.com/flutter/flutter/blob/6a19cca56475dbfba1478ee68d7bd0c2ef891da1/engine/src/flutter/shell/platform/linux/fl_view_renderer.cc)
+- [固定 Flutter 3.47.5 纹理未就绪时的错误处理](https://github.com/flutter/flutter/blob/6a19cca56475dbfba1478ee68d7bd0c2ef891da1/engine/src/flutter/shell/platform/linux/fl_engine.cc#L433-L471)
