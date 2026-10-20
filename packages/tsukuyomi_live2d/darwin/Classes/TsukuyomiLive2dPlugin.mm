@@ -156,7 +156,7 @@ NSData* bytes(id value) {
           [blit generateMipmapsForTexture:texture]; [blit endEncoding];
           [command commit]; [command waitUntilCompleted];
           require(command.status == MTLCommandBufferStatusCompleted, "Atlas upload failed");
-          require(s->api->bind(s->scene, (int)s->atlases.count, (__bridge void*)texture), s->api->error());
+          if (!s->api->bind(s->scene, (int)s->atlases.count, (__bridge void*)texture)) throw std::runtime_error(s->api->error());
           [s->atlases addObject:texture];
           while (true) {
             atlasBytes += w * h * 4;
@@ -262,7 +262,7 @@ NSData* bytes(id value) {
       TsGpuFrame frame{names.data(), (const double*)values.bytes, (const int32_t*)blends.bytes,
         (int)ids.count, w, h, [args[@"delta"] doubleValue], (__bridge void*)command, (__bridge void*)pass};
       double timing[2]{};
-      require(s->api->draw(s->scene, &frame, timing), s->api->error());
+      if (!s->api->draw(s->scene, &frame, timing)) throw std::runtime_error(s->api->error());
       auto submitted = std::chrono::steady_clock::now();
       [command commit]; [command waitUntilCompleted];
       require(command.status == MTLCommandBufferStatusCompleted, "Metal command failed");

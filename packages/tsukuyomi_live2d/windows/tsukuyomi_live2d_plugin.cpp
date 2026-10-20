@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <chrono>
 #include <condition_variable>
-#include <cstdlib>
 #include <atomic>
 #include <deque>
 #include <future>
@@ -63,8 +62,9 @@ class Worker {
   void initialize() {
     if (device) return;
     // Explicit CI-only opt-in; normal runs never silently select software D3D.
-    const char* qa = std::getenv("TSUKUYOMI_GPU_QA_WARP");
-    auto driver = qa && std::string(qa) == "1" ? D3D_DRIVER_TYPE_WARP : D3D_DRIVER_TYPE_HARDWARE;
+    char qa[2]{};
+    auto driver = GetEnvironmentVariableA("TSUKUYOMI_GPU_QA_WARP", qa, sizeof(qa)) == 1 && qa[0] == '1'
+        ? D3D_DRIVER_TYPE_WARP : D3D_DRIVER_TYPE_HARDWARE;
     check(D3D11CreateDevice(nullptr, driver, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
         nullptr, 0, D3D11_SDK_VERSION, &device, nullptr, &context), "D3D11 device unavailable");
   }
@@ -207,7 +207,7 @@ class Plugin final : public flutter::Plugin {
               ComPtr<ID3D11ShaderResourceView> view;
               check(worker().device->CreateShaderResourceView(texture.Get(), nullptr, &view), "Cannot create atlas view");
               worker().context->GenerateMips(view.Get());
-              require(s->api->bind(s->model, static_cast<int32_t>(s->atlases.size()), view.Get()), s->api->error());
+              if (!s->api->bind(s->model, static_cast<int32_t>(s->atlases.size()), view.Get())) throw std::runtime_error(s->api->error());
               s->atlases.push_back(view);
               for (;;) { atlas_bytes += int64_t(w) * h * 4; if (w == 1 && h == 1) break;
                 w = std::max(1u, w / 2); h = std::max(1u, h / 2); }
@@ -268,7 +268,7 @@ class Plugin final : public flutter::Plugin {
           TsGpuFrame frame{names.data(), values.data(), blends.data(), static_cast<int32_t>(ids.size()),
               w, h, std::get<double>(at(args, "delta")), worker().context.Get(), surface->target.Get()};
           double timing[2]{};
-          require(s->api->draw(s->model, &frame, timing), s->api->error());
+          if (!s->api->draw(s->model, &frame, timing)) throw std::runtime_error(s->api->error());
           auto submitted = std::chrono::steady_clock::now();
           // The public registrar exposes no consumer GPU fence. Keep published
           // images immutable; reuse only our private Cubism render target.

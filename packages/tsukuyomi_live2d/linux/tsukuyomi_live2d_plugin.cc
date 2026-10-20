@@ -105,7 +105,7 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
         static_cast<int32_t>(count), w, h, fl_value_get_float(at(args, "delta")),
         nullptr, reinterpret_cast<void*>(uintptr_t(s->target))};
       double timing[2]{};
-      require(s->api->draw(s->model, &frame, timing), s->api->error());
+      if (!s->api->draw(s->model, &frame, timing)) throw std::runtime_error(s->api->error());
       // The next Flutter sample occurs on this same raster thread. Complete
       // producer commands before returning a shared texture from our context.
       auto start = std::chrono::steady_clock::now();
@@ -218,7 +218,7 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
             glGenerateMipmap(GL_TEXTURE_2D);
             require(glGetError() == GL_NO_ERROR, "Cannot upload atlas");
-            require(state->api->bind(state->model, static_cast<int32_t>(i), reinterpret_cast<void*>(uintptr_t(atlas))), state->api->error());
+            if (!state->api->bind(state->model, static_cast<int32_t>(i), reinterpret_cast<void*>(uintptr_t(atlas)))) throw std::runtime_error(state->api->error());
             for (;;) { atlas_bytes += int64_t(w) * h * 4; if (w == 1 && h == 1) break;
               w = std::max(1, w / 2); h = std::max(1, h / 2); }
           }
