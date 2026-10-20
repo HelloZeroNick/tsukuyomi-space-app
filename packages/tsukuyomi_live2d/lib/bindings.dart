@@ -43,6 +43,8 @@ final class NativeMesh extends Struct {
 
 @Native<Int32 Function()>(symbol: 'ts_available')
 external int nativeAvailable();
+@Native<Pointer<Void> Function()>(symbol: 'ts_gpu_api')
+external Pointer<Void> nativeGpuApi();
 @Native<Pointer<Void> Function(Pointer<Uint8>, Int32, Pointer<Uint8>, Int32)>(
   symbol: 'ts_create',
 )

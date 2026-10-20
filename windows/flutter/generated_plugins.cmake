@@ -12,6 +12,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   media_kit_video
   screen_retriever_windows
   share_plus
+  tsukuyomi_live2d
   url_launcher_windows
   window_manager
 )

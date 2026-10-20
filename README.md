@@ -8,7 +8,7 @@ Tsukuyomi Space 的独立 Flutter 客户端。0.6.23 Live2D / 桌面 Agent 测�
 
 所有平台打开即进入 Room，不播放 Access 动画。默认关闭演示；首次使用在聊天区填写模型地址、名称和 Key，保存后直接真实聊天。已有配置直接可用，本地历史先加载，登录与同步随后执行。升级保留独立演示历史。
 
-Android 使用 Cubism 官方 OpenGL ES 渲染器和 Flutter 外部纹理，模型更新、物理、遮罩和绘制在原生工作线程完成；自动档使用 3K 图集，保留单帧限流。0.6.23 修复聊天滚动时动画暂停，并减少启动时的着色器编译、并行读取模型资源。设置中可切回兼容渲染。其他平台应用清晰度和帧率修正并保留 Canvas。实现与设备验收边界见 [原生 GPU 渲染](docs/native-live2d-gpu.md)。
+Android 使用 Cubism 官方 OpenGL ES 渲染器和 Flutter 外部纹理；iOS/macOS、Windows、Linux 分别接入 Metal、D3D11 和 OpenGL。自动档使用 3K 图集，保留单帧限流、聊天交互期间动画和失败自动回退；设置中可切回 Canvas。HarmonyOS 继续使用 Canvas。实现与设备验收边界见 [原生 GPU 渲染](docs/native-live2d-gpu.md) 和 [跨平台适配](docs/native-live2d-platforms.md)。
 
 0.6.20 将 Room 的 Live2D 绘制改为异步帧缓存和有界调度，减少交互时的绘制开销；修复辉夜快跑背景克隆闪烁和下车后的角色动画。保留输入法修复、2048纹理和鼠标追踪关闭。见 [Room 绘制与游戏验证](docs/native-room-pipeline-v0.6.20.md)。
 
@@ -85,9 +85,9 @@ flutter run -d macos
 
 脚本仅复制文件到本项目，不修改来源。SDK 放在 `packages/tsukuyomi_live2d/vendor/cubism/`，模型放在 `assets/live2d/`，二者均被 Git 忽略。更改 SDK 是否存在后必须执行 `flutter clean`，使原生构建钩子重新检测。
 
-加载成功后「角色状态」显示当前渲染方式、网格数量及模型更新耗时；Android GPU 路径另显示输出尺寸、有效 DPR 与原生提交计时。它们**不代表 GPU 执行时间或实际帧率**。自动/细节优先目标为 60fps，省电为 30fps，持续负载下会降低帧率；离开页面、后台、最小化和输入交互时暂停。支持眨眼、呼吸、物理、表情与音频口型，鼠标追踪保持关闭。
+加载成功后「角色状态」显示当前渲染方式、网格数量及模型更新耗时；GPU 路径另显示后端名称、输出尺寸、有效 DPR 与原生提交计时。它们**不代表 GPU 执行时间或实际帧率**。自动/细节优先目标为 60fps，省电为 30fps，持续负载下会降低帧率；离开页面、后台、最小化时暂停，输入交互时继续动画。支持眨眼、呼吸、物理、表情与音频口型，鼠标追踪保持关闭。
 
-Android 默认采用 **Cubism Native Core + Framework + 官方 OpenGL ES Renderer → Flutter SurfaceProducer / Texture**。原生工作线程不逐帧传出网格，也不进行 CPU 像素读回。其他平台及兼容模式采用 **Cubism Native + Flutter Canvas**；GPU 初始化或绘制失败时自动回退。没有 WebView 或 JavaScript 引擎。详见 [渲染架构和验证](docs/native-live2d-gpu.md)。
+支持的平台默认采用 **Cubism Native Core + Framework + 官方 GPU Renderer → Flutter Texture**，不逐帧传出网格或进行 CPU 像素读回。HarmonyOS 和兼容模式采用 **Cubism Native + Flutter Canvas**；GPU 初始化或绘制失败时自动回退。没有 WebView 或 JavaScript 引擎。详见 [渲染架构和验证](docs/native-live2d-gpu.md)。
 
 已支持普通/反向遮罩、标准加法/乘法混合、multiply/screen 色彩；明确拒绝 Cubism 5.3 的离屏部件和扩展混合。网站表情与动作预设通过原生参数和舞台变换执行，支持队列、动作过渡、回复情绪反应与设置页 JSON 调试。任意 Cubism motion3 动作文件播放仍未实现。
 

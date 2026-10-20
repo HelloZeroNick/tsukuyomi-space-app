@@ -34,19 +34,15 @@ struct Mesh {
 using namespace Live2D::Cubism::Framework;
 namespace Core = Live2D::Cubism::Core;
 
-#if !defined(CSM_TARGET_ANDROID_ES2)
+#if !defined(TS_GPU)
 // Canvas-only platforms own no SDK renderer GPU resources.
 void Rendering::CubismRenderer::StaticRelease() {}
 #endif
 // Android's render worker and the Canvas fallback may coexist during a switch.
 // Protect Cubism's process-wide allocator, IDs and framework lifecycle.
-#if defined(CSM_TARGET_ANDROID_ES2)
 static std::recursive_mutex cubism_mutex;
 #define TS_LOCK std::lock_guard<std::recursive_mutex> lock(cubism_mutex)
-#else
-#define TS_LOCK ((void)0)
-#endif
-#if defined(CSM_TARGET_ANDROID_ES2)
+#if defined(TS_GPU) && !defined(TS_GPU_METAL)
 #include "gpu_shaders.h"
 static int shader_source_loads = 0;
 static csmByte* load_shader(const std::string path, csmSizeInt* size) {
@@ -100,7 +96,7 @@ API int ts_available() { return 1; }
 API void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int physics_size) { TS_LOCK;
   if (!bytes || size < 4 || size > 64 * 1024 * 1024) return nullptr;
   if (!CubismFramework::IsStarted()) { CubismFramework::StartUp(&allocator
-#if defined(CSM_TARGET_ANDROID_ES2)
+#if defined(TS_GPU) && !defined(TS_GPU_METAL)
     , &framework_options
 #endif
     ); CubismFramework::Initialize(); }
@@ -169,6 +165,8 @@ API int ts_meshes(void* ptr, Mesh* out, int count) { TS_LOCK;
 }
 #if defined(CSM_TARGET_ANDROID_ES2)
 #include "android_gpu.inc"
+#elif defined(TS_GPU)
+#include "desktop_gpu.inc"
 #endif
 #else
 API int ts_available() { return 0; }
@@ -180,4 +178,8 @@ API void ts_update(void*, float) {}
 API int ts_mesh_count(void*) { return 0; }
 API int ts_mesh(void*, int, Mesh*) { return 0; }
 API int ts_meshes(void*, Mesh*, int) { return 0; }
+#endif
+
+#if !defined(TS_GPU) || defined(CSM_TARGET_ANDROID_ES2)
+API const void* ts_gpu_api() { return nullptr; }
 #endif

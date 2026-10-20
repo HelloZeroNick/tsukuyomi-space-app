@@ -23,7 +23,9 @@ class _ProbeClock implements TickerProvider {
 /// acceptance. Explicit readback is confined to this probe, never animation.
 Future<void> probeAndroidGpu() async {
   final directory = Directory(
-    '${(await getExternalStorageDirectory())!.path}/live2d-gpu-qa',
+    const String.fromEnvironment('NATIVE_GPU_QA_DIR').isNotEmpty
+        ? const String.fromEnvironment('NATIVE_GPU_QA_DIR')
+        : '${(Platform.isAndroid ? await getExternalStorageDirectory() : await getApplicationSupportDirectory())!.path}/live2d-gpu-qa',
   );
   await directory.create(recursive: true);
   final results = <Map<String, Object>>[];
@@ -114,7 +116,7 @@ Future<void> probeAndroidGpu() async {
       maxTextureSize: 3072,
     ) as GpuLive2DModel;
     try {
-      if (gpu.loadMetrics['shader_source_loads'] != 16) {
+      if (Platform.isAndroid && gpu.loadMetrics['shader_source_loads'] != 16) {
         throw StateError(
           'Expected 8 official programs, got ${gpu.loadMetrics}',
         );
@@ -169,9 +171,15 @@ Future<void> probeAndroidGpu() async {
       await gpu.settled;
       await capture(gpu, 'cycle-$cycle-landscape');
       // Exercise a different Surface with the same scene and GL resources.
-      await const MethodChannel(
-        'space.tsukuyomi/live2d_gpu',
-      ).invokeMethod<void>('recreateSurfaceForTesting', {'id': gpu.textureId});
+      if (Platform.isAndroid) {
+        await const MethodChannel('space.tsukuyomi/live2d_gpu')
+            .invokeMethod<void>('recreateSurfaceForTesting', {
+              'id': gpu.textureId,
+            });
+      } else {
+        gpu.configureSurface(const Size(390, 800), 2, 'auto');
+        await gpu.settled;
+      }
       gpu.tick(.1, .016);
       await gpu.settled;
       await capture(gpu, 'cycle-$cycle-recreated-surface');
@@ -223,6 +231,6 @@ Future<void> probeAndroidGpu() async {
       .writeAsString(const JsonEncoder.withIndent('  ').convert(results));
   // ignore: avoid_print
   print(
-    'TSUKUYOMI_LIVE2D_GPU_OK direct_surface=true cycles=2 transparent=true pose=true resize=true recreated_surface=true output=${directory.path}',
+    'TSUKUYOMI_LIVE2D_GPU_OK platform=${Platform.operatingSystem} direct_surface=true cycles=2 transparent=true pose=true resize=true recreated_surface=${Platform.isAndroid} output=${directory.path}',
   );
 }

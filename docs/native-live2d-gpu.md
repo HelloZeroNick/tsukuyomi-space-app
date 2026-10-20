@@ -1,6 +1,8 @@
-# Android 原生 GPU 渲染
+# 原生 GPU 渲染
 
-这一版在 Android 默认使用 **Cubism Native OpenGL ES Renderer → RGBA 渲染纹理 → EGL window surface → Flutter SurfaceProducer → Texture**。iOS、macOS、Windows、Linux 和 HarmonyOS 继续使用 Canvas 渲染。可以在「房间设置 → 角色 → 角色渲染方式」选择兼容渲染，进行同设备 A/B 对比。
+Android 使用 **Cubism Native OpenGL ES Renderer → RGBA 渲染纹理 → EGL window surface → Flutter SurfaceProducer → Texture**。iOS/macOS 新增 Metal，Windows 新增 D3D11，Linux 新增 OpenGL 外部纹理。HarmonyOS 按参考文档保留 Canvas，待对应 embedder 单独适配。可以在「房间设置 → 角色 → 角色渲染方式」选择兼容渲染，进行同设备 A/B 对比。
+
+跨平台实现、验证与限制见 [剩余平台适配](native-live2d-platforms.md)。下文的 SurfaceProducer、EGL 和 Android 探针细节专指 Android。
 
 ## 数据与线程
 
@@ -48,7 +50,7 @@ SurfaceProducer 的 Surface 在每次提交时重新取得；尺寸改变、后�
 - `tool/verify_mobile_live2d.dart` 同时保留 Canvas 像素回归及 Room IME/滚动验证。`mobile-native.yml` 使用软件渲染 Android 模拟器，因此只能证明构建和功能，不能证明骁龙 GPU 帧率、功耗或温度。
 - 角色状态中的更新、绘制提交和帧往返都是 CPU/提交计时，不是 GPU 执行时间。尚未接入 GPU timer query。
 - [此前 Canvas 清晰度验证](native-live2d-mobile-parity.md) 的 M5 数据仅适用于 Canvas 路径，不能作为 Android 原生 GPU 的性能收益。
-- Redmi K90 的同设备 A/B、15 分钟持续运行、温度/内存以及后台恢复实机验收仍需在设备上完成。此阶段没有移植 Metal/D3D/Linux/OHOS 的 GPU renderer。
+- Redmi K90 的同设备 A/B、15 分钟持续运行、温度/内存以及后台恢复实机验收仍需在设备上完成。新平台的验证不能替代这项验收。
 
 ## 一手参考
 

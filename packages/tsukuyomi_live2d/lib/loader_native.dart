@@ -27,11 +27,16 @@ Future<Live2DModel> loadLive2D({
   // Keep the native asset reachable even for an exclusively GPU entrypoint,
   // and initialize its loader before Android resolves the JNI exports.
   String? fallback;
-  if (Platform.isAndroid && renderer != 'canvas') {
+  if (renderer != 'canvas') {
     try {
+      final api = Platform.isAndroid ? 0 : nativeGpuApi().address;
+      if (!Platform.isAndroid && api == 0) {
+        throw UnsupportedError('此平台尚未接入原生 GPU 纹理，使用兼容渲染。');
+      }
       return await GpuLive2DModel.load(
         manifest: manifest,
         maxTextureSize: maxTextureSize,
+        nativeApiAddress: api,
       );
     } catch (e) {
       if (renderer == 'gpu') rethrow;

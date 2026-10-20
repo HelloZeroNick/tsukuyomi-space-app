@@ -62,6 +62,7 @@ void main() {
           'bounds': [-1.0, -2.0, 1.0, 2.0],
           'maxSize': 4096,
           'atlasBytes': 100663280,
+          'backend': 'Metal',
         };
       }
       if (call.method == 'frame') {
@@ -87,6 +88,20 @@ void main() {
   Future<GpuLive2DModel> load() => GpuLive2DModel.load(
     manifest: 'gpu-fixture/model3.json',
     maxTextureSize: 3072,
+  );
+
+  test(
+    'platform backend and native asset ABI survive channel handoff',
+    () async {
+      final model = await GpuLive2DModel.load(
+        manifest: 'gpu-fixture/model3.json',
+        maxTextureSize: 3072,
+        nativeApiAddress: 123456,
+      );
+      expect(model.backend, 'Metal');
+      expect(calls.single.arguments['nativeApi'], 123456);
+      model.dispose();
+    },
   );
 
   test(

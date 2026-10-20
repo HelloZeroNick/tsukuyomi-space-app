@@ -265,7 +265,7 @@ class _CharacterStageState extends State<CharacterStage>
   String _rendererDiagnostics() {
     final model = _model!;
     final gpu = model is GpuLive2DModel ? model : null;
-    return '${gpu == null ? "Flutter Canvas" : "Cubism GPU · OpenGL ES"} · ${gpu?.meshCount ?? model.meshes.length} 个网格\n'
+    return '${gpu == null ? "Flutter Canvas" : "Cubism GPU · ${gpu.backend}"} · ${gpu?.meshCount ?? model.meshes.length} 个网格\n'
         '最近模型更新 ${model.updateMilliseconds.toStringAsFixed(1)} ms\n'
         '${gpu == null ? "" : "模型加载 ${((gpu.loadMetrics['load_ms'] ?? 0) / 1000).toStringAsFixed(2)} s\n"}'
         '${gpu == null ? "" : "输出 ${gpu.actualWidth} × ${gpu.actualHeight} · DPR ${gpu.effectivePixelRatio.toStringAsFixed(2)}\n原生提交 ${gpu.submitMilliseconds.toStringAsFixed(1)} ms · 帧往返 ${gpu.frameMilliseconds.toStringAsFixed(1)} ms\n"}'

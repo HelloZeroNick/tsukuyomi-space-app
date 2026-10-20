@@ -1,5 +1,5 @@
 name: tsukuyomi_live2d
-description: Cubism Native model, Android GPU textures and Flutter Canvas fallback.
+description: Cubism Native GPU textures and Flutter Canvas fallback.
 version: 0.1.0
 publish_to: none
 environment:
@@ -14,3 +14,16 @@ dependencies:
   native_toolchain_c: ^0.19.0
 dev_dependencies:
   flutter_lints: ^6.0.0
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: TsukuyomiLive2dPlugin
+        sharedDarwinSource: true
+      macos:
+        pluginClass: TsukuyomiLive2dPlugin
+        sharedDarwinSource: true
+      windows:
+        pluginClass: TsukuyomiLive2dPluginCApi
+      linux:
+        pluginClass: TsukuyomiLive2dPlugin

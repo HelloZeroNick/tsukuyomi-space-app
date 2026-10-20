@@ -8,12 +8,16 @@ PODS:
   - media_kit_video (0.0.1):
     - FlutterMacOS
   - OrderedSet (6.0.3)
+  - tsukuyomi_live2d (0.1.0):
+    - Flutter
+    - FlutterMacOS
 
 DEPENDENCIES:
   - flutter_inappwebview_macos (from `Flutter/ephemeral/.symlinks/plugins/flutter_inappwebview_macos/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - media_kit_libs_macos_video (from `Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos`)
   - media_kit_video (from `Flutter/ephemeral/.symlinks/plugins/media_kit_video/macos`)
+  - tsukuyomi_live2d (from `Flutter/ephemeral/.symlinks/plugins/tsukuyomi_live2d/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -28,6 +32,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos
   media_kit_video:
     :path: Flutter/ephemeral/.symlinks/plugins/media_kit_video/macos
+  tsukuyomi_live2d:
+    :path: Flutter/ephemeral/.symlinks/plugins/tsukuyomi_live2d/darwin
 
 SPEC CHECKSUMS:
   flutter_inappwebview_macos: c2d68649f9f8f1831bfcd98d73fd6256366d9d1d
@@ -35,6 +41,7 @@ SPEC CHECKSUMS:
   media_kit_libs_macos_video: 85a23e549b5f480e72cae3e5634b5514bc692f65
   media_kit_video: fa6564e3799a0a28bff39442334817088b7ca758
   OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
+  tsukuyomi_live2d: 1fa8277ee9dac305a5de471a8fdc595f43aedca6
 
 PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
 

@@ -12,7 +12,7 @@ import 'model.dart';
 
 const _channel = MethodChannel('space.tsukuyomi/live2d_gpu');
 
-/// Android Cubism GLES renderer. Atlases cross the channel once at load time;
+/// Cubism native GPU renderer. Atlases cross the channel once at load time;
 /// animation frames contain only one ordered parameter batch and output size.
 class GpuLive2DModel extends Live2DModel {
   static final _models = <int, GpuLive2DModel>{};
@@ -33,6 +33,7 @@ class GpuLive2DModel extends Live2DModel {
 
   GpuLive2DModel._(Map<dynamic, dynamic> info, this._expressions)
     : textureId = info['textureId'] as int,
+      backend = info['backend'] as String? ?? 'OpenGL ES',
       meshCount = info['meshCount'] as int,
       maxSize = info['maxSize'] as int,
       atlasBytes = info['atlasBytes'] as int,
@@ -46,6 +47,7 @@ class GpuLive2DModel extends Live2DModel {
   static Future<GpuLive2DModel> load({
     required String manifest,
     required int maxTextureSize,
+    int nativeApiAddress = 0,
   }) async {
     final watch = Stopwatch()..start();
     _channel.setMethodCallHandler(_nativeEvent);
@@ -95,6 +97,7 @@ class GpuLive2DModel extends Live2DModel {
     final assetMilliseconds = watch.elapsedMicroseconds / 1000;
     final info = await _channel.invokeMapMethod<dynamic, dynamic>('create', {
       'moc': moc,
+      'nativeApi': nativeApiAddress,
       'physics': physics,
       'textures': textures,
       'maxTextureSize': maxTextureSize == 0 ? 4096 : maxTextureSize,
@@ -111,6 +114,7 @@ class GpuLive2DModel extends Live2DModel {
   }
 
   final int textureId, meshCount, maxSize, atlasBytes;
+  final String backend;
 
   /// Startup wall timings (not GPU timer queries), for device diagnostics/QA.
   final Map<String, num> loadMetrics = {};
