@@ -1,0 +1,151 @@
+{
+  "tag": "v0.6.24-beta.1",
+  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.24-beta.1",
+  "release_id": 418324881,
+  "prerelease": true,
+  "source_sha": "a75ed26092a37cbedbf10cce0db40f08fdc2aa12",
+  "hap_source_sha": "a75ed26092a37cbedbf10cce0db40f08fdc2aa12",
+  "release_run": 39412183167,
+  "native_gpu_run": 39409888614,
+  "hap_run": 39412189006,
+  "verified_at_utc": "2026-10-20T11:35:05Z",
+  "all_16_downloads_verified": true,
+  "checksum_coverage": [
+    "INSTALL.md",
+    "OHOS-BUILD-INFO.json",
+    "OHOS-INSTALL.md",
+    "OHOS-THIRD-PARTY-NOTICES.md",
+    "THIRD_PARTY_NOTICES.md",
+    "tsukuyomi-space-0.6.24-31-ohos-arm64-unsigned.hap",
+    "tsukuyomi-space-0.6.24-android-arm64-v8a.apk",
+    "tsukuyomi-space-0.6.24-android-x86_64.apk",
+    "tsukuyomi-space-0.6.24-ios-arm64-unsigned.ipa",
+    "tsukuyomi-space-0.6.24-linux-x64.deb",
+    "tsukuyomi-space-0.6.24-linux-x64.tar.gz",
+    "tsukuyomi-space-0.6.24-macos-universal.dmg",
+    "tsukuyomi-space-0.6.24-windows-x64-setup.exe",
+    "tsukuyomi-space-0.6.24-windows-x64.zip"
+  ],
+  "physical_device_acceptance": false,
+  "assets": [
+    {
+      "name": "INSTALL.md",
+      "size": 15773,
+      "sha256": "4fd06ef9369ee21d65ed936fd9869d0d3f42ccd35ef3c885b61f6caab37a6f0b",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/INSTALL.md"
+    },
+    {
+      "name": "OHOS-BUILD-INFO.json",
+      "size": 559,
+      "sha256": "42fe4dcf542607baef9f9a8ea0825aeb62e8e35ff6d6d446cab4541c438f6a8e",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/OHOS-BUILD-INFO.json"
+    },
+    {
+      "name": "OHOS-INSTALL.md",
+      "size": 1845,
+      "sha256": "62cd7d37c93980ea04fc59b1409fd2102121df8aab2d60d9bb89ef4e49ced1d3",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/OHOS-INSTALL.md"
+    },
+    {
+      "name": "OHOS-SHA256SUMS.txt",
+      "size": 379,
+      "sha256": "263bfed42b45c3d90226fa9e4882be2dbcd9dc3bbebc90b468ccd7a7b4350194",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/OHOS-SHA256SUMS.txt"
+    },
+    {
+      "name": "OHOS-THIRD-PARTY-NOTICES.md",
+      "size": 6515,
+      "sha256": "f40218b95181490fad7505d9a0cea6e499b861a007ebca1943cec1e90ce96370",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/OHOS-THIRD-PARTY-NOTICES.md"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 1031,
+      "sha256": "89f79a3b404e4627b5711ccc2ab7f4644d2ea5ca3ef3961f273ef34d43e2e39a",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/SHA256SUMS.txt"
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "size": 6515,
+      "sha256": "f40218b95181490fad7505d9a0cea6e499b861a007ebca1943cec1e90ce96370",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-31-ohos-arm64-unsigned.hap",
+      "size": 148829787,
+      "sha256": "4fffee69ea7c3ddd47c1061663731a68d40eab0184c03e81305788bda9edaa69",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-31-ohos-arm64-unsigned.hap"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-android-arm64-v8a.apk",
+      "size": 155620336,
+      "sha256": "20be774aaac368261846bb21ce7851e7c1d8429296d71d43d9cfc7528151f550",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-android-arm64-v8a.apk"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-android-x86_64.apk",
+      "size": 160797979,
+      "sha256": "a0e9618d3a180cff98bb3adfaa363b39c5a6fd78d570e1fb9f28ed3de1616e1c",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-android-x86_64.apk"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-ios-arm64-unsigned.ipa",
+      "size": 127783558,
+      "sha256": "5a646eb25a6c3288032f708fb369983b4d1e3d71eec52087969104d7793a87ed",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-ios-arm64-unsigned.ipa"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-linux-x64.deb",
+      "size": 261810374,
+      "sha256": "c3d7ca9d54b460dbf8390d88612f312651b3a8b59773dba80d62250efe22aa2f",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-linux-x64.deb"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-linux-x64.tar.gz",
+      "size": 320129255,
+      "sha256": "9d75f234525da10c58df5f6586fc6f49d6935800b9994560fd570fdb37693b9b",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-linux-x64.tar.gz"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-macos-universal.dmg",
+      "size": 549890986,
+      "sha256": "14eb421e5bdb31f1916766ae61762edaea5ece622dd03d8034fb30e3436b7604",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-macos-universal.dmg"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-windows-x64-setup.exe",
+      "size": 268968536,
+      "sha256": "cdfbb07048df04988743b8141ee19dcad04b86489679451aca6559501fc87858",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-windows-x64-setup.exe"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.24-windows-x64.zip",
+      "size": 364032663,
+      "sha256": "fb267c2d8db2efbe1ebc1523fcae2d7d33cfe0a188f32200700e66b8bd3ea2c3",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.24-beta.1/tsukuyomi-space-0.6.24-windows-x64.zip"
+    }
+  ],
+  "hap_publication_run": 39415843058,
+  "hap_reused": true,
+  "release_quality": {
+    "passed": 969,
+    "skipped": 19
+  },
+  "hap_quality": {
+    "passed": 947,
+    "skipped": 41
+  },
+  "native_rendering": {
+    "macos": "local Metal probe, two cycles",
+    "ios": "iOS 27 simulator Metal probe, two cycles; unsigned arm64 IPA built",
+    "windows": "D3D11 WARP, two cycles and Flutter composition",
+    "linux": "x64 EGL / Mesa llvmpipe / X11, two cycles and Flutter composition",
+    "android": "Android 35 x86_64 SwiftShader, direct SurfaceProducer, two cycles plus keyboard/Room checks",
+    "ohos": "Native Core + Canvas; unsigned ARM64 HAP validated"
+  },
+  "acceptance_limits": [
+    "iOS IPA and HarmonyOS HAP require user signing",
+    "No physical phone or Windows/Linux hardware GPU performance acceptance",
+    "No 15-minute thermal/power or same-device Room A/B acceptance"
+  ]
+}
