@@ -1,10 +1,11 @@
-0.6.23+30 / v0.6.23-beta.1：Live2D 启动加载与聊天滚动修复。
+0.6.24+31 / v0.6.24-beta.1：Live2D 原生 GPU 渲染扩展至 Apple、Windows 和 Linux。
 
-- 修复滑动聊天记录、输入文字和键盘变化时主动暂停 Live2D 的问题。Android 原生 GPU 继续按所选帧率目标运行；兼容 Canvas 在交互期间最高 30 fps，保留所选画质。
-- Android 启动只编译当前模型支持的 8 个官方着色器程序，省去 474 个未使用的高级混合变体；保留普通、加算、乘算、遮罩和反向遮罩。模型、物理、图集和表情资源改为并行读取。
-- 保留单帧任务限流，以及隐藏页面、后台和手动暂停。角色状态增加模型加载耗时，原生探针记录初始化、解码、上传和首帧时间，便于实机定位。
-- 自动档仍为 3K 图集、最高 400 万输出像素；本次未通过降低分辨率加速。其他平台继续使用 Canvas。
+- iOS / macOS 使用 Cubism Metal 渲染，通过 IOSurface / CVPixelBuffer 交给 Flutter Texture；透明合成、普通与反向遮罩、眨眼、表情和实时口型沿用现有模型逻辑。
+- Windows 使用 Cubism D3D11 与 DXGI 共享纹理；Linux x64 使用与 Flutter 共享的 EGL / OpenGL ES 上下文，修复首帧交付、GTK 上下文恢复、尺寸变化和资源销毁。
+- 自动模式优先使用原生 GPU，初始化或绘制失败会回退兼容 Canvas；设置中仍可手动选择。Android 保留已有 SurfaceProducer 原生管线，HarmonyOS 按平台能力继续使用 Native Core + Canvas。
+- 保留 3K 图集、实际屏幕密度、输出像素预算与单帧限流；聊天滑动和输入期间继续动画，页面隐藏、后台和手动暂停时停止更新。
+- 新增跨平台图像探针和 CI，检查透明边角、发丝、表情口型、横竖尺寸、交互提交及两轮销毁重建，并保存实际桌面合成截图。
 
-普通 Android 手机选择 **arm64-v8a**。安装后角色状态应显示 `Cubism GPU · OpenGL ES`。主机测试和 Android 模拟器验证不代表红米 K90 的加载秒数、帧率、温度或续航，仍需同设备体验验证。iOS 包需自签；鸿蒙补包由独立流程追加，未签名 HAP 需自行签名。
+macOS 与 iOS 模拟器 Metal、Windows WARP、Linux Mesa 图像探针，以及 iOS arm64 无签名构建和 Android 原生回归均已通过。Windows 仍有每帧 GPU 拷贝，Linux X11 完整合成链路仍有 CPU 拷贝；这些功能验证不代表真机帧率、功耗、温度或 15 分钟持续运行验收。
 
-实现与验证边界见[原生 GPU 说明](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-live2d-gpu.md)。
+普通 Android 手机选择 **arm64-v8a**。iOS IPA 和 HarmonyOS HAP 未签名，需自行签名安装；鸿蒙附件由独立发行流程追加。平台接口、复现命令与验收边界见[适配记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-live2d-platforms.md)。

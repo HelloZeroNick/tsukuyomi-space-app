@@ -12,7 +12,7 @@ root = pathlib.Path(__file__).resolve().parents[2]
 app = root / 'build/ios/iphoneos/Runner.app'
 info = plistlib.loads((app / 'Info.plist').read_bytes())
 assert 'iPhoneOS' in info['CFBundleSupportedPlatforms'], 'Simulator builds cannot be self-signed for a phone'
-for required in ['Frameworks/App.framework/App', 'Frameworks/Flutter.framework/Flutter', 'Frameworks/tsukuyomi_live2d.framework/tsukuyomi_live2d', 'Frameworks/App.framework/flutter_assets/assets/live2d/character.model3.json']:
+for required in ['Frameworks/App.framework/App', 'Frameworks/Flutter.framework/Flutter', 'Frameworks/tsukuyomi_live2d.framework/tsukuyomi_live2d', 'Frameworks/tsukuyomi_cubism_core.framework/tsukuyomi_cubism_core', 'Frameworks/App.framework/flutter_assets/assets/live2d/character.model3.json']:
     assert (app / required).is_file(), f'Missing {required}'
 for binary in [app / info['CFBundleExecutable'], *app.glob('Frameworks/*.framework/*')]:
     if not binary.is_file() or binary.suffix or binary.name in ['Info', 'Resources']:
