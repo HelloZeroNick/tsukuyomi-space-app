@@ -2,6 +2,7 @@
 #include "../src/gpu_api.h"
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
+#include <epoxy/glx.h>
 #include <algorithm>
 #include <chrono>
 #include <map>
@@ -23,17 +24,35 @@ void put(FlValue* map, const char* key, FlValue* value) { fl_value_set_string_ta
 // Flutter 3.47 renders in EGL, while GTK on X11 can still use GLX. Save the
 // actual EGL context, not GDK's unrelated thread-local paint context.
 struct Current {
+  EGLenum previous_api = eglQueryAPI();
   EGLDisplay display, previous_display = eglGetCurrentDisplay();
   EGLContext previous = eglGetCurrentContext();
   EGLSurface draw = eglGetCurrentSurface(EGL_DRAW), read = eglGetCurrentSurface(EGL_READ);
+  GLXContext glx = glXGetCurrentContext();
+  Display* glx_display = glXGetCurrentDisplay();
+  GLXDrawable glx_draw = glXGetCurrentDrawable(), glx_read = glXGetCurrentReadDrawable();
   explicit Current(EGLDisplay d, EGLContext context) : display(d) {
-    require(eglMakeCurrent(d, EGL_NO_SURFACE, EGL_NO_SURFACE, context) == EGL_TRUE,
-        "Cannot acquire shared EGL context");
+    // GTK's platform thread can own a GLX context and a different bound EGL
+    // API. Release that binding during diagnostics/teardown, then restore it.
+    if (glx) require(glXMakeContextCurrent(glx_display, None, None, nullptr),
+        "Cannot release GTK GLX context");
+    eglBindAPI(EGL_OPENGL_ES_API);
+    if (!eglMakeCurrent(d, EGL_NO_SURFACE, EGL_NO_SURFACE, context)) {
+      auto code = eglGetError();
+      restore();
+      throw std::runtime_error("Cannot acquire shared EGL context: " + std::to_string(code));
+    }
   }
-  ~Current() {
-    if (previous != EGL_NO_CONTEXT) eglMakeCurrent(previous_display, draw, read, previous);
-    else eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  void restore() {
+    // Explicitly unbind our ES context before restoring another client API;
+    // otherwise it can remain current to this thread and reject the next one.
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglBindAPI(previous_api);
+    if (previous != EGL_NO_CONTEXT && !eglMakeCurrent(previous_display, draw, read, previous))
+      g_warning("Live2D could not restore Flutter EGL context: %d", eglGetError());
+    if (glx) glXMakeContextCurrent(glx_display, glx_draw, glx_read, glx);
   }
+  ~Current() { restore(); }
 };
 struct Reply { FlMethodCall* call; FlValue* value; std::string error; };
 void respond(FlMethodCall* call, FlValue* value, const std::string& error = {}) {
