@@ -231,6 +231,6 @@ Future<void> probeAndroidGpu() async {
       .writeAsString(const JsonEncoder.withIndent('  ').convert(results));
   // ignore: avoid_print
   print(
-    'TSUKUYOMI_LIVE2D_GPU_OK platform=${Platform.operatingSystem} direct_surface=true cycles=2 transparent=true pose=true resize=true recreated_surface=${Platform.isAndroid} output=${directory.path}',
+    'TSUKUYOMI_LIVE2D_GPU_OK direct_surface=true cycles=2 transparent=true pose=true resize=true recreated_surface=${Platform.isAndroid} platform=${Platform.operatingSystem} output=${directory.path}',
   );
 }

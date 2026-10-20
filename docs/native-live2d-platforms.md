@@ -6,15 +6,17 @@
 | --- | --- | --- |
 | Android | OpenGL ES → SurfaceProducer | 保留已有 EGL 工作线程、窗口 Surface 重建 |
 | iOS/macOS | Metal → IOSurface/CVPixelBuffer → FlutterTexture | 共用串行工作队列；最多三个输出缓冲；命令完成后通知 Flutter；Flutter 持有的缓冲不能复用 |
-| Windows | D3D11 → DXGI shared handle → GpuSurfaceTexture | 共用工作线程/device；完成查询后交付；三个输出槽，释放回调管理消费期间的所有权 |
-| Linux | OpenGL → FlTextureGL | 私有 GDK 共享上下文；加载/图集解码在工作池；有待处理帧时在纹理回调绘制，保存/恢复 Flutter 上下文，跨上下文同步 |
+| Windows | D3D11 → DXGI shared handle → GpuSurfaceTexture | 共用工作线程/device；复用私有渲染目标；GPU 拷贝到不可变共享帧，完成查询后交付 |
+| Linux | OpenGL → FlTextureGL | 私有 GDK 共享上下文；模型加载/图集上传在工作池；有待处理帧时在纹理回调绘制，保存/恢复 Flutter 上下文，跨上下文同步 |
 | HarmonyOS | 现有 Native Core + Canvas | 本次不注册 GPU 插件；自动模式说明回退原因；强制 GPU 报错 |
 
-所有新平台通过进程内 `TsGpuApi` 使用 native-assets 中同一份 Cubism。Dart 只在创建时传 API 地址与压缩资源，每帧仍是一批有序参数，不传网格或像素。版本检查避免接口不匹配。Apple 的原生资源库名称与 CocoaPods 插件不同，避免 framework 覆盖导致 FFI 找不到 Core 符号。
+所有新平台通过进程内 `TsGpuApi` 使用 native-assets 中同一份 Cubism。Dart 只在创建时传 API 地址与模型/图集资源，每帧仍是一批有序参数，不传网格或像素。版本检查避免接口不匹配。Apple 的原生资源库名称与 CocoaPods 插件不同，避免 framework 覆盖导致 FFI 找不到 Core 符号。
 
 Apple/Windows 的正常帧没有 CPU 像素读回；Linux 同样不读回，但它的提交发生在 Flutter 的原生纹理回调中，GPU 同步可能占用 raster 时间，不能将它描述为完全独立的渲染线程。隐藏窗口不消费纹理时，500 ms 内解除待处理帧的背压，不推进隐藏场景。实际性能收益需要同设备 A/B。
 
-图集只在加载时解码、缩放为预乘 alpha 并生成完整 mip 链；图集内存估计包括 mip 层。输出沿用真实 DPR、总像素预算和 4096 最大边长。Apple 使用 BGRA8Unorm 与 Depth32Float，颜色缓冲具备 IOSurface/Metal 兼容属性。GPU 完成计时包含等待，仍不是独立 GPU timer query。
+Windows 的 registrar 释放回调仅表示完成纹理导入，后续仍可能读取描述信息和采样纹理。因此描述信息保留到下次回调，已交付的共享纹理不覆写；每帧额外创建共享呈现纹理并做 GPU 拷贝。私有 Cubism 渲染目标只在 resize 时重建。这项分配成本是当前适配的性能限制，不能宣称 Windows 已实现全程复用或零拷贝。
+
+图集只在加载时解码、缩放为预乘 alpha 并生成完整 mip 链；Windows/Linux 使用 Flutter 自带解码器一次性解码并上传，避免依赖系统额外安装 WebP codec；图集内存估计包括 mip 层。输出沿用真实 DPR、总像素预算和 4096 最大边长。Apple 使用 BGRA8Unorm 与 Depth32Float，颜色缓冲具备 IOSurface/Metal 兼容属性。GPU 完成计时包含等待，仍不是独立 GPU timer query。
 
 SDK vendor 文件保持原样。构建时对固定 SDK 生成源码：
 

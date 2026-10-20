@@ -237,12 +237,29 @@ void main(List<String> args) async {
       }
       output.dependencies.add(sdk.resolve(core));
     }
+    // MSVC is launched through cmd.exe by native_toolchain_c. The Framework's
+    // absolute source paths exceed cmd's 8191-character limit on CI checkouts.
+    // Keep each translation unit, but move source arguments into a response file.
+    String? sourceResponse;
+    if (os == OS.windows) {
+      final sourceUris = sources
+          .map((source) => input.packageRoot.resolveUri(Uri.file(source)))
+          .toList();
+      final response = File.fromUri(
+        input.outputDirectory.resolve('cubism_sources.rsp'),
+      );
+      await response.writeAsString(
+        sourceUris.map((uri) => '"${uri.toFilePath()}"').join('\n'),
+      );
+      output.dependencies.addAll(sourceUris);
+      sourceResponse = response.path;
+    }
     final builder = CBuilder.library(
       // CocoaPods also creates tsukuyomi_live2d.framework. Native assets must
       // have a distinct install name or Flutter can resolve FFI into the plugin.
       name: metal ? 'tsukuyomi_cubism_core' : input.packageName,
       assetName: 'bindings.dart',
-      sources: sources,
+      sources: sourceResponse == null ? sources : [],
       language: Language.cpp,
       cppLinkStdLib: os == OS.windows
           ? null
@@ -267,7 +284,7 @@ void main(List<String> args) async {
         if (linuxGl) 'CSM_TARGET_LINUX_GL': '1',
       },
       flags: os == OS.windows
-          ? ['/std:c++17', '/MD']
+          ? ['/std:c++17', '/MD', '/EHsc', '@$sourceResponse']
           : [
               '-std=c++17',
               if (metal) ...[

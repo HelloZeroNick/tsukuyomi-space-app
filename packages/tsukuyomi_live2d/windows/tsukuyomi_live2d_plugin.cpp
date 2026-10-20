@@ -6,7 +6,6 @@
 #include <flutter/texture_registrar.h>
 #include <d3d11.h>
 #include <dxgi.h>
-#include <wincodec.h>
 #include <wrl/client.h>
 #include <algorithm>
 #include <chrono>
@@ -82,10 +81,6 @@ struct Surface {
   HANDLE shared = nullptr;
   int width = 0, height = 0;
 };
-struct Lease {
-  FlutterDesktopGpuSurfaceDescriptor descriptor{};
-  std::shared_ptr<Surface> surface;
-};
 struct Scene {
   const TsGpuApi* api = nullptr;
   void* model = nullptr;
@@ -93,48 +88,54 @@ struct Scene {
   std::atomic<bool> registered{false};
   std::mutex mutex;
   std::shared_ptr<Surface> front;
-  std::vector<std::shared_ptr<Surface>> pool;
+  std::shared_ptr<Surface> consumer;
+  std::shared_ptr<Surface> render_target;
+  FlutterDesktopGpuSurfaceDescriptor descriptor{};
   std::vector<ComPtr<ID3D11ShaderResourceView>> atlases;
   std::unique_ptr<flutter::TextureVariant> texture;
   void close() {
     if (model) { api->destroy(model); model = nullptr; }
     atlases.clear();
-    std::lock_guard<std::mutex> lock(mutex); front.reset(); pool.clear();
+    std::lock_guard<std::mutex> lock(mutex); front.reset(); render_target.reset();
   }
   const FlutterDesktopGpuSurfaceDescriptor* copy() {
     std::lock_guard<std::mutex> lock(mutex);
     if (!front) return nullptr;
-    auto* lease = new Lease;
-    lease->surface = front;
-    auto& d = lease->descriptor;
+    consumer = front;
+    auto& d = descriptor;
     d.struct_size = sizeof(d); d.handle = front->shared;
     d.width = d.visible_width = front->width;
     d.height = d.visible_height = front->height;
     d.format = kFlutterDesktopPixelFormatBGRA8888;
-    d.release_context = lease;
-    d.release_callback = [](void* p) { delete static_cast<Lease*>(p); };
+    d.release_context = new std::shared_ptr<Surface>(front);
+    // Flutter invokes this after importing the handle, then still reads the
+    // descriptor. Keep metadata alive and never reuse a published GPU image.
+    d.release_callback = [](void* p) { delete static_cast<std::shared_ptr<Surface>*>(p); };
     return &d;
   }
   std::shared_ptr<Surface> acquire(int width, int height) {
     std::lock_guard<std::mutex> lock(mutex);
-    for (auto& slot : pool) if (slot.use_count() == 1) {
-      if (slot->width == width && slot->height == height) return slot;
-      slot.reset();
-    }
-    pool.erase(std::remove(pool.begin(), pool.end(), nullptr), pool.end());
-    if (pool.size() >= 3) return nullptr;
+    if (render_target && render_target->width == width && render_target->height == height) return render_target;
     auto slot = std::make_shared<Surface>();
     D3D11_TEXTURE2D_DESC desc{};
     desc.Width = width; desc.Height = height; desc.MipLevels = desc.ArraySize = 1;
     desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; desc.SampleDesc.Count = 1;
     desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
     check(worker().device->CreateTexture2D(&desc, nullptr, &slot->texture), "Cannot allocate D3D target");
     check(worker().device->CreateRenderTargetView(slot->texture.Get(), nullptr, &slot->target), "Cannot create D3D target view");
+    slot->width = width; slot->height = height; render_target = slot;
+    return slot;
+  }
+  std::shared_ptr<Surface> copy_for_flutter(const std::shared_ptr<Surface>& rendered) {
+    auto slot = std::make_shared<Surface>();
+    D3D11_TEXTURE2D_DESC desc{}; rendered->texture->GetDesc(&desc);
+    desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+    check(worker().device->CreateTexture2D(&desc, nullptr, &slot->texture), "Cannot allocate presentation texture");
     ComPtr<IDXGIResource> resource;
     check(slot->texture.As(&resource), "Cannot share D3D target");
     check(resource->GetSharedHandle(&slot->shared), "Cannot obtain DXGI handle");
-    slot->width = width; slot->height = height; pool.push_back(slot);
+    slot->width = rendered->width; slot->height = rendered->height;
+    worker().context->CopyResource(slot->texture.Get(), rendered->texture.Get());
     return slot;
   }
 };
@@ -188,28 +189,15 @@ class Plugin final : public flutter::Plugin {
             require(s->model != nullptr, s->api->error());
             double init = micros(start);
             int limit = static_cast<int>(std::clamp<int64_t>(number(at(args, "maxTextureSize")), 1, 4096));
-            ComPtr<IWICImagingFactory> factory;
-            check(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)), "WIC unavailable");
             int64_t atlas_bytes = 0;
-            for (const auto& value : std::get<L>(at(args, "textures"))) {
-              const auto& encoded = std::get<std::vector<uint8_t>>(value);
-              require(!encoded.empty() && encoded.size() < 64 * 1024 * 1024, "Invalid atlas");
-              ComPtr<IWICStream> stream; check(factory->CreateStream(&stream), "Cannot create atlas stream");
-              check(stream->InitializeFromMemory(const_cast<BYTE*>(encoded.data()), static_cast<DWORD>(encoded.size())), "Invalid atlas stream");
-              ComPtr<IWICBitmapDecoder> decoder;
-              check(factory->CreateDecoderFromStream(stream.Get(), nullptr, WICDecodeMetadataCacheOnLoad, &decoder), "Cannot decode atlas");
-              ComPtr<IWICBitmapFrameDecode> frame; check(decoder->GetFrame(0, &frame), "Missing atlas image");
-              UINT w, h; check(frame->GetSize(&w, &h), "Invalid atlas dimensions");
-              require(w > 0 && h > 0 && w <= 16384 && h <= 16384, "Atlas dimensions exceed limit");
-              double ratio = std::min(1.0, double(limit) / std::max(w, h));
-              w = std::max(1u, UINT(w * ratio + .5)); h = std::max(1u, UINT(h * ratio + .5));
-              ComPtr<IWICBitmapScaler> scaler; check(factory->CreateBitmapScaler(&scaler), "Cannot resize atlas");
-              check(scaler->Initialize(frame.Get(), w, h, WICBitmapInterpolationModeFant), "Cannot scale atlas");
-              ComPtr<IWICFormatConverter> converter; check(factory->CreateFormatConverter(&converter), "Cannot convert atlas");
-              check(converter->Initialize(scaler.Get(), GUID_WICPixelFormat32bppPRGBA, WICBitmapDitherTypeNone, nullptr, 0,
-                    WICBitmapPaletteTypeCustom), "Cannot premultiply atlas");
-              std::vector<uint8_t> pixels(size_t(w) * h * 4);
-              check(converter->CopyPixels(nullptr, w * 4, static_cast<UINT>(pixels.size()), pixels.data()), "Cannot read atlas");
+            for (const auto& value : std::get<L>(at(args, "atlases"))) {
+              const auto& atlas_data = std::get<M>(value);
+              int width = static_cast<int>(number(at(atlas_data, "width")));
+              int height = static_cast<int>(number(at(atlas_data, "height")));
+              const auto& pixels = std::get<std::vector<uint8_t>>(at(atlas_data, "rgba"));
+              require(width > 0 && height > 0 && width <= limit && height <= limit &&
+                  pixels.size() == size_t(width) * height * 4, "Invalid decoded atlas");
+              UINT w = static_cast<UINT>(width), h = static_cast<UINT>(height);
               D3D11_TEXTURE2D_DESC desc{};
               desc.Width = w; desc.Height = h; desc.ArraySize = 1; desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
               desc.SampleDesc.Count = 1; desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
@@ -282,6 +270,9 @@ class Plugin final : public flutter::Plugin {
           double timing[2]{};
           require(s->api->draw(s->model, &frame, timing), s->api->error());
           auto submitted = std::chrono::steady_clock::now();
+          // The public registrar exposes no consumer GPU fence. Keep published
+          // images immutable; reuse only our private Cubism render target.
+          auto published = s->copy_for_flutter(surface);
           D3D11_QUERY_DESC query_desc{D3D11_QUERY_EVENT, 0};
           ComPtr<ID3D11Query> fence;
           check(worker().device->CreateQuery(&query_desc, &fence), "Cannot create completion query");
@@ -292,7 +283,7 @@ class Plugin final : public flutter::Plugin {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
           }
           check(status, "D3D device lost");
-          { std::lock_guard<std::mutex> lock(s->mutex); s->front = surface; }
+          { std::lock_guard<std::mutex> lock(s->mutex); s->front = published; }
           registry->MarkTextureFrameAvailable(s->id);
           reply->Success(V(M{{V("width"), V(w)}, {V("height"), V(h)},
             {V("updateMicros"), V(timing[0])}, {V("submitMicros"), V(timing[1])},

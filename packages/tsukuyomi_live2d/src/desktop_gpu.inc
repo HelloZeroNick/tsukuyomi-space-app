@@ -36,6 +36,8 @@ struct NativeGpuScene {
       if (--gpu_instances == 0) {
 #if defined(TS_GPU_METAL)
         Rendering::CubismDeviceInfo_Metal::ReleaseAllDeviceInfo();
+#elif defined(TS_GPU_D3D11)
+        Rendering::CubismDeviceInfo_D3D11::ReleaseAllDeviceInfo();
 #else
         Rendering::CubismRenderer::StaticRelease();
 #endif
@@ -192,7 +194,7 @@ void gpu_destroy(void* handle) { TS_LOCK; delete static_cast<NativeGpuScene*>(ha
 const char* gpu_error_text() { return gpu_last_error.c_str(); }
 const TsGpuApi gpu_api{1, gpu_create, gpu_bind, gpu_draw, gpu_destroy, gpu_error_text};
 }
-API const TsGpuApi* ts_gpu_api() { return &gpu_api; }
+TS_EXPORT const TsGpuApi* ts_gpu_api() { return &gpu_api; }
 
 #if defined(CSM_TARGET_LINUX_GL)
 void ts_gl_vertex(GLuint attribute, int vertices, const float* data) {

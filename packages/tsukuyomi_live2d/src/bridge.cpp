@@ -7,9 +7,9 @@
 
 #if defined(_WIN32)
 #include <malloc.h>
-#define API extern "C" __declspec(dllexport)
+#define TS_EXPORT extern "C" __declspec(dllexport)
 #else
-#define API extern "C" __attribute__((visibility("default"))) __attribute__((used))
+#define TS_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 #endif
 
 struct Mesh {
@@ -92,8 +92,8 @@ static void shutdown_if_idle() {
     CubismFramework::Dispose(); CubismFramework::CleanUp();
   }
 }
-API int ts_available() { return 1; }
-API void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int physics_size) { TS_LOCK;
+TS_EXPORT int ts_available() { return 1; }
+TS_EXPORT void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int physics_size) { TS_LOCK;
   if (!bytes || size < 4 || size > 64 * 1024 * 1024) return nullptr;
   if (!CubismFramework::IsStarted()) { CubismFramework::StartUp(&allocator
 #if defined(TS_GPU) && !defined(TS_GPU_METAL)
@@ -111,15 +111,15 @@ API void* ts_create(const uint8_t* bytes, int size, const uint8_t* physics, int 
   auto* scene = new Scene{moc, model, physics_size > 0 ? CubismPhysics::Create(physics, physics_size) : nullptr};
   ++instances; model->SaveParameters(); model->Update(); return scene;
 }
-API void ts_destroy(void* ptr) { TS_LOCK;
+TS_EXPORT void ts_destroy(void* ptr) { TS_LOCK;
   if (!ptr) return;
   auto* s = static_cast<Scene*>(ptr);
   if (s->physics) CubismPhysics::Delete(s->physics);
   s->moc->DeleteModel(s->model); CubismMoc::Delete(s->moc); delete s;
   --instances; shutdown_if_idle();
 }
-API void ts_begin(void* ptr) { TS_LOCK; if (ptr) static_cast<Scene*>(ptr)->model->LoadParameters(); }
-API void ts_parameter(void* ptr, const char* id, float value, int blend) { TS_LOCK;
+TS_EXPORT void ts_begin(void* ptr) { TS_LOCK; if (ptr) static_cast<Scene*>(ptr)->model->LoadParameters(); }
+TS_EXPORT void ts_parameter(void* ptr, const char* id, float value, int blend) { TS_LOCK;
   if (!ptr || !id || !std::isfinite(value)) return;
   auto* m = static_cast<Scene*>(ptr)->model;
   auto key = CubismFramework::GetIdManager()->GetId(id);
@@ -127,7 +127,7 @@ API void ts_parameter(void* ptr, const char* id, float value, int blend) { TS_LO
   else if (blend == 2) m->MultiplyParameterValue(key, value);
   else m->SetParameterValue(key, value);
 }
-API void ts_update(void* ptr, float delta) { TS_LOCK;
+TS_EXPORT void ts_update(void* ptr, float delta) { TS_LOCK;
   if (!ptr) return;
   auto* s = static_cast<Scene*>(ptr);
   if (s->physics) s->physics->Evaluate(s->model, std::clamp(delta, 0.0f, 0.05f));
@@ -136,8 +136,8 @@ API void ts_update(void* ptr, float delta) { TS_LOCK;
   Core::csmResetDrawableDynamicFlags(s->model->GetModel());
   Core::csmUpdateModel(s->model->GetModel());
 }
-API int ts_mesh_count(void* ptr) { TS_LOCK; return ptr ? static_cast<Scene*>(ptr)->model->GetDrawableCount() : 0; }
-API int ts_mesh(void* ptr, int index, Mesh* out) { TS_LOCK;
+TS_EXPORT int ts_mesh_count(void* ptr) { TS_LOCK; return ptr ? static_cast<Scene*>(ptr)->model->GetDrawableCount() : 0; }
+TS_EXPORT int ts_mesh(void* ptr, int index, Mesh* out) { TS_LOCK;
   if (!ptr || !out || index < 0 || index >= ts_mesh_count(ptr)) return 0;
   auto* m = static_cast<Scene*>(ptr)->model; auto* core = m->GetModel();
   out->vertices = m->GetDrawableVertexCount(index);
@@ -158,7 +158,7 @@ API int ts_mesh(void* ptr, int index, Mesh* out) { TS_LOCK;
   out->screen[0] = scr.X; out->screen[1] = scr.Y; out->screen[2] = scr.Z; out->screen[3] = scr.W;
   return 1;
 }
-API int ts_meshes(void* ptr, Mesh* out, int count) { TS_LOCK;
+TS_EXPORT int ts_meshes(void* ptr, Mesh* out, int count) { TS_LOCK;
   if (!ptr || !out || count != ts_mesh_count(ptr)) return 0;
   for (int i = 0; i < count; ++i) if (!ts_mesh(ptr, i, out + i)) return 0;
   return 1;
@@ -169,17 +169,17 @@ API int ts_meshes(void* ptr, Mesh* out, int count) { TS_LOCK;
 #include "desktop_gpu.inc"
 #endif
 #else
-API int ts_available() { return 0; }
-API void* ts_create(const uint8_t*, int, const uint8_t*, int) { return nullptr; }
-API void ts_destroy(void*) {}
-API void ts_begin(void*) {}
-API void ts_parameter(void*, const char*, float, int) {}
-API void ts_update(void*, float) {}
-API int ts_mesh_count(void*) { return 0; }
-API int ts_mesh(void*, int, Mesh*) { return 0; }
-API int ts_meshes(void*, Mesh*, int) { return 0; }
+TS_EXPORT int ts_available() { return 0; }
+TS_EXPORT void* ts_create(const uint8_t*, int, const uint8_t*, int) { return nullptr; }
+TS_EXPORT void ts_destroy(void*) {}
+TS_EXPORT void ts_begin(void*) {}
+TS_EXPORT void ts_parameter(void*, const char*, float, int) {}
+TS_EXPORT void ts_update(void*, float) {}
+TS_EXPORT int ts_mesh_count(void*) { return 0; }
+TS_EXPORT int ts_mesh(void*, int, Mesh*) { return 0; }
+TS_EXPORT int ts_meshes(void*, Mesh*, int) { return 0; }
 #endif
 
 #if !defined(TS_GPU) || defined(CSM_TARGET_ANDROID_ES2)
-API const void* ts_gpu_api() { return nullptr; }
+TS_EXPORT const void* ts_gpu_api() { return nullptr; }
 #endif

@@ -48,6 +48,7 @@ class GpuLive2DModel extends Live2DModel {
     required String manifest,
     required int maxTextureSize,
     int nativeApiAddress = 0,
+    bool decodeAtlases = false,
   }) async {
     final watch = Stopwatch()..start();
     _channel.setMethodCallHandler(_nativeEvent);
@@ -95,17 +96,59 @@ class GpuLive2DModel extends Live2DModel {
       ),
     ).wait;
     final assetMilliseconds = watch.elapsedMicroseconds / 1000;
+    // Desktop system codecs do not consistently include WebP. Decode once
+    // using Flutter's bundled codecs; no atlas pixels cross Dart per frame.
+    final atlases = <Map<String, Object>>[];
+    if (decodeAtlases) {
+      final limit = maxTextureSize == 0 ? 4096 : math.min(maxTextureSize, 4096);
+      for (final encoded in textures) {
+        final codec = await ui.instantiateImageCodecWithSize(
+          await ui.ImmutableBuffer.fromUint8List(encoded),
+          getTargetSize: (w, h) {
+            final scale = math.min(1.0, limit / math.max(w, h));
+            return ui.TargetImageSize(
+              width: math.max(1, (w * scale).round()),
+              height: math.max(1, (h * scale).round()),
+            );
+          },
+        );
+        try {
+          final image = (await codec.getNextFrame()).image;
+          try {
+            final pixels = await image.toByteData(
+              format: ui.ImageByteFormat.rawRgba,
+            );
+            if (pixels == null) throw StateError('Cannot decode GPU atlas');
+            atlases.add({
+              'width': image.width,
+              'height': image.height,
+              'rgba': pixels.buffer.asUint8List(
+                pixels.offsetInBytes,
+                pixels.lengthInBytes,
+              ),
+            });
+          } finally {
+            image.dispose();
+          }
+        } finally {
+          codec.dispose();
+        }
+      }
+    }
+    final atlasDecodeMilliseconds =
+        watch.elapsedMicroseconds / 1000 - assetMilliseconds;
     final info = await _channel.invokeMapMethod<dynamic, dynamic>('create', {
       'moc': moc,
       'nativeApi': nativeApiAddress,
       'physics': physics,
-      'textures': textures,
+      if (decodeAtlases) 'atlases': atlases else 'textures': textures,
       'maxTextureSize': maxTextureSize == 0 ? 4096 : maxTextureSize,
     });
     if (info == null) throw StateError('Native GPU returned no texture');
     final model = GpuLive2DModel._(info, Map.fromEntries(expressionEntries));
     model.loadMetrics.addAll({
       'assets_ms': assetMilliseconds,
+      if (decodeAtlases) 'atlas_decode_ms': atlasDecodeMilliseconds,
       'load_ms': watch.elapsedMicroseconds / 1000,
       ...Map<String, num>.from(info['loadMetrics'] as Map? ?? const {}),
     });

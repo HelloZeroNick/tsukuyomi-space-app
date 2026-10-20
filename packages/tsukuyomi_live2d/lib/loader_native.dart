@@ -37,6 +37,7 @@ Future<Live2DModel> loadLive2D({
         manifest: manifest,
         maxTextureSize: maxTextureSize,
         nativeApiAddress: api,
+        decodeAtlases: Platform.isLinux || Platform.isWindows,
       );
     } catch (e) {
       if (renderer == 'gpu') rethrow;

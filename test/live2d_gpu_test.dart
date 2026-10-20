@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as image;
 import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import 'package:tsukuyomi_space_app/live2d/live2d_scene_controller.dart';
 
@@ -88,6 +89,44 @@ void main() {
   Future<GpuLive2DModel> load() => GpuLive2DModel.load(
     manifest: 'gpu-fixture/model3.json',
     maxTextureSize: 3072,
+  );
+
+  test(
+    'desktop atlas decode preserves premultiplied alpha and bounds size',
+    () async {
+      final atlas = image.Image(width: 4, height: 2, numChannels: 4);
+      image.fill(atlas, color: image.ColorRgba8(128, 64, 32, 128));
+      final png = image.encodePng(atlas);
+      binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', (
+        data,
+      ) async {
+        final path = utf8.decode(
+          data!.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        );
+        return ByteData.sublistView(
+          path.endsWith('.png')
+              ? png
+              : Uint8List.fromList(
+                  utf8.encode(
+                    path.endsWith('.json')
+                        ? '{"FileReferences":{"Moc":"m.moc3","Textures":["t.png"]}}'
+                        : 'fixture',
+                  ),
+                ),
+        );
+      });
+      final model = await GpuLive2DModel.load(
+        manifest: 'desktop-decode/model3.json',
+        maxTextureSize: 2,
+        decodeAtlases: true,
+      );
+      final args = calls.single.arguments as Map;
+      expect(args.containsKey('textures'), false);
+      final result = (args['atlases'] as List).single as Map;
+      expect([result['width'], result['height']], [2, 1]);
+      expect(result['rgba'], [64, 32, 16, 128, 64, 32, 16, 128]);
+      model.dispose();
+    },
   );
 
   test(

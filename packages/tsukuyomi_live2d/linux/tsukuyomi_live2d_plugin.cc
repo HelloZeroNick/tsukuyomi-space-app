@@ -204,32 +204,18 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
           GLint max_size = 0; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
           int limit = static_cast<int>(std::clamp<int64_t>(fl_value_get_int(at(a, "maxTextureSize")), 1, std::min(max_size, 4096)));
           int64_t atlas_bytes = 0;
-          auto* textures = at(a, "textures");
+          auto* textures = at(a, "atlases");
           for (size_t i = 0; i < fl_value_get_length(textures); ++i) {
-            auto* encoded = fl_value_get_list_value(textures, i);
-            g_autoptr(GdkPixbufLoader) loader = gdk_pixbuf_loader_new();
-            g_signal_connect(loader, "size-prepared", G_CALLBACK(+[](GdkPixbufLoader* loader, int w, int h, gpointer data) {
-              int edge = GPOINTER_TO_INT(data);
-              double scale = std::min(1.0, double(edge) / std::max(w, h));
-              gdk_pixbuf_loader_set_size(loader, std::max(1, int(w * scale + .5)), std::max(1, int(h * scale + .5)));
-            }), GINT_TO_POINTER(limit));
-            require(gdk_pixbuf_loader_write(loader, fl_value_get_uint8_list(encoded), fl_value_get_length(encoded), nullptr) &&
-                gdk_pixbuf_loader_close(loader, nullptr), "Cannot decode atlas");
-            GdkPixbuf* image = gdk_pixbuf_loader_get_pixbuf(loader);
-            require(image != nullptr, "Missing atlas");
-            int w = gdk_pixbuf_get_width(image), h = gdk_pixbuf_get_height(image);
-            int stride = gdk_pixbuf_get_rowstride(image), channels = gdk_pixbuf_get_n_channels(image);
-            const auto* input = gdk_pixbuf_get_pixels(image);
-            std::vector<uint8_t> pixels(size_t(w) * h * 4);
-            for (int y = 0; y < h; ++y) for (int x = 0; x < w; ++x) {
-              const auto* p = input + y * stride + x * channels; auto* q = pixels.data() + (y * w + x) * 4;
-              uint8_t alpha = channels == 4 ? p[3] : 255;
-              for (int c = 0; c < 3; ++c) q[c] = (unsigned(p[c]) * alpha + 127) / 255;
-              q[3] = alpha;
-            }
+            auto* atlas_data = fl_value_get_list_value(textures, i);
+            int w = static_cast<int>(fl_value_get_int(at(atlas_data, "width")));
+            int h = static_cast<int>(fl_value_get_int(at(atlas_data, "height")));
+            auto* rgba = at(atlas_data, "rgba");
+            require(w > 0 && h > 0 && w <= limit && h <= limit &&
+                fl_value_get_length(rgba) == size_t(w) * h * 4, "Invalid decoded atlas");
+            const auto* pixels = fl_value_get_uint8_list(rgba);
             GLuint atlas = 0; glGenTextures(1, &atlas); state->atlases.push_back(atlas);
             glBindTexture(GL_TEXTURE_2D, atlas);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
             glGenerateMipmap(GL_TEXTURE_2D);
             require(glGetError() == GL_NO_ERROR, "Cannot upload atlas");
             require(state->api->bind(state->model, static_cast<int32_t>(i), reinterpret_cast<void*>(uintptr_t(atlas))), state->api->error());
@@ -298,7 +284,7 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
       Current current(s->context);
       glBindFramebuffer(GL_FRAMEBUFFER, s->target);
       std::vector<uint8_t> pixels(size_t(s->width) * s->height * 4), bottom_up(pixels.size());
-      glReadPixels(0, 0, s->width, s->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+      glReadPixels(0, 0, s->width, s->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
       require(glGetError() == GL_NO_ERROR, "QA readback failed");
       for (int y = 0; y < s->height; ++y) std::copy_n(pixels.data() + size_t(y) * s->width * 4,
           s->width * 4, bottom_up.data() + size_t(s->height - 1 - y) * s->width * 4);
