@@ -100,7 +100,7 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
   std::lock_guard<std::mutex> lock(s->mutex);
   // The pinned Linux embedder dereferences GError whenever populate returns
   // FALSE. The widget can be painted before Dart's post-frame size callback.
-  if (s->closed || !s->model || (!s->pending && !s->color)) {
+  if (s->closed || !s->model) {
     g_set_error_literal(error, g_quark_from_static_string("ts-live2d"), 1,
         "Live2D is waiting for its first frame or has been disposed");
     return FALSE;
@@ -148,6 +148,22 @@ static gboolean populate(FlTextureGL* texture, uint32_t* target, uint32_t* name,
         if (!s->api->bind(s->model, static_cast<int32_t>(i), reinterpret_cast<void*>(uintptr_t(atlas)))) throw std::runtime_error(s->api->error());
       }
       fl_value_unref(s->pending_atlases); s->pending_atlases = nullptr;
+    }
+    if (!s->pending && !s->color) {
+      // Publish a valid transparent image before Dart knows the layout. A
+      // failed first import can leave Flutter's retained tree without an image
+      // for subsequent texture-only frames to repaint.
+      glGenTextures(1, &s->color);
+      glBindTexture(GL_TEXTURE_2D, s->color);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      const uint8_t transparent[4] = {};
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA,
+          GL_UNSIGNED_BYTE, transparent);
+      s->width = s->height = 1;
+      glFinish();
     }
     if (s->pending) {
       FlValue* args = fl_method_call_get_args(s->pending);
@@ -324,7 +340,10 @@ void handle(FlMethodChannel*, FlMethodCall* call, gpointer user_data) {
     if (method == "frame") {
       require(s->pending == nullptr, "Frame already pending");
       s->pending = FL_METHOD_CALL(g_object_ref(call));
-      fl_texture_registrar_mark_texture_frame_available(plugin->registry, FL_TEXTURE(texture));
+      if (!fl_texture_registrar_mark_texture_frame_available(plugin->registry, FL_TEXTURE(texture))) {
+        s->finish(nullptr, "Flutter rejected the texture frame notification");
+        return;
+      }
       // A hidden window may never populate a texture. Release Dart backpressure
       // without rendering or advancing physics until the scene is visible.
       auto* pending = new std::pair<TsTexture*, FlMethodCall*>(
