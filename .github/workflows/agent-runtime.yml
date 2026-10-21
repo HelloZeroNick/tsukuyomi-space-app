@@ -50,6 +50,11 @@ jobs:
           flutter-version: '3.47.5'
           channel: stable
           cache: true
+      - name: Install Linux native rendering headers
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libepoxy-dev libgl-dev
       - run: python tool/release/prepare_assets.py
       - run: flutter pub get
       - run: python tool/agent/prepare_runtime.py --target '${{ matrix.target }}'
