@@ -1153,6 +1153,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.12"
+  tobias:
+    dependency: "direct main"
+    description:
+      name: tobias
+      sha256: "1cfd203bf57f8d4daa3e734d24ef97568eb5265af62d1498c32da4e69905c70f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.3.4"
   tsukuyomi_live2d:
     dependency: "direct main"
     description:

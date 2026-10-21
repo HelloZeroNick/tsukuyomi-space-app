@@ -34,6 +34,7 @@ const _groups = <String, List<(String, IconData)>>{
   ],
   '账户与设置': [
     ('/user', Icons.person_outline),
+    ('/payments', Icons.account_balance_wallet_outlined),
     ('/notifications', Icons.notifications_outlined),
   ],
 };

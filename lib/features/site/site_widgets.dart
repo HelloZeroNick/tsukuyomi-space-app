@@ -32,6 +32,7 @@ const siteDestinations = <String, String>{
   '/conversations': '会话与记忆',
   '/growth': '月契成长',
   '/user': '个人中心',
+  '/payments': '支付中心',
   '/notifications': '站内信',
   '/wiki': '月读百科',
   '/gallery': '幻想画廊',

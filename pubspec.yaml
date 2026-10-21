@@ -1,7 +1,7 @@
 name: tsukuyomi_space_app
 description: Native Flutter Room client for Tsukuyomi Space.
 publish_to: none
-version: 0.6.24+31
+version: 0.6.25+32
 environment:
   sdk: ^3.13.4
 dependencies:
@@ -38,12 +38,17 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   geolocator: ^14.1.1
   share_plus: ^13.3.0
+  tobias: 5.3.4
 dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+tobias:
+  url_scheme: tsukuyomi-alipay
+  ios:
+    ignore_security: true
 flutter:
   uses-material-design: true
   shaders:

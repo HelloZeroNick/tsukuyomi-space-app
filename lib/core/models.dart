@@ -80,6 +80,20 @@ class RoomSettings {
   /// Additional Room settings. Secrets stay in system secure storage.
   final Map<String, dynamic> options;
   final String mcpKey;
+  bool get usesOfficialApi {
+    final target = Uri.tryParse(llmUrl), site = Uri.tryParse(siteUrl);
+    return target != null &&
+        site != null &&
+        target.hasAuthority &&
+        site.hasAuthority &&
+        {'https', 'http'}.contains(target.scheme) &&
+        target.origin == site.origin &&
+        target.path == '/official-api/v1/chat/completions' &&
+        target.userInfo.isEmpty &&
+        !target.hasQuery &&
+        !target.hasFragment;
+  }
+
   bool flag(String key, [bool fallback = false]) =>
       options[key] as bool? ?? fallback;
   String option(String key, [String fallback = '']) =>

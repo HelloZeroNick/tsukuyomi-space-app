@@ -26,7 +26,22 @@ abstract interface class SiteDataService {
   ]);
 }
 
-class SiteClient implements SiteService, SiteDataService, SiteRoomEventService {
+abstract interface class OfficialDataService {
+  Future<Map<String, dynamic>> officialRequest(
+    String site,
+    String method,
+    String path, {
+    String? account,
+    Map<String, dynamic>? body,
+  });
+}
+
+class SiteClient
+    implements
+        SiteService,
+        SiteDataService,
+        SiteRoomEventService,
+        OfficialDataService {
   SiteClient({http.Client? client, this.timeout = const Duration(seconds: 25)})
     : _client = client ?? http.Client();
   final http.Client _client;
@@ -143,10 +158,46 @@ class SiteClient implements SiteService, SiteDataService, SiteRoomEventService {
     String method,
     String path, [
     Map<String, dynamic>? body,
-  ]) async {
+  ]) => _request(site, method, path, body);
+
+  @override
+  Future<Map<String, dynamic>> officialRequest(
+    String site,
+    String method,
+    String path, {
+    String? account,
+    Map<String, dynamic>? body,
+  }) {
+    if (!RegExp(
+          r'^/api/[a-z0-9/?=&%_.-]+$',
+          caseSensitive: false,
+        ).hasMatch(path) ||
+        Uri.decodeComponent(path).contains('..') ||
+        (method != 'GET' && (account == null || account.isEmpty))) {
+      throw const ApiFailure('请刷新支付中心，确认当前账号后重试');
+    }
+    return _request(
+      site,
+      method,
+      '/official-api$path',
+      body,
+      official: true,
+      account: account,
+    );
+  }
+
+  Future<Map<String, dynamic>> _request(
+    String site,
+    String method,
+    String path,
+    Map<String, dynamic>? body, {
+    bool official = false,
+    String? account,
+  }) async {
     final base = endpointUri(site);
     final target = base.resolve(path);
-    if (target.origin != base.origin || !target.path.startsWith('/api/')) {
+    if (target.origin != base.origin ||
+        !target.path.startsWith(official ? '/official-api/api/' : '/api/')) {
       throw const ApiFailure('无效的站点接口地址');
     }
     final revision = _revision, musicEpoch = _musicEpoch;
@@ -163,6 +214,8 @@ class SiteClient implements SiteService, SiteDataService, SiteRoomEventService {
             'Origin': base.origin,
             'X-Requested-With': 'XMLHttpRequest',
             'Cache-Control': 'no-cache',
+            if (official && account != null)
+              'X-Official-Expected-Account': account,
             if (sessionCookie != null ||
                 readerCookies.containsKey(base.origin) ||
                 visitorCookies.containsKey(base.origin) ||
@@ -249,9 +302,14 @@ class SiteClient implements SiteService, SiteDataService, SiteRoomEventService {
           status: response.statusCode,
         );
       }
-      if (response.statusCode >= 300 || json['success'] != true) {
+      if (response.statusCode >= 300 ||
+          (!official && json['success'] != true)) {
         throw ApiFailure(
-          json['message'] is String ? json['message'] : '站点请求失败',
+          official && json['error'] is Map && json['error']['message'] is String
+              ? json['error']['message'] as String
+              : json['message'] is String
+              ? json['message']
+              : '站点请求失败',
           status: response.statusCode,
         );
       }

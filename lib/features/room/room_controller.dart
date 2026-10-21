@@ -736,6 +736,7 @@ class RoomController extends ChangeNotifier {
         llm.systemOverride = '';
         llm.referenceContext = '';
         llm.siteCookie = site.cookie;
+        llm.siteAccountId = account?.id;
         llm.tools = workspace.modelTools(image);
         llm.executeTool = (call) => workspace.executeModelTool(call, image);
         llm.cancelTools = workspace.tools.cancel;
@@ -1031,6 +1032,7 @@ class RoomController extends ChangeNotifier {
           _diaryClient = service;
           if (service is LlmClient) {
             service.siteCookie = site.cookie;
+            service.siteAccountId = account?.id;
             service.systemOverride =
                 '你是「${persona['name']}」，请以第一人称把刚结束的对话写成私人日记。角色设定：${persona['description']}。性格：${persona['personality']}。相处背景：${persona['scenario']}。补充设定：${persona['creator_notes']}。只输出日记正文，不要 JSON、标题或额外说明。仅依据对话，不编造重要事件。400–900 字，自然分段。';
           }

@@ -13,6 +13,7 @@ const nativeSiteRoutes = {
   '/plaza',
   '/growth',
   '/user',
+  '/payments',
   '/conversations',
   '/notifications',
   '/wiki',

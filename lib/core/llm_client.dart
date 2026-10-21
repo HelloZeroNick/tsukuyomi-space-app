@@ -10,6 +10,7 @@ import 'room_conversation.dart';
 import 'room_protocol.dart';
 import 'room_reference.dart';
 import 'room_dialogue.dart';
+import 'official_api.dart';
 
 const characterPrompt =
     '你是月读空间里的月见八千代。用温柔、自然的中文陪伴用户，回答简短，尊重用户自主性。'
@@ -32,6 +33,7 @@ class LlmClient implements ChatService {
   String memoryContext = '';
   String referenceContext = '', systemOverride = '';
   String? siteCookie;
+  String? siteAccountId;
   Map<String, dynamic>? image;
   bool jsonObject = false;
   int maxReplyChars = 200000;
@@ -68,7 +70,16 @@ class LlmClient implements ChatService {
       return;
     }
     final direct = roomChatEndpoint(settings.llmUrl);
-    final proxy = settings.flag('llmProxy') && roomProtocol(direct) != 'ollama';
+    final official = settings.usesOfficialApi;
+    if (!official &&
+        (settings.option('llmConnection') == 'site' ||
+            settings.apiKey == 'tsukuyomi-site-session')) {
+      throw const ApiFailure('站内直供地址与当前站点不匹配，请重新选择连接方式');
+    }
+    final proxy =
+        !official &&
+        settings.flag('llmProxy') &&
+        roomProtocol(direct) != 'ollama';
     final uri = proxy
         ? endpointUri(settings.siteUrl).resolve('/api/chat/stream')
         : direct;
@@ -82,6 +93,49 @@ class LlmClient implements ChatService {
       cancelTools?.call();
     });
     try {
+      String? officialAccount;
+      if (official) {
+        if (siteCookie == null || siteAccountId == null) {
+          throw const ApiFailure('请先登录月读空间，再使用站内直供', status: 401);
+        }
+        final preflight =
+            http.Request(
+                'GET',
+                endpointUri(settings.siteUrl)
+                    .resolve('/official-api/api/dashboard'),
+              )
+              ..followRedirects = false
+              ..headers.addAll({
+                'Accept': 'application/json',
+                'Cache-Control': 'no-store',
+                'Origin': endpointUri(settings.siteUrl).origin,
+                'Cookie': siteCookie!,
+              });
+        final result = await client
+            .send(preflight)
+            .timeout(const Duration(seconds: 15));
+        final bytes = await result.stream
+            .timeout(const Duration(seconds: 15))
+            .fold<List<int>>([], (all, part) {
+              if (all.length + part.length > 1024 * 1024) {
+                throw const ApiFailure('直供服务响应过大');
+              }
+              return all..addAll(part);
+            });
+        if (generation != _generation) return;
+        if (result.statusCode != 200) {
+          throw _officialFailure(result.statusCode, bytes);
+        }
+        final dashboard = officialDashboard(
+          Map<String, dynamic>.from(jsonDecode(utf8.decode(bytes)) as Map),
+          siteAccountId!,
+        );
+        settings = officialRoomSettings(settings, dashboard);
+        officialAccount = (dashboard['me'] as Map)['account_id'] as String;
+        if (image != null) {
+          throw const ApiFailure('当前站内直供仅支持文字，图片请使用 MCP 识图或切换模型');
+        }
+      }
       final system = systemOverride.isNotEmpty
           ? systemOverride
           : [
@@ -173,13 +227,14 @@ class LlmClient implements ChatService {
           http.Request('POST', uri)
             ..followRedirects = false
             ..headers.addAll(
-              proxy
+              proxy || official
                   ? {
                       'Content-Type': 'application/json',
                       'Accept': 'text/event-stream',
                       'Origin': endpointUri(settings.siteUrl).origin,
                       'X-Requested-With': 'XMLHttpRequest',
                       'Cookie': ?siteCookie,
+                      'X-Official-Expected-Account': ?officialAccount,
                     }
                   : roomChatHeaders(settings, direct),
             )
@@ -236,12 +291,23 @@ class LlmClient implements ChatService {
               );
         if (closing) body['tool_choice'] = {'type': 'none'};
         if (runtime.unsupported('streaming')) body['stream'] = false;
+        if (official) {
+          if (settings.option('officialProvider') == 'deepseek') {
+            body['thinking'] = {'type': 'disabled'};
+          }
+          if (body['stream'] == true) {
+            body['stream_options'] = {'include_usage': true};
+          }
+        }
         var response = await client
             .send(requestFor(body))
             .timeout(const Duration(seconds: 30));
         for (
           var retry = 0;
-          !proxy && retry < 2 && [400, 422].contains(response.statusCode);
+          !proxy &&
+              !official &&
+              retry < 2 &&
+              [400, 422].contains(response.statusCode);
           retry++
         ) {
           final failed = <int>[];
@@ -289,6 +355,15 @@ class LlmClient implements ChatService {
               .timeout(const Duration(seconds: 30));
         }
         if (response.statusCode != 200) {
+          if (official) {
+            final bytes = await response.stream
+                .timeout(const Duration(seconds: 10))
+                .fold<List<int>>([], (all, part) {
+                  if (all.length + part.length <= 8192) all.addAll(part);
+                  return all;
+                });
+            throw _officialFailure(response.statusCode, bytes);
+          }
           throw providerFailure('模型请求', response.statusCode);
         }
         final limits = ModelLimits(
@@ -407,6 +482,24 @@ class LlmClient implements ChatService {
 }
 
 /// Legacy Chat Completions helper uses the same bounded provider decoder.
+ApiFailure _officialFailure(int status, List<int> bytes) {
+  String? message;
+  try {
+    final error = (jsonDecode(utf8.decode(bytes)) as Map)['error'];
+    if (error is Map && error['message'] is String) {
+      message = error['message'] as String;
+    }
+  } catch (_) {
+    /* The gateway may return an HTML error. */
+  }
+  return ApiFailure(switch (status) {
+    401 => '登录已失效，请重新登录后使用站内直供',
+    402 => '网站余额不足，请前往支付中心充值后重试',
+    409 => message ?? '账号或模型已变化，请刷新后重试',
+    _ => message ?? '站内直供暂时无法响应，请稍后重试',
+  }, status: status);
+}
+
 Stream<String> decodeCompletion(Stream<List<int>> bytes) async* {
   await for (final event in decodeModelStream(bytes, 'openai')) {
     if (event.type == 'text') yield event.text;

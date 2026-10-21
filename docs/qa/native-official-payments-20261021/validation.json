@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-21",
+  "scope": "Local implementation; not deployed or released",
+  "checks": {
+    "analyze": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-mobile-payments-analyze.log"
+    },
+    "full_flutter": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-payments-all-tests.log"
+    },
+    "final_focused": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-payments-final-focused.log"
+    },
+    "operator_and_payment_ui": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-payments-page-final-tests.log"
+    },
+    "macos": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-payments-macos-build.log"
+    },
+    "ios_unsigned": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-payments-ios-build.log"
+    },
+    "website_payments": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-mobile-payments-backend.log"
+    },
+    "website_build": {
+      "passed": true,
+      "log": "/private/tmp/tsukuyomi-payments-web-build.log"
+    }
+  },
+  "full_flutter": {
+    "passed": 993,
+    "skipped": 40
+  },
+  "website_payment_tests": 20,
+  "visual_qa": {
+    "fixture_only": true,
+    "desktop": "1280x720",
+    "mobile": "390x844",
+    "reviewed": [
+      "balance",
+      "topup",
+      "orders",
+      "models",
+      "usage",
+      "monthly statements"
+    ]
+  },
+  "ios_transport_security_preserved": true,
+  "legacy_migration": "Existing order retains amount and receives web channel",
+  "open_acceptance": [
+    "Android SDK unavailable on this Mac; no new Android APK built",
+    "Alipay mobile application currently lists PC website payment only; App Pay product not observed",
+    "Mobile application credentials have not been configured on production by this task",
+    "Physical-device App Pay invocation, signed installation and real payment settlement remain untested"
+  ]
+}

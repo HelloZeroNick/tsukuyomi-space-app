@@ -1,11 +1,11 @@
-# 月读空间 0.6.24 测试版
+# 月读空间 0.6.25 测试版
 
 ## 安装
 
 - Android：安装 `android-arm64-v8a.apk`（绝大多数手机）。x86_64 模拟器选择 x86_64。当前 Cubism SDK 已不提供 32 位 ARM 库，因此不发布 32 位 APK。允许安装来自浏览器或文件管理器的应用。所有 APK 使用同一持久发行密钥签名，可覆盖升级本测试版。
 - macOS：打开 DMG，将应用拖到 Applications。Universal 包同时支持 Apple Silicon 和 Intel。当前没有 Developer ID 签名和公证；首次启动可能需在“系统设置 → 隐私与安全性”允许打开此应用。无需关闭系统安全功能。
 - Windows 10/11 x64：运行 setup.exe。按当前用户安装，无需管理员权限；当前未使用商业代码签名，SmartScreen 可能显示未知发布者。安装程序包含经过微软签名验证的 WebView2 引导程序，缺少运行时会联网安装，以支持 QQ 登录。便携 ZIP 解压完整目录后也可运行，使用 QQ 前需运行包内的 `MicrosoftEdgeWebview2Setup.exe`。
-- Linux x64：使用 Ubuntu 22.04 构建，推荐 `sudo apt install ./tsukuyomi-space-0.6.24-linux-x64.deb` 自动安装该版本所需音视频运行库。需桌面登录会话及 Secret Service（如已解锁的 GNOME Keyring）保存密钥。其它发行版须具备相同运行库 ABI，尤其是构建时链接的 libmpv；tar.gz 为便携包，不包含系统 GTK、Secret Service、GStreamer、libmpv 和 libepoxy。DEB 的依赖根据实际安装包中全部 ELF 自动推导。
+- Linux x64：使用 Ubuntu 22.04 构建，推荐 `sudo apt install ./tsukuyomi-space-0.6.25-linux-x64.deb` 自动安装该版本所需音视频运行库。需桌面登录会话及 Secret Service（如已解锁的 GNOME Keyring）保存密钥。其它发行版须具备相同运行库 ABI，尤其是构建时链接的 libmpv；tar.gz 为便携包，不包含系统 GTK、Secret Service、GStreamer、libmpv 和 libepoxy。DEB 的依赖根据实际安装包中全部 ELF 自动推导。
 - iOS：下载 `ios-arm64-unsigned.ipa`，使用自签工具导入，并用自己的 Apple 账号或证书签名。签名器需重新签署 App 和所有内嵌 Framework，配置对应描述文件与 Keychain entitlement。IPA 是真实 iPhoneOS arm64 构建，不是模拟器包；未签名文件不能直接点击安装。签名有效期、设备数量与刷新方式取决于签名账号及工具。本版未做已签名 iPhone 真机验收。
 
 ## 配置真实模型和语音
@@ -41,6 +41,12 @@
 - 断网时保留草稿、已完成对话与页面缓存。重新登录原账号后继续同步；切换账号不会显示原账号的缓存。留言和评论网络失败后需手动确认重试，避免重复发帖。
 
 Agent OS 保留原站独立部署的外部入口，其运行环境不随 Flutter 安装包发布。文章、头像、图片与媒体的在线操作需要原站接口及对象存储配置可用。
+
+## 站内直供、余额与支付宝
+
+登录网站账号后，在 Room 设置选择「站内直供」并刷新模型即可使用网站统一余额，无需填写供应商 Key。个人中心或分组菜单的「支付中心」可查看余额、订单、用量详情及月账单；维护者和超级管理员按各自服务权限管理配置和订单。
+
+Android 在服务端启用 App 渠道后通过支付宝 SDK 付款；iOS 当前使用 WAP。移动支付需要配套主站部署、支付宝产品权限与对应应用密钥，本版安装包不会开启服务端支付开关。未开通时页面会显示渠道状态。付款返回后以服务端查单为准，不以 SDK 回调或返回页面判断到账。本次未做真机拉起和真实资金结算验收。
 
 ## Room 与房间设置
 

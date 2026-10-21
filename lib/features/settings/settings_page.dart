@@ -16,6 +16,8 @@ import '../../core/room_reference.dart';
 import '../../core/room_knowledge.dart';
 import '../../core/model_runtime.dart';
 import '../../core/model_catalog.dart';
+import '../../core/official_api.dart';
+import '../../core/site_client.dart';
 import 'model_runtime_panel.dart';
 import '../../core/room_archive.dart';
 import '../../core/voice_service.dart';
@@ -249,7 +251,9 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
           s.option('mcpEndpoint') != '/api/mcp/token-plan') {
         roomMcpEndpoint(s);
       }
-      await c.configure(s);
+      final effective = s.usesOfficialApi ? await _verifiedOfficial(s) : s;
+      await c.configure(effective);
+      if (effective.usesOfficialApi) options = {...effective.options};
       if (mounted) {
         setState(() {
           savedSnapshot = _snapshot();
@@ -471,6 +475,8 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
       } else {
         catalog = [];
         demo = false;
+        options.remove('llmConnection');
+        options.remove('officialProvider');
         fields['llmUrl']!.text = '${preset['apiUrl']}';
         fields['model']!.text = '${preset['model']}';
         options['llmProxy'] = preset['useProxy'] == true;
@@ -481,7 +487,9 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
 
   Future<void> _testLlm() async {
     final s = _value().copyWith(demo: false);
-    final client = LlmClient()..siteCookie = c.site.cookie;
+    final client = LlmClient()
+      ..siteCookie = c.site.cookie
+      ..siteAccountId = c.account?.id;
     testing = client;
     setState(() => testStatus = '正在测试连接');
     try {
@@ -506,6 +514,10 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
 
   Future<void> _catalog() async {
     final settings = _value(), owner = c.scope;
+    if (settings.usesOfficialApi) {
+      await _connectOfficial();
+      return;
+    }
     catalogPlan(settings); // Validate before any credential relay.
     final rows = <Map<String, dynamic>>[];
     if (settings.flag('llmProxy')) {
@@ -553,7 +565,153 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
     });
   }
 
+  Future<Map<String, dynamic>> _officialDashboard() async {
+    if (c.account == null ||
+        !c.sessionVerified ||
+        c.sessionExpired ||
+        c.settings.demo) {
+      throw const ApiFailure('请先登录月读空间，再使用站内直供');
+    }
+    if (c.site is! OfficialDataService) throw const ApiFailure('站内直供接口暂不可用');
+    final user = c.account!.id,
+        cookie = c.site.cookie,
+        site = c.settings.siteUrl;
+    if (endpointUri(_value().siteUrl).origin != endpointUri(site).origin) {
+      throw const ApiFailure('请先保存站点地址并重新登录，再选择站内直供');
+    }
+    final data = await (c.site as OfficialDataService).officialRequest(
+      site,
+      'GET',
+      '/api/dashboard',
+    );
+    if (!mounted ||
+        c.account?.id != user ||
+        c.site.cookie != cookie ||
+        c.settings.siteUrl != site ||
+        c.sessionExpired) {
+      throw const ApiFailure('账号已切换，请刷新后重试');
+    }
+    return officialDashboard(data, user);
+  }
+
+  Future<RoomSettings> _verifiedOfficial(RoomSettings settings) async =>
+      officialRoomSettings(settings, await _officialDashboard());
+
+  Future<void> _connectOfficial() async {
+    if (c.account == null || c.sessionExpired || !c.sessionVerified) {
+      await showSiteLogin(context, c);
+      if (!mounted) return;
+    }
+    final data = await _officialDashboard();
+    final models = (data['models'] as List)
+        .whereType<Map>()
+        .where((row) => row['enabled'] == true)
+        .toList();
+    if (models.isEmpty || data['enabled'] != true) {
+      throw const ApiFailure('站内直供暂未开放，请稍后再试');
+    }
+    final model = models.any((row) => row['id'] == fields['model']!.text)
+        ? fields['model']!.text
+        : '${models.first['id']}';
+    final next = officialRoomSettings(_value().copyWith(model: model), data);
+    if (!mounted) return;
+    setState(() {
+      fields['llmUrl']!.text = next.llmUrl;
+      fields['model']!.text = next.model;
+      fields['apiKey']!.clear();
+      demo = false;
+      options = {...next.options};
+      catalog = models.map((row) => <String, dynamic>{...row}).toList();
+      notice = '使用当前登录账号，无需填写 API 密钥。保存后生效。';
+    });
+  }
+
+  Widget _officialLlm() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _mode(
+        '站内直供',
+        '账号直接使用 · 统一余额计费',
+        CupertinoIcons.moon,
+        true,
+        () => _run(_connectOfficial),
+      ),
+      const SizedBox(height: 16),
+      const SiteText('使用当前月读空间账号和网站余额，无需填写供应商密钥。'),
+      Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: [
+          OutlinedButton(
+            onPressed: busy ? null : () => _run(_connectOfficial),
+            child: const SiteText('刷新直供模型'),
+          ),
+          OutlinedButton(
+            onPressed: busy ? null : () => _go('/payments'),
+            child: const SiteText('余额、充值与订单'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      _field('model', '模型 Model'),
+      if (catalog.isNotEmpty)
+        DropdownButtonFormField<String>(
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: '可用直供模型'),
+          items: [
+            for (final row in catalog)
+              DropdownMenuItem(
+                value: '${row['id']}',
+                child: Text('${row['id']}'),
+              ),
+          ],
+          onChanged: busy
+              ? null
+              : (value) => setState(() => fields['model']!.text = value ?? ''),
+        ),
+      _hint('按公布的最终 Token 用量结算；余额不足时可到支付中心充值。当前直供仅支持文字，图片可使用 MCP 识图。'),
+      _selectOption('visionMode', '图片理解', {
+        'auto': '自动（模型 / MCP）',
+        'model': '仅模型视觉',
+        'mcp': '仅 MCP 图片理解',
+      }, fallback: 'auto'),
+      _field('systemPrompt', '补充聊天指令', lines: 5),
+      ModelRuntimePanel(
+        settings: _value(),
+        onChanged: (value) => setState(() => options['runtimeConfig'] = value),
+      ),
+      OutlinedButton(
+        onPressed: busy ? null : () => _run(_testLlm),
+        child: const SiteText('测试模型连接'),
+      ),
+      SiteText(testStatus),
+      const SizedBox(height: 20),
+      Wrap(
+        spacing: 12,
+        children: [
+          TextButton(
+            onPressed: busy
+                ? null
+                : () => _preset(
+                    jsonMap(RoomReference.map('llmPresets')['openaiChat']),
+                  ),
+            child: const SiteText('切换云端 API'),
+          ),
+          TextButton(
+            onPressed: busy
+                ? null
+                : () => _preset(
+                    jsonMap(RoomReference.map('llmPresets')['ollama']),
+                  ),
+            child: const SiteText('切换本机 Ollama'),
+          ),
+        ],
+      ),
+    ],
+  );
+
   Widget _llm() {
+    if (_value().usesOfficialApi) return _officialLlm();
     final local = fields['llmUrl']!.text.contains('11434');
     final presets = {
       ...RoomReference.map('llmPresets'),
@@ -565,6 +723,14 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _mode(
+          '站内直供',
+          '账号直接使用 · 统一余额计费',
+          CupertinoIcons.moon,
+          false,
+          () => _run(_connectOfficial),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(

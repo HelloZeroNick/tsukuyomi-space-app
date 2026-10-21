@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/site_localization.dart';
 import '../../core/models.dart';
 import 'room_controller.dart';
+import '../site/site_navigation.dart';
 
 class RoomQuickSetup extends StatefulWidget {
   const RoomQuickSetup({super.key, required this.controller});
@@ -73,6 +74,17 @@ class _RoomQuickSetupState extends State<RoomQuickSetup> {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _saving
+                    ? null
+                    : () => navigateSite(
+                        context,
+                        widget.controller,
+                        '/room/settings?section=llm',
+                      ),
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const SiteText('站内直供 · 使用网站账号与余额'),
+              ),
               TextField(
                 controller: _url,
                 decoration: const InputDecoration(labelText: 'API URL'),

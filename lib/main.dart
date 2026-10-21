@@ -36,6 +36,7 @@ import 'features/site/asset_library_page.dart';
 import 'features/site/editor_page.dart';
 import 'features/site/management_page.dart';
 import 'features/site/user_center_page.dart';
+import 'features/site/payments_page.dart';
 import 'features/pixel/pixel_page.dart';
 import 'features/game/game_page.dart';
 import 'features/site/native_auth_page.dart';
@@ -520,6 +521,14 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
         }
         if (route == '/user') {
           return UserCenterPage(controller: c, onGo: go, onTheme: _toggleTheme);
+        }
+        if (route == '/payments') {
+          return PaymentsPage(
+            controller: c,
+            onGo: go,
+            onTheme: _toggleTheme,
+            orderId: Uri.parse(path!).queryParameters['order'],
+          );
         }
         if (route == '/admin' || route == '/terminal') {
           return ManagementPage(

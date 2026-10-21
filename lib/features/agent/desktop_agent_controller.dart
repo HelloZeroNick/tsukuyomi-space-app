@@ -293,11 +293,14 @@ class DesktopAgentController extends ChangeNotifier {
     if (_disposed || epoch != _epoch) return false;
     _runtime ??=
         engine == 'structured' ||
+            room.settings.usesOfficialApi ||
             room.settings.flag('llmProxy') ||
             preference == 'structured'
         ? StructuredAgentRuntime(
             _gateway!,
-            chat: LlmClient()..siteCookie = room.site.cookie,
+            chat: LlmClient()
+              ..siteCookie = room.site.cookie
+              ..siteAccountId = room.account?.id,
           )
         : OpenCodeAgentRuntime(
             binaries,
@@ -434,7 +437,9 @@ class DesktopAgentController extends ChangeNotifier {
         _gateway!.begin();
         _runtime = StructuredAgentRuntime(
           _gateway!,
-          chat: LlmClient()..siteCookie = room.site.cookie,
+          chat: LlmClient()
+            ..siteCookie = room.site.cookie
+            ..siteAccountId = room.account?.id,
         );
         status = '结构化兼容模式';
         _changed();

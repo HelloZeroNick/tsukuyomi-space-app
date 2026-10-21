@@ -12,6 +12,11 @@ PODS:
   - media_kit_video (0.0.1):
     - Flutter
   - OrderedSet (6.0.3)
+  - tobias (0.0.1):
+    - Flutter
+    - tobias/normal (= 0.0.1)
+  - tobias/normal (0.0.1):
+    - Flutter
   - tsukuyomi_live2d (0.1.0):
     - Flutter
     - FlutterMacOS
@@ -21,6 +26,7 @@ DEPENDENCIES:
   - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
   - media_kit_libs_ios_video (from `.symlinks/plugins/media_kit_libs_ios_video/ios`)
   - media_kit_video (from `.symlinks/plugins/media_kit_video/ios`)
+  - tobias (from `.symlinks/plugins/tobias/ios`)
   - tsukuyomi_live2d (from `.symlinks/plugins/tsukuyomi_live2d/darwin`)
 
 SPEC REPOS:
@@ -36,6 +42,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/media_kit_libs_ios_video/ios"
   media_kit_video:
     :path: ".symlinks/plugins/media_kit_video/ios"
+  tobias:
+    :path: ".symlinks/plugins/tobias/ios"
   tsukuyomi_live2d:
     :path: ".symlinks/plugins/tsukuyomi_live2d/darwin"
 
@@ -45,6 +53,7 @@ SPEC CHECKSUMS:
   media_kit_libs_ios_video: 5a18affdb97d1f5d466dc79988b13eff6c5e2854
   media_kit_video: 1746e198cb697d1ffb734b1d05ec429d1fcd1474
   OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
+  tobias: 7bc370eaccba2e7c7c345902a4a47dc5916cf8bb
   tsukuyomi_live2d: 1fa8277ee9dac305a5de471a8fdc595f43aedca6
 
 PODFILE CHECKSUM: 3ba3a73b1b12adcf321a227a745625fe0888cc82

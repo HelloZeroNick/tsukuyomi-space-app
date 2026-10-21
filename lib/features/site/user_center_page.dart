@@ -1790,6 +1790,11 @@ class _UserCenterPageState extends State<UserCenterPage>
   Widget _support({bool columns = false}) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      _supportCard('支付中心', Icons.account_balance_wallet_outlined, [
+        const Text('统一查看网站余额、充值订单和站内直供用量。'),
+        _supportAction('payments', '进入支付中心', () => widget.onGo('/payments')),
+      ]),
+      const SizedBox(height: 16),
       if (columns)
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,

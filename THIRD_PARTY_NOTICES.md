@@ -35,6 +35,13 @@ packages/tsukuyomi_live2d/src/vendor/dr_libs/LICENSE.
 
 Flutter, Dart and third-party Dart packages retain their respective licenses. Flutter's generated NOTICES file in the application's asset bundle contains dependency notices.
 
+Mobile payments use [Tobias 5.3.4](https://pub.dev/packages/tobias)
+(Apache-2.0, OpenFlutter) to call the official Alipay mobile SDK. The Android
+dependency is `com.alipay.sdk:alipaysdk-android:15.8.40`; iOS uses the SDK
+framework bundled by Tobias. Those SDKs retain Alipay's license and privacy
+terms. Their payment API is invoked only when the user chooses to pay; payment
+results and wallet credit are confirmed by the site's backend.
+
 Desktop fullscreen uses window_manager 0.5.2 and its screen_retriever dependencies by LiJianying (MIT). Their full licenses are included in the generated Flutter NOTICES bundle; source: https://github.com/leanflutter/window_manager and https://github.com/leanflutter/screen_retriever.
 
 ## Desktop Agent runtimes (0.6)

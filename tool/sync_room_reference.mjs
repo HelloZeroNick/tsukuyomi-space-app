@@ -29,5 +29,5 @@ const result = vm.runInContext('JSON.stringify({chatPersona:fallbackRoomPersona(
 const parsed = JSON.parse(result);
 parsed.catalogProviders = createRequire(import.meta.url)(path.join(root, 'shared/model-catalog.cjs')).PROVIDERS;
 parsed.dialoguePolicy = JSON.parse(fs.readFileSync(path.join(root, 'shared/room-dialogue-policy.json'), 'utf8'));
-fs.writeFileSync('lib/core/room_reference_data.dart', "// Generated from the website. Run tool/sync_room_reference.mjs to update.\nconst roomReferenceJson = r'''" + JSON.stringify(parsed) + "''';\n");
+fs.writeFileSync('lib/core/room_reference_data.dart', "// Generated from the website. Run tool/sync_room_reference.mjs to update.\nconst roomReferenceJson =\n    r'''" + JSON.stringify(parsed) + "''';\n");
 console.log('Room presets, knowledge, music and Live2D manifests synchronized.');
