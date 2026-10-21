@@ -41,6 +41,14 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        if (googlePlayBuild) {
+            // Media dependencies may ship additional ABIs even when Flutter's
+            // target-platform flag builds only our supported 64-bit binaries.
+            ndk {
+                abiFilters.clear()
+                abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
+            }
+        }
     }
 
     signingConfigs {
