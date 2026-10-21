@@ -47,6 +47,10 @@ jobs:
       - run: bash tool/release/setup_android.sh
       - run: python tool/release/verify_android_toolchain.py
       - run: python tool/release/prepare_assets.py
+      - name: Install native libraries used by Linux-hosted Flutter tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libepoxy-dev libgl-dev
       - run: flutter pub get
       - run: flutter analyze --no-pub
       - name: Check updater and application UI regressions
