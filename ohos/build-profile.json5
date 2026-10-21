@@ -10,6 +10,9 @@
         "targetSdkVersion": "26.0.0",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
+          "strictMode": {
+            "useNormalizedOHMUrl": true
+          },
           "packOptions": {
             "enableIncrementalSoCompress": true,
             "fastBuildApp": true
@@ -33,11 +36,6 @@
         "name": "release"
       }
     ]
-  },
-  "buildOption": {
-    "strictMode": {
-      "useNormalizedOHMUrl": true
-    }
   },
   "modules": [
     {
