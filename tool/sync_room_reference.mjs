@@ -28,5 +28,6 @@ vm.runInContext(chat.slice(chat.indexOf('function fallbackRoomPersona()'),chat.i
 const result = vm.runInContext('JSON.stringify({chatPersona:fallbackRoomPersona(),chatProtocol:roomProtocolPrompt(),llmPresets:LLM_PRESETS,aliyunPresets:ALIYUN_LLM_PRESETS,mimoPresets:MIMO_LLM_PRESETS,ttsPresets:TTS_PRESETS,knowledge:DEFAULT_ROOM_KNOWLEDGE_ENTRIES,knowledgeVersion:ROOM_KNOWLEDGE_VERSION,legacyKnowledge:LEGACY_ROOM_KNOWLEDGE_ENTRIES,previousKnowledgeIds:PREVIOUS_ROOM_KNOWLEDGE_IDS,previousKnowledgeVersion:PREVIOUS_ROOM_KNOWLEDGE_VERSION,previousKnowledgeOverrides:PREVIOUS_ROOM_KNOWLEDGE_OVERRIDES,music:MUSIC_TRACKS,live2d:roomLive2DManifest,expressions:YACHIYO_EXPRESSION_PRESETS.map(p=>({...p,cubism:mapTrackingFrameToYachiyoCubismParameters(p.vts)})),actions:exportedBehaviorActions})', ctx);
 const parsed = JSON.parse(result);
 parsed.catalogProviders = createRequire(import.meta.url)(path.join(root, 'shared/model-catalog.cjs')).PROVIDERS;
+parsed.dialoguePolicy = JSON.parse(fs.readFileSync(path.join(root, 'shared/room-dialogue-policy.json'), 'utf8'));
 fs.writeFileSync('lib/core/room_reference_data.dart', "// Generated from the website. Run tool/sync_room_reference.mjs to update.\nconst roomReferenceJson = r'''" + JSON.stringify(parsed) + "''';\n");
 console.log('Room presets, knowledge, music and Live2D manifests synchronized.');

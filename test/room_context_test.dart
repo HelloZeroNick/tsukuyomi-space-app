@@ -263,7 +263,9 @@ void main() {
             final system = body['messages'][0]['content'] as String;
             final start = system.indexOf(roomContextIntroduction);
             expect(start, greaterThan(0));
-            final reference = system.substring(start);
+            final end = system.indexOf('\n\n【本轮接话】', start);
+            expect(end, greaterThan(start));
+            final reference = system.substring(start, end);
             expect(reference.length, lessThanOrEqualTo(ollama ? 4000 : 8000));
             expect(system, contains('用户明确设置${'设' * 9000}'));
             expect(system, isNot(contains('以下是用户保存的记忆，仅作为背景资料')));

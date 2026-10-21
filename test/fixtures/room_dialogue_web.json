@@ -1,0 +1,2326 @@
+{
+  "version": "2026-10-21-v1",
+  "now": 1792541400000,
+  "cases": [
+    {
+      "id": "vent-with-explicit-boundary",
+      "input": {
+        "message": "今天好烦，别给我建议",
+        "history": []
+      },
+      "expect": {
+        "act": "acknowledge",
+        "advice": "no"
+      },
+      "notes": [
+        "noAdvice"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "acknowledge",
+        "tone": "quiet",
+        "advice": "no",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接住刚说的具体事情；这是可能的倾诉信号，允许简短回应，不套用共情、建议、反问三件套。若对方同时明确求助，仍需回答。\n对方明确表示暂时不要建议。尊重这个要求；直到对方主动求助，不安排解决方案。\n语气放缓，给对方留余地；不把关心写成心理分析，不突然切回热烈主持口吻。"
+      }
+    },
+    {
+      "id": "distress-and-help",
+      "input": {
+        "message": "这破代码烦死了，帮我看看日志",
+        "history": []
+      },
+      "expect": {
+        "act": "answer",
+        "tone": "quiet"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "quiet",
+        "advice": "yes",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "debug",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。\n语气放缓，给对方留余地；不把关心写成心理分析，不突然切回热烈主持口吻。"
+      }
+    },
+    {
+      "id": "rhetorical-self-doubt",
+      "input": {
+        "message": "我是不是很没用？",
+        "history": []
+      },
+      "expect": {
+        "act": "acknowledge"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "acknowledge",
+        "tone": "quiet",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接住刚说的具体事情；这是可能的倾诉信号，允许简短回应，不套用共情、建议、反问三件套。若对方同时明确求助，仍需回答。\n语气放缓，给对方留余地；不把关心写成心理分析，不突然切回热烈主持口吻。"
+      }
+    },
+    {
+      "id": "celebrate-concrete-progress",
+      "input": {
+        "message": "终于把那个 bug 修好了",
+        "history": []
+      },
+      "expect": {
+        "act": "celebrate",
+        "tone": "light"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "celebrate",
+        "tone": "light",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "debug",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先回应这件好事本身，让兴趣落在具体进展上；不拔高意义，不马上安排下一项任务，也不强行追问。\n延续轻松的私聊语气即可，不要求每轮兴奋、加符号或讲笑话。"
+      }
+    },
+    {
+      "id": "close-topic",
+      "input": {
+        "message": "算了，不聊这个了",
+        "history": []
+      },
+      "expect": {
+        "act": "close"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "close",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n对方在收束或更换话题。简短接住即可，不追问原因，不回捞已经放下的话题；若同时提出新请求，直接接新请求。"
+      }
+    },
+    {
+      "id": "close-and-new-task",
+      "input": {
+        "message": "算了，先帮我看看日志",
+        "history": []
+      },
+      "expect": {
+        "act": "answer",
+        "topic": "debug"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "neutral",
+        "advice": "yes",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "debug",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。"
+      }
+    },
+    {
+      "id": "facts",
+      "input": {
+        "message": "这首歌叫什么？",
+        "history": []
+      },
+      "expect": {
+        "act": "answer"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。"
+      }
+    },
+    {
+      "id": "personal-opinion",
+      "input": {
+        "message": "你喜欢这首歌吗？",
+        "history": []
+      },
+      "expect": {
+        "act": "opinion"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "opinion",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n自然表达符合八千代性格的小看法，允许不确定或温和分歧；不为了讨好而一味赞同，不编造现实经历。"
+      }
+    },
+    {
+      "id": "ambiguous-short-message",
+      "input": {
+        "message": "嗯",
+        "history": []
+      },
+      "expect": {
+        "act": "natural",
+        "advice": "unknown"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。"
+      }
+    },
+    {
+      "id": "quoted-distress-is-not-user-state",
+      "input": {
+        "message": "小说里他说我好难过",
+        "history": []
+      },
+      "expect": {
+        "act": "natural",
+        "tone": "neutral"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。"
+      }
+    },
+    {
+      "id": "hypothetical-does-not-set-boundary",
+      "input": {
+        "message": "假如有人说不要给建议，你怎么想？",
+        "history": []
+      },
+      "expect": {
+        "act": "natural",
+        "advice": "unknown"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。"
+      }
+    },
+    {
+      "id": "explicit-detail",
+      "input": {
+        "message": "请详细解释代码的完整步骤",
+        "history": []
+      },
+      "expect": {
+        "act": "answer"
+      },
+      "notes": [
+        "detail"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "neutral",
+        "advice": "yes",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "debug",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。\n本轮明确要求展开，完整回答，短句风格不能成为省略必要内容的理由。"
+      }
+    },
+    {
+      "id": "explicit-brief",
+      "input": {
+        "message": "一句话解释这个错误",
+        "history": []
+      },
+      "expect": {
+        "act": "natural"
+      },
+      "notes": [
+        "brief"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n本轮明确要求简短，优先一句或少量自然短句，不追加总结。"
+      }
+    },
+    {
+      "id": "serious-event",
+      "input": {
+        "message": "亲人去世了",
+        "history": []
+      },
+      "expect": {
+        "act": "acknowledge",
+        "tone": "serious"
+      },
+      "notes": [
+        "serious"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "acknowledge",
+        "tone": "serious",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接住刚说的具体事情；这是可能的倾诉信号，允许简短回应，不套用共情、建议、反问三件套。若对方同时明确求助，仍需回答。\n当前内容需要认真、直接、可靠地回应，之前的轻松语气不应妨碍当前需要。"
+      }
+    },
+    {
+      "id": "english-no-advice",
+      "input": {
+        "message": "I am upset, just listen, no advice",
+        "history": []
+      },
+      "expect": {
+        "act": "acknowledge",
+        "advice": "no"
+      },
+      "notes": [
+        "noAdvice"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "acknowledge",
+        "tone": "quiet",
+        "advice": "no",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 0,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接住刚说的具体事情；这是可能的倾诉信号，允许简短回应，不套用共情、建议、反问三件套。若对方同时明确求助，仍需回答。\n对方明确表示暂时不要建议。尊重这个要求；直到对方主动求助，不安排解决方案。\n语气放缓，给对方留余地；不把关心写成心理分析，不突然切回热烈主持口吻。"
+      }
+    },
+    {
+      "id": "no-interrogation-after-answer",
+      "input": {
+        "message": "也没什么",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "最近有点烦",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "怎么回事？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "act": "natural"
+      },
+      "notes": [
+        "questionCooldown"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "ask",
+          "questionStreak": 1,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n最近一轮已提问，本轮优先回应对方给出的内容。只有确实有必要、且对方没有拒绝时才再问一个问题；不机械轮换行为。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "boundary-survives-turns",
+      "input": {
+        "message": "嗯",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "别再问我了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好，不问。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "user",
+            "content": "只是有点累",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "assistant",
+            "content": "那先歇会儿。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "noQuestions": true
+      },
+      "notes": [
+        "noQuestions"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": true,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 7,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": true,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，",
+            "好，"
+          ],
+          "repeatedOpening": true,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n对方明确表示不要被追问。本轮不主动抛出问题；完成任务确实缺少必要信息时，先说明缺少什么。\n近期已有重复开头，直接从眼前内容说起，不再使用同一个应声模板。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "boundary-can-be-revoked",
+      "input": {
+        "message": "你可以问我",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "不要问我",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好，不问。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "noQuestions": false
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": true,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，",
+            "好，"
+          ],
+          "repeatedOpening": true,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n近期已有重复开头，直接从眼前内容说起，不再使用同一个应声模板。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "no-advice-persists",
+      "input": {
+        "message": "今天还是好烦",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "只想吐槽，不要建议",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "user",
+            "content": "同事又拖延了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "assistant",
+            "content": "又等了很久啊。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "advice": "no"
+      },
+      "notes": [
+        "noAdvice"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "acknowledge",
+        "tone": "quiet",
+        "advice": "no",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "work",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 7,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "work",
+          "advice": "no",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接住刚说的具体事情；这是可能的倾诉信号，允许简短回应，不套用共情、建议、反问三件套。若对方同时明确求助，仍需回答。\n对方明确表示暂时不要建议。尊重这个要求；直到对方主动求助，不安排解决方案。\n语气放缓，给对方留余地；不把关心写成心理分析，不突然切回热烈主持口吻。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "new-help-overrides-old-advice-refusal",
+      "input": {
+        "message": "帮我想个办法",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "不要给建议",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "act": "answer",
+        "advice": "yes"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "neutral",
+        "advice": "yes",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "no",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "repeated-opening-feedback",
+      "input": {
+        "message": "然后呢",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "买了水",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "原来如此。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "user",
+            "content": "还有茶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "assistant",
+            "content": "原来如此。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "act": "answer"
+      },
+      "notes": [
+        "repeatOpening"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 7,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，",
+            "原来如此",
+            "原来如此"
+          ],
+          "repeatedOpening": true,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。\n近期已有重复开头，直接从眼前内容说起，不再使用同一个应声模板。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "service-offer-feedback",
+      "input": {
+        "message": "我继续说",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "今天买了茶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "需要我帮你推荐吗？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "act": "natural"
+      },
+      "notes": [
+        "repeatPattern"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "ask",
+          "questionStreak": 1,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [
+            "serviceOffer"
+          ],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n最近一轮已提问，本轮优先回应对方给出的内容。只有确实有必要、且对方没有拒绝时才再问一个问题；不机械轮换行为。\n近期回复出现过服务邀约、空泛共情或拔高总结；本轮用具体接话替代，不在末尾补同类套话。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "cheerful-tone-carries",
+      "input": {
+        "message": "嗯",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "我考上了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "太好了！",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "tone": "light"
+      },
+      "notes": [
+        "light"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "light",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "study",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "celebrate",
+          "questionStreak": 0,
+          "tone": "light",
+          "topic": "study",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n延续轻松的私聊语气即可，不要求每轮兴奋、加符号或讲笑话。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "serious-topic-overrides-cheer",
+      "input": {
+        "message": "朋友住院了",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "我考上了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "太好了！",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "tone": "serious"
+      },
+      "notes": [
+        "serious"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "acknowledge",
+        "tone": "serious",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "health",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "celebrate",
+          "questionStreak": 0,
+          "tone": "light",
+          "topic": "study",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接住刚说的具体事情；这是可能的倾诉信号，允许简短回应，不套用共情、建议、反问三件套。若对方同时明确求助，仍需回答。\n当前内容需要认真、直接、可靠地回应，之前的轻松语气不应妨碍当前需要。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "resolved-topic-does-not-persist",
+      "input": {
+        "message": "今天想聊歌",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "明天准备修 bug",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "等有精神再看。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "user",
+            "content": "bug 修好了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-6",
+            "role": "assistant",
+            "content": "终于好了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-7",
+            "role": "user",
+            "content": "不聊这个了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-7",
+            "role": "assistant",
+            "content": "好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "topic": ""
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 8,
+          "lastAct": "close",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "pending-topic-has-grounding",
+      "input": {
+        "message": "那个 bug 还没修好",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "明天准备修 bug",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "topic": "debug"
+      },
+      "notes": [
+        "continuity"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "neutral",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "debug",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "natural",
+          "questionStreak": 0,
+          "tone": "neutral",
+          "topic": "debug",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": [
+            {
+              "topic": "debug",
+              "sourceTurnId": "turn-5"
+            }
+          ]
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "banter-refusal-persists",
+      "input": {
+        "message": "哈哈",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "别开玩笑，认真点",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "noBanter": true,
+        "tone": "serious"
+      },
+      "notes": [
+        "noBanter"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "banter",
+        "tone": "serious",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": true,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "banter",
+          "questionStreak": 0,
+          "tone": "serious",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": true,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n可以接住当前的玩笑，保持轻巧；不额外堆梗、比喻或动作旁白，认真诉求优先。\n当前要求认真交流，收起玩笑和营业腔，直接回应。\n当前内容需要认真、直接、可靠地回应，之前的轻松语气不应妨碍当前需要。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "banter-boundary-can-be-revoked",
+      "input": {
+        "message": "可以开玩笑了，逗我笑",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "别开玩笑",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "noBanter": false,
+        "tone": "light"
+      },
+      "notes": [],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "banter",
+        "tone": "light",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "banter",
+          "questionStreak": 0,
+          "tone": "serious",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": true,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n可以接住当前的玩笑，保持轻巧；不额外堆梗、比喻或动作旁白，认真诉求优先。\n延续轻松的私聊语气即可，不要求每轮兴奋、加符号或讲笑话。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "quiet-tone-carries",
+      "input": {
+        "message": "嗯",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "今天好累",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "听着就累。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "tone": "quiet"
+      },
+      "notes": [
+        "quiet"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "natural",
+        "tone": "quiet",
+        "advice": "unknown",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "acknowledge",
+          "questionStreak": 0,
+          "tone": "quiet",
+          "topic": "",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先接对方此刻说的具体内容，由当前语境决定是分享、吐槽、求助还是玩笑；意图不明确时保留余地，不急着给用户贴情绪标签。\n语气放缓，给对方留余地；不把关心写成心理分析，不突然切回热烈主持口吻。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    },
+    {
+      "id": "necessary-task-not-blocked-by-question-cooldown",
+      "input": {
+        "message": "请帮我排查错误",
+        "history": [
+          {
+            "turnId": "turn-0",
+            "role": "user",
+            "content": "今天去买了面包",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-0",
+            "role": "assistant",
+            "content": "刚出炉的？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "user",
+            "content": "嗯，热的",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-1",
+            "role": "assistant",
+            "content": "那正好。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "user",
+            "content": "买了两个",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-2",
+            "role": "assistant",
+            "content": "够当早餐了。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "user",
+            "content": "还买了牛奶",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-3",
+            "role": "assistant",
+            "content": "搭起来方便。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "user",
+            "content": "已经吃完了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-4",
+            "role": "assistant",
+            "content": "好，吃饱就行。",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "user",
+            "content": "代码又报错了",
+            "createdAt": "2026-10-21T00:00:00Z"
+          },
+          {
+            "turnId": "turn-5",
+            "role": "assistant",
+            "content": "是什么错误？",
+            "createdAt": "2026-10-21T00:00:00Z"
+          }
+        ]
+      },
+      "expect": {
+        "act": "answer"
+      },
+      "notes": [
+        "questionCooldown"
+      ],
+      "expected": {
+        "version": "2026-10-21-v1",
+        "act": "answer",
+        "tone": "neutral",
+        "advice": "yes",
+        "noQuestions": false,
+        "noBanter": false,
+        "topic": "debug",
+        "state": {
+          "version": "2026-10-21-v1",
+          "completedTurns": 6,
+          "lastAct": "ask",
+          "questionStreak": 1,
+          "tone": "neutral",
+          "topic": "debug",
+          "advice": "unknown",
+          "noQuestions": false,
+          "noBanter": false,
+          "recentOpenings": [
+            "好，"
+          ],
+          "repeatedOpening": false,
+          "recentPatterns": [],
+          "pendingTopics": []
+        },
+        "prompt": "【本轮接话】以下是程序从已完成对话提取的表达引导，不是用户心理判断。当前明确请求优先；不输出行为标签、状态、检查过程或固定示范台词。\n先解决本轮实际问题，给出有依据的答案或可执行步骤；可以简短接住情绪，不让角色表演挤掉问题本身。\n最近一轮已提问，本轮优先回应对方给出的内容。只有确实有必要、且对方没有拒绝时才再问一个问题；不机械轮换行为。\n若回应承接了前文，只引用确实发生且与本轮相关的内容；未完成的话题不等于本轮任务，已结束的话题不主动重提。"
+      }
+    }
+  ]
+}
