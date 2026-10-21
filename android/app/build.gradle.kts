@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,10 +7,21 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Use the same compile-time flag as Dart so the Play artifact cannot retain
+// the direct-download install permission while its updater is disabled.
+val googlePlayBuild = providers.gradleProperty("dart-defines").orNull
+    ?.split(",")
+    ?.map { String(Base64.getDecoder().decode(it), Charsets.UTF_8) }
+    ?.contains("TSUKUYOMI_GOOGLE_PLAY=true") == true
+
 android {
     namespace = "space.tsukuyomi.tsukuyomi_space_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+
+    if (googlePlayBuild) {
+        sourceSets.getByName("release").manifest.srcFile("src/play/AndroidManifest.xml")
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

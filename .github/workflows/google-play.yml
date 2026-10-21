@@ -1,0 +1,99 @@
+name: Google Play bundle
+
+on:
+  push:
+    branches: [codex/google-play-release]
+    paths:
+      - '.github/workflows/google-play.yml'
+      - 'android/**'
+      - 'lib/**'
+      - 'pubspec.*'
+      - 'tool/release/**'
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: Monotonically increasing Google Play version code
+        default: '100031'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-play-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      PLAY_VERSION_CODE: ${{ inputs.version_code || '100031' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: bash tool/release/setup_android.sh
+      - run: python tool/release/verify_android_toolchain.py
+      - run: python tool/release/prepare_assets.py
+      - run: flutter pub get
+      - run: flutter analyze --no-pub
+      - name: Check updater and application UI regressions
+        run: flutter test --no-pub test/app_update_test.dart test/app_update_transport_test.dart test/app_update_ui_test.dart
+      - name: Build with existing distribution signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [[ "$PLAY_VERSION_CODE" =~ ^[1-9][0-9]*$ ]]
+          test -n "$ANDROID_KEYSTORE_BASE64" && test -n "$ANDROID_KEYSTORE_PASSWORD"
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/tsukuyomi-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          chmod 600 "$ANDROID_KEYSTORE_PATH"
+          trap 'rm -f "$ANDROID_KEYSTORE_PATH"' EXIT
+          flutter build appbundle --release --target-platform android-arm64,android-x64 --build-number="$PLAY_VERSION_CODE" --dart-define=TSUKUYOMI_GOOGLE_PLAY=true
+          mkdir -p dist/google-play
+          cp build/app/outputs/bundle/release/app-release.aab dist/google-play/tsukuyomi-space-play.aab
+          LC_ALL=C jarsigner -verify dist/google-play/tsukuyomi-space-play.aab | tee dist/google-play/signature-verification.txt
+          grep -F 'jar verified.' dist/google-play/signature-verification.txt
+          keytool -exportcert -rfc -alias tsukuyomi -keystore "$ANDROID_KEYSTORE_PATH" -storepass:env ANDROID_KEYSTORE_PASSWORD -file dist/google-play/upload-certificate.pem
+      - name: Validate final bundle and exact packaged assets
+        run: |
+          python tool/release/verify_assets.py dist/google-play/tsukuyomi-space-play.aab
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          target = pathlib.Path('dist/google-play/tsukuyomi-space-play.aab')
+          with zipfile.ZipFile(target) as archive:
+              manifest = archive.read('base/manifest/AndroidManifest.xml')
+              assert b'space.tsukuyomi.tsukuyomi_space_app' in manifest, 'Wrong application ID'
+              assert b'android.permission.REQUEST_INSTALL_PACKAGES' not in manifest, 'Play bundle must not request APK installation'
+              for abi in ('arm64-v8a', 'x86_64'):
+                  assert f'base/lib/{abi}/libapp.so' in archive.namelist(), f'Missing {abi} app'
+              assert not any('/armeabi-v7a/' in name for name in archive.namelist()), 'Unsupported 32-bit ABI'
+          info = dict(source_sha=subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
+                      version_code=int(os.environ['PLAY_VERSION_CODE']), google_play=True,
+                      sha256=hashlib.sha256(target.read_bytes()).hexdigest(), bytes=target.stat().st_size,
+                      install_packages_permission=False, human_device_acceptance=False)
+          pathlib.Path('dist/google-play/build-info.json').write_text(json.dumps(info, indent=2)+'\n')
+          print(json.dumps(info, indent=2))
+          PY
+          cd dist/google-play
+          sha256sum tsukuyomi-space-play.aab upload-certificate.pem > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: google-play-bundle-${{ github.run_id }}
+          path: dist/google-play/
+          if-no-files-found: error
+          retention-days: 30

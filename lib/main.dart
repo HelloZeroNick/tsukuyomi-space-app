@@ -17,6 +17,7 @@ import 'core/site_routes.dart';
 import 'core/storage.dart';
 import 'core/app_update_controller.dart';
 import 'core/app_update_release.dart';
+import 'core/distribution.dart';
 import 'features/updates/app_update_page.dart';
 import 'core/voice_service.dart';
 import 'features/room/room_controller.dart';
@@ -57,7 +58,9 @@ Future<void> main() async {
     TsukuyomiApp(
       controller: controller,
       window: window,
-      updates: AppUpdateController(preferences: preferences),
+      updates: isGooglePlayBuild
+          ? null
+          : AppUpdateController(preferences: preferences),
     ),
   );
   await controller.initialize();

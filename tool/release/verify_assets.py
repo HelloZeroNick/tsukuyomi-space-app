@@ -48,7 +48,8 @@ def verify(target, root=ROOT):
             return (target / name).read_bytes()
     else:
         archive = zipfile.ZipFile(target)
-        prefix = ("assets/flutter_assets/" if target.suffix == ".apk" else
+        prefix = ("base/assets/flutter_assets/" if target.suffix == ".aab" else
+                  "assets/flutter_assets/" if target.suffix == ".apk" else
                   "Payload/Runner.app/Frameworks/App.framework/flutter_assets/")
 
         def read(name):
@@ -70,6 +71,6 @@ def verify(target, root=ROOT):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target", type=Path, help="flutter_assets directory, APK, or unsigned IPA")
+    parser.add_argument("target", type=Path, help="flutter_assets directory, APK, AAB, or unsigned IPA")
     args = parser.parse_args()
     verify(args.target)
