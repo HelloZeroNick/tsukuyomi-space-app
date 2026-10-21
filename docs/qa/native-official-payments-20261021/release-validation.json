@@ -1,0 +1,216 @@
+{
+  "tag": "v0.6.25-beta.1",
+  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.25-beta.1",
+  "release_id": 419293520,
+  "prerelease": true,
+  "source_sha": "82466e82dde88e1c4be8c9712d99892e6499106b",
+  "hap_source_sha": "7e7d08721c45ce8be49406c7e191dd54bf58ebf5",
+  "release_run": 39561977039,
+  "verified_at_utc": "2026-10-21T10:15:40Z",
+  "all_16_downloads_verified": true,
+  "checksum_coverage": [
+    "INSTALL.md",
+    "OHOS-BUILD-INFO.json",
+    "OHOS-INSTALL.md",
+    "OHOS-THIRD-PARTY-NOTICES.md",
+    "THIRD_PARTY_NOTICES.md",
+    "tsukuyomi-space-0.6.25-32-ohos-arm64-unsigned.hap",
+    "tsukuyomi-space-0.6.25-android-arm64-v8a.apk",
+    "tsukuyomi-space-0.6.25-android-x86_64.apk",
+    "tsukuyomi-space-0.6.25-ios-arm64-unsigned.ipa",
+    "tsukuyomi-space-0.6.25-linux-x64.deb",
+    "tsukuyomi-space-0.6.25-linux-x64.tar.gz",
+    "tsukuyomi-space-0.6.25-macos-universal.dmg",
+    "tsukuyomi-space-0.6.25-windows-x64-setup.exe",
+    "tsukuyomi-space-0.6.25-windows-x64.zip"
+  ],
+  "physical_device_acceptance": false,
+  "assets": [
+    {
+      "name": "INSTALL.md",
+      "size": 16540,
+      "sha256": "7013daa8fdbe9b782ad67ecd5b208a8499251ebe4fc04fd9025d1f90c5e1a102",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/INSTALL.md"
+    },
+    {
+      "name": "OHOS-BUILD-INFO.json",
+      "size": 559,
+      "sha256": "1b7a47b5c42233603b74524e3c18cd28ca307a9fe46758b1aa4a1a950a7502a2",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/OHOS-BUILD-INFO.json"
+    },
+    {
+      "name": "OHOS-INSTALL.md",
+      "size": 1845,
+      "sha256": "49203e21f67d7a6902a01b595e517338476fd3fc124fb4828ead552a27737d88",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/OHOS-INSTALL.md"
+    },
+    {
+      "name": "OHOS-SHA256SUMS.txt",
+      "size": 379,
+      "sha256": "b21510966837905c9d9a1cfa9230f6b1b750ac1230b65a8ea6492700a0cb51a3",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/OHOS-SHA256SUMS.txt"
+    },
+    {
+      "name": "OHOS-THIRD-PARTY-NOTICES.md",
+      "size": 6955,
+      "sha256": "652317c146bc41e544d84676205ec5a3dd393a3427594322da6adc2c31f4ab4d",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/OHOS-THIRD-PARTY-NOTICES.md"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 1031,
+      "sha256": "a135f3a78d8883dc589427815a522cbc383a39921170a559adeaa9e1b5ebd212",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/SHA256SUMS.txt"
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "size": 6955,
+      "sha256": "652317c146bc41e544d84676205ec5a3dd393a3427594322da6adc2c31f4ab4d",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-32-ohos-arm64-unsigned.hap",
+      "size": 154132714,
+      "sha256": "9852803eda3922a919483faf2c52378e77a972efaf2c2c8aa0f2790c93f38931",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-32-ohos-arm64-unsigned.hap"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-android-arm64-v8a.apk",
+      "size": 159396433,
+      "sha256": "be5f2d79b2e9be9ce6e35c441175a8da7266bf0ff5f1bb9acc91c0acf5e64b2a",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-android-arm64-v8a.apk"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-android-x86_64.apk",
+      "size": 164443004,
+      "sha256": "301f9c3c7dcdc1bdd3774f0af12aa19b54252cada70579669ac8f3087304a890",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-android-x86_64.apk"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-ios-arm64-unsigned.ipa",
+      "size": 128160121,
+      "sha256": "bfa173e08e7bbf2a3e2496b36e69e770a239f3c3066dcd94ca5d3d76d8badf35",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-ios-arm64-unsigned.ipa"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-linux-x64.deb",
+      "size": 261947306,
+      "sha256": "f2ff8a9b1953ac8b1a00b4cf9539407f5bfe20ba10b0a98561e77e17a6456730",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-linux-x64.deb"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-linux-x64.tar.gz",
+      "size": 320249350,
+      "sha256": "85a982db4e063c7257053abe2606a2c7d0f058b0c116b55eb4151cdb30c4457e",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-linux-x64.tar.gz"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-macos-universal.dmg",
+      "size": 548951616,
+      "sha256": "24c26bf5b7f083c8afe0247f4312b83ba50e771ccb06ff2b1fc6b3c50c08c8a0",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-macos-universal.dmg"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-windows-x64-setup.exe",
+      "size": 268956592,
+      "sha256": "4ebbe4933737731856a19b8df3655faf0d2d8b3502656720c862b545ef363278",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-windows-x64-setup.exe"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.25-windows-x64.zip",
+      "size": 364133031,
+      "sha256": "6dd1b8448f7ac7600013e70f99c66611fd11e57808d49754523860c9cd2d497e",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.25-beta.1/tsukuyomi-space-0.6.25-windows-x64.zip"
+    }
+  ],
+  "main_ci_run": 39561972617,
+  "main_ci_conclusion": "success",
+  "release_conclusion": "success",
+  "release_quality": {
+    "passed": 1015,
+    "skipped": 19
+  },
+  "hap_run": 39565322542,
+  "hap_conclusion": "success",
+  "hap_quality": {
+    "passed": 993,
+    "skipped": 41
+  },
+  "hap_publication_run": 39566806185,
+  "hap_reused": true,
+  "agent_runtime_run": 39562271196,
+  "agent_runtime_conclusion": "success",
+  "android_native_smoke": {
+    "passed": true,
+    "artifact_id": 12329162339,
+    "artifact_sha256": "2cd94563bb18685dd16be085a4abab1b1d426d4822bdc3facfc534481a3c8d45",
+    "gpu_marker": "TSUKUYOMI_LIVE2D_GPU_OK direct_surface=true cycles=2 transparent=true pose=true resize=true recreated_surface=true",
+    "environment": "Android 35 x86_64 emulator / SwiftShader"
+  },
+  "hap_source_difference": {
+    "files": [
+      ".github/workflows/agent-runtime.yml",
+      "ohos/build-profile.json5"
+    ],
+    "reason": "Linux Agent CI headers and HarmonyOS normalized OHM URLs required by Alipay bytecode HAR; shared application source unchanged",
+    "initial_failed_runs": [
+      39561997033,
+      39563760656
+    ],
+    "cancelled_duplicate_run": 39566099385
+  },
+  "android_certificates": [
+    {
+      "file": "tsukuyomi-space-0.6.25-android-arm64-v8a.apk",
+      "scheme": "v2 certificate extraction; full signature verified by CI apksigner",
+      "certificate_md5": "5870574f60b40e270cb4c9979b5ffd19",
+      "certificate_sha256": "52e37f146e56de792da1653e48be9f4542cd8ac1bd4badb15bf0c5e44258f51c",
+      "matches_registered_android_certificate": true
+    },
+    {
+      "file": "tsukuyomi-space-0.6.25-android-x86_64.apk",
+      "scheme": "v2 certificate extraction; full signature verified by CI apksigner",
+      "certificate_md5": "5870574f60b40e270cb4c9979b5ffd19",
+      "certificate_sha256": "52e37f146e56de792da1653e48be9f4542cd8ac1bd4badb15bf0c5e44258f51c",
+      "matches_registered_android_certificate": true
+    }
+  ],
+  "desktop_runtime_integrity": [
+    {
+      "platform": "windows",
+      "runtime": "agent/windows-x64",
+      "files": 10,
+      "all_hashes_match": true
+    },
+    {
+      "platform": "linux",
+      "runtime": "tsukuyomi-space/agent/linux-x64",
+      "files": 11,
+      "all_hashes_match": true
+    },
+    {
+      "platform": "macos",
+      "runtime": "macos-x64",
+      "files": 10,
+      "all_hashes_match": true
+    },
+    {
+      "platform": "macos",
+      "runtime": "macos-arm64",
+      "files": 10,
+      "all_hashes_match": true
+    }
+  ],
+  "macos_universal_architectures": [
+    "arm64",
+    "x86_64"
+  ],
+  "macos_codesign_deep_strict_verified": true,
+  "actualPaymentPerformed": false,
+  "companion_backend_deployed_by_this_release": false,
+  "acceptance_limits": [
+    "iOS IPA and HarmonyOS HAP require user signing",
+    "No physical-device Alipay invocation or real payment settlement acceptance",
+    "App Pay requires product entitlement, corresponding credentials and the companion backend deployment"
+  ]
+}

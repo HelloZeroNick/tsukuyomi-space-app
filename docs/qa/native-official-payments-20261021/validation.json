@@ -1,6 +1,6 @@
 {
   "date": "2026-10-21",
-  "scope": "Local implementation; not deployed or released",
+  "scope": "Local implementation checks captured before release; final distribution evidence is in release-validation.json",
   "checks": {
     "analyze": {
       "passed": true,
@@ -56,7 +56,7 @@
   "ios_transport_security_preserved": true,
   "legacy_migration": "Existing order retains amount and receives web channel",
   "open_acceptance": [
-    "Android SDK unavailable on this Mac; no new Android APK built",
+    "Android SDK unavailable on this Mac; signed APKs subsequently built and verified by release CI and public downloads",
     "Alipay mobile application currently lists PC website payment only; App Pay product not observed",
     "Mobile application credentials have not been configured on production by this task",
     "Physical-device App Pay invocation, signed installation and real payment settlement remain untested"
