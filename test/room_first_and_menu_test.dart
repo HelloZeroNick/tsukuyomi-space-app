@@ -95,7 +95,7 @@ void main() {
   );
 
   testWidgets(
-    'inline configuration saves the real provider and immediately enables chat',
+    'guided configuration saves the real provider and immediately enables chat',
     (tester) async {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1;
@@ -111,14 +111,18 @@ void main() {
       await c.initialize();
       await tester.pumpWidget(TsukuyomiApp(controller: c, loadNative: false));
       await tester.pumpAndSettle();
-      final fields = find.descendant(
-        of: find.byKey(const Key('room-quick-setup')),
-        matching: find.byType(TextField),
-      );
-      await tester.enterText(fields.at(0), 'http://localhost:11434/api/chat');
-      await tester.enterText(fields.at(1), 'configured-model');
-      await tester.ensureVisible(find.text('保存并开始聊天'));
-      await tester.tap(find.text('保存并开始聊天'));
+      await tester.tap(find.text('开始分步配置'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('本机 Ollama').last);
+      await tester.tap(find.text('本机 Ollama').last);
+      await tester.pumpAndSettle();
+      final modelField = find.byKey(const Key('setting-model'));
+      await tester.ensureVisible(modelField);
+      await tester.enterText(modelField, 'configured-model');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('下一步'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('跳过测试并保存'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('room-quick-setup')), findsNothing);
       expect(c.settings.model, 'configured-model');

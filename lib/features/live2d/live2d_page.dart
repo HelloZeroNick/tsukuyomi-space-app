@@ -1,5 +1,3 @@
-import '../../core/site_localization.dart';
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -8,6 +6,7 @@ import 'package:tsukuyomi_live2d/tsukuyomi_live2d.dart';
 import '../../core/llm_client.dart';
 import '../../core/room_archive.dart';
 import '../../core/room_reference.dart';
+import '../../core/site_localization.dart';
 import '../../live2d/character_stage.dart';
 import '../../live2d/live2d_semantics.dart';
 import '../room/room_controller.dart';
@@ -48,7 +47,7 @@ class _Live2DPageState extends State<Live2DPage> with WidgetsBindingObserver {
         text: '{\n  "expression": "smile",\n  "actions": [{"type": "head_tilt", "side": "left", "duration": 1.2}],\n  "durationMs": 3000\n}',
       );
   bool _ready = false, _streaming = true;
-  String _commandError = '';
+  String _commandError = '', _actionNotice = '';
   bool get canAct => _ready || d.animation.ready;
   @override
   void initState() {
@@ -68,7 +67,10 @@ class _Live2DPageState extends State<Live2DPage> with WidgetsBindingObserver {
   void _act(Map<String, dynamic> command) {
     try {
       d.animation.custom(command);
-      setState(() => _commandError = '');
+      setState(() {
+        _commandError = '';
+        _actionNotice = '动作指令已发送，请观察上方角色；文字和语音分别运行。';
+      });
     } catch (e) {
       setState(() => _commandError = '$e');
     }
@@ -99,6 +101,41 @@ class _Live2DPageState extends State<Live2DPage> with WidgetsBindingObserver {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const SiteText(
+          '第一次玩舞台：等待角色就绪 → 试一次点头 → 再尝试 AI 演出。',
+          style: TextStyle(height: 1.7),
+        ),
+        Semantics(
+          liveRegion: true,
+          child: SiteText(
+            canAct
+                ? '角色已就绪，可以试表情和动作。'
+                : '角色尚未就绪。请查看下方加载状态，失败时点击重试。文字输出不代表动作已执行。',
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            key: const Key('live2d-first-action'),
+            onPressed: canAct
+                ? () => _act({'motion': 'nod', 'durationMs': 2600})
+                : null,
+            icon: const Icon(Icons.play_arrow),
+            label: const SiteText('试试点头'),
+          ),
+        ),
+        if (_actionNotice.isNotEmpty)
+          Semantics(liveRegion: true, child: SiteText(_actionNotice)),
+        const ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: SiteText('有文字，却没动作或声音？'),
+          children: [
+            SiteText(
+              '先用点头按钮检查角色；仍无反应时重新进入舞台并查看加载提示。AI 演出需要配置聊天模型，声音还需要语音服务。没有声音也可以先试动作。',
+              style: TextStyle(height: 1.7),
+            ),
+          ],
+        ),
         Wrap(
           spacing: 12,
           runSpacing: 8,

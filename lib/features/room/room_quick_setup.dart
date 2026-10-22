@@ -1,127 +1,47 @@
 import 'package:flutter/material.dart';
 
 import '../../core/site_localization.dart';
-import '../../core/models.dart';
+import '../settings/settings_dialog.dart';
 import 'room_controller.dart';
-import '../site/site_navigation.dart';
 
-class RoomQuickSetup extends StatefulWidget {
-  const RoomQuickSetup({super.key, required this.controller});
+class RoomQuickSetup extends StatelessWidget {
+  const RoomQuickSetup({super.key, required this.controller, this.onDiscover});
   final RoomController controller;
-  @override
-  State<RoomQuickSetup> createState() => _RoomQuickSetupState();
-}
-
-class _RoomQuickSetupState extends State<RoomQuickSetup> {
-  late final _url = TextEditingController(
-    text: widget.controller.settings.llmUrl,
-  );
-  late final _model = TextEditingController(
-    text: widget.controller.settings.model,
-  );
-  final _key = TextEditingController();
-  bool _saving = false;
-  String _error = '';
-  @override
-  void dispose() {
-    _url.dispose();
-    _model.dispose();
-    _key.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_saving) return;
-    setState(() {
-      _saving = true;
-      _error = '';
-    });
-    try {
-      endpointUri(_url.text.trim());
-      if (_model.text.trim().isEmpty) throw const ApiFailure('请填写模型名称');
-      await widget.controller.configure(
-        widget.controller.settings.copyWith(
-          llmUrl: _url.text.trim(),
-          model: _model.text.trim(),
-          apiKey: _key.text.trim().isEmpty
-              ? widget.controller.settings.apiKey
-              : _key.text.trim(),
-          demo: false,
-        ),
-      );
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
+  final VoidCallback? onDiscover;
 
   @override
   Widget build(BuildContext context) => Material(
     key: const Key('room-quick-setup'),
     color: Theme.of(context).colorScheme.surfaceContainerLow,
     borderRadius: BorderRadius.circular(16),
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 250),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SiteText(
-                '连接模型，开始聊天',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _saving
-                    ? null
-                    : () => navigateSite(
-                        context,
-                        widget.controller,
-                        '/room/settings?section=llm',
-                      ),
-                icon: const Icon(Icons.account_balance_wallet_outlined),
-                label: const SiteText('站内直供 · 使用网站账号与余额'),
-              ),
-              TextField(
-                controller: _url,
-                decoration: const InputDecoration(labelText: 'API URL'),
-                keyboardType: TextInputType.url,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _model,
-                      decoration: InputDecoration(
-                        labelText: siteTranslate(context, '模型名称'),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _key,
-                      obscureText: true,
-                      decoration: const InputDecoration(labelText: 'API Key'),
-                    ),
-                  ),
-                ],
-              ),
-              if (_error.isNotEmpty) Text(_error),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: _saving ? null : _save,
-                  child: SiteText(_saving ? '正在保存…' : '保存并开始聊天'),
-                ),
-              ),
-            ],
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SiteText(
+            '第一次来，先和八千代聊起来',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
           ),
-        ),
+          const SizedBox(height: 12),
+          const SiteText(
+            '① 选择聊天服务\n② 测试连接并保存\n③ 发一句话，收到完整回复',
+            style: TextStyle(height: 1.9),
+          ),
+          const SizedBox(height: 8),
+          const SiteText(
+            '语音、记忆和外观可以稍后设置。站内直供需要账号与可用额度，也可以连接自己的云端或本机模型。',
+            style: TextStyle(fontSize: 12, height: 1.7),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () =>
+                showRoomSettings(context, controller, guidedSetup: true),
+            child: const SiteText('开始分步配置'),
+          ),
+          if (onDiscover != null)
+            TextButton(onPressed: onDiscover, child: const SiteText('先看看能做什么')),
+        ],
       ),
     ),
   );

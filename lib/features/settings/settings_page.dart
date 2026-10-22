@@ -51,11 +51,13 @@ class RoomSettingsPage extends StatefulWidget {
     super.key,
     required this.controller,
     this.initialSection = 'llm',
+    this.guidedSetup = false,
     this.onTheme,
   });
   final RoomController controller;
   final VoidCallback? onTheme;
   final String initialSection;
+  final bool guidedSetup;
   @override
   State<RoomSettingsPage> createState() => _RoomSettingsPageState();
 }
@@ -76,6 +78,13 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
       showKey = false,
       mobileMenu = false,
       allowPop = false;
+  late bool guided;
+  int setupStep = 1;
+  String testedSnapshot = '';
+  String get connectionStatus =>
+      testedSnapshot.isNotEmpty && testedSnapshot != _snapshot()
+      ? '尚未测试连接'
+      : testStatus;
   String search = '', notice = '', testStatus = '尚未测试连接', savedSnapshot = '';
   List<Map<String, dynamic>> catalog = [], tools = [];
   String expression = 'smile', motion = '';
@@ -87,7 +96,8 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
   @override
   void initState() {
     super.initState();
-    section = widget.initialSection;
+    guided = widget.guidedSetup;
+    section = guided ? 'llm' : widget.initialSection;
     _restore();
     _catalogOwner = c.scope;
     c.addListener(_controllerChanged);
@@ -477,6 +487,10 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
         demo = false;
         options.remove('llmConnection');
         options.remove('officialProvider');
+        if (Uri.tryParse(fields['llmUrl']!.text)?.host !=
+            Uri.tryParse('${preset['apiUrl']}')?.host) {
+          fields['apiKey']!.clear();
+        }
         fields['llmUrl']!.text = '${preset['apiUrl']}';
         fields['model']!.text = '${preset['model']}';
         options['llmProxy'] = preset['useProxy'] == true;
@@ -491,6 +505,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
       ..siteCookie = c.site.cookie
       ..siteAccountId = c.account?.id;
     testing = client;
+    testedSnapshot = _snapshot();
     setState(() => testStatus = '正在测试连接');
     try {
       final text = await client
@@ -499,7 +514,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
           .timeout(const Duration(seconds: 60));
       if (mounted) {
         setState(() {
-          testStatus = '连接测试通过';
+          testStatus = text.trim().isEmpty ? '已响应，未返回文本' : '连接测试通过';
           notice = '模型回复：${text.substring(0, text.length.clamp(0, 300))}';
         });
       }
@@ -680,11 +695,12 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
         settings: _value(),
         onChanged: (value) => setState(() => options['runtimeConfig'] = value),
       ),
-      OutlinedButton(
-        onPressed: busy ? null : () => _run(_testLlm),
-        child: const SiteText('测试模型连接'),
-      ),
-      SiteText(testStatus),
+      if (!guided)
+        OutlinedButton(
+          onPressed: busy ? null : () => _run(_testLlm),
+          child: const SiteText('测试模型连接'),
+        ),
+      SiteText(connectionStatus),
       const SizedBox(height: 20),
       Wrap(
         spacing: 12,
@@ -707,6 +723,135 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
           ),
         ],
       ),
+    ],
+  );
+
+  bool get setupReady {
+    final s = _value();
+    try {
+      roomChatEndpoint(s.llmUrl);
+      final host = Uri.parse(s.llmUrl).host;
+      final local = [
+        'localhost',
+        '127.0.0.1',
+        '::1',
+        '[::1]',
+        '10.0.2.2',
+      ].contains(host);
+      return s.model.trim().isNotEmpty &&
+          (s.usesOfficialApi || local || s.apiKey.trim().isNotEmpty);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _setupStep(int value) {
+    setState(() {
+      setupStep = value;
+      notice = '';
+    });
+    if (scroll.hasClients) scroll.jumpTo(0);
+  }
+
+  Widget _guidedLlm() {
+    if (setupStep == 2) return _llm();
+    if (setupStep == 3) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            siteTranslate(
+              context,
+              '当前模型：{model}',
+            ).replaceAll('{model}', fields['model']!.text),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          const SiteText(
+            '测试会调用所选服务，可能产生用量。通过后保存，回到房间发一句话，收到回复后就能继续聊了。也可以跳过测试。',
+            style: TextStyle(height: 1.7),
+          ),
+          const SizedBox(height: 16),
+          SiteText(connectionStatus, key: const Key('setup-connection-status')),
+          if (connectionStatus == '连接测试失败')
+            const SiteText('请查看上方失败原因，可以回到上一步修改；填写的内容会保留。'),
+          _button('测试连接', _testLlm, primary: true),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SiteText(
+          '选择适合你的聊天服务',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        _mode(
+          '站内直供',
+          '需要登录账号与可用额度，无需服务商密钥',
+          CupertinoIcons.moon,
+          _value().usesOfficialApi,
+          () => _run(() async {
+            await _connectOfficial();
+            if (mounted && _value().usesOfficialApi) _setupStep(2);
+          }),
+        ),
+        const SizedBox(height: 12),
+        _mode('云端 API', '已有服务商账号与密钥，连接自己的服务', CupertinoIcons.cloud, false, () {
+          _preset(jsonMap(RoomReference.map('llmPresets')['deepseek']));
+          _setupStep(2);
+        }),
+        const SizedBox(height: 12),
+        _mode('本机 Ollama', '已安装并启动本机模型，无需密钥', CupertinoIcons.layers, false, () {
+          _preset(jsonMap(RoomReference.map('llmPresets')['ollama']));
+          _setupStep(2);
+        }),
+        if (fields['model']!.text.trim().isNotEmpty)
+          TextButton(
+            onPressed: () => _setupStep(2),
+            child: const SiteText('继续使用当前连接'),
+          ),
+      ],
+    );
+  }
+
+  Widget _setupFooter() => Wrap(
+    alignment: WrapAlignment.end,
+    spacing: 8,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      Text(
+        siteTranslate(
+          context,
+          '第 {step} / 3 步',
+        ).replaceAll('{step}', '$setupStep'),
+      ),
+      if (setupStep > 1)
+        TextButton(
+          onPressed: busy ? null : () => _setupStep(setupStep - 1),
+          child: const SiteText('上一步'),
+        ),
+      if (setupStep == 2)
+        FilledButton(
+          onPressed: busy || !setupReady ? null : () => _setupStep(3),
+          child: const SiteText('下一步'),
+        ),
+      if (setupStep == 3)
+        FilledButton(
+          onPressed: busy || !setupReady
+              ? null
+              : () => _run(() async {
+                  if (await _save() && mounted) {
+                    setState(() => allowPop = true);
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  }
+                }),
+          child: SiteText(
+            connectionStatus == '连接测试通过' ? '保存，去说第一句话' : '跳过测试并保存',
+          ),
+        ),
     ],
   );
 
@@ -927,14 +1072,15 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
           },
         ),
         const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(testStatus, style: const TextStyle(fontSize: 12)),
-            _button('测试连接', _testLlm, primary: true),
-          ],
-        ),
+        if (!guided)
+          Wrap(
+            spacing: 16,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SiteText(connectionStatus, style: const TextStyle(fontSize: 12)),
+              _button('测试连接', _testLlm, primary: true),
+            ],
+          ),
       ],
     );
   }
@@ -1485,7 +1631,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
     ),
   );
   Widget _content() => switch (section) {
-    'llm' => _llm(),
+    'llm' => guided ? _guidedLlm() : _llm(),
     'tts' => _tts(),
     'memory' => Column(
       children: [
@@ -1728,7 +1874,50 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
                               const SizedBox(height: 12),
                               _hint('先连接聊天模型，其他功能可以稍后设置。'),
                               RoomMemorySourcePanel(controller: c),
-                              if (guide)
+                              if (guided)
+                                SiteCard(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SiteText(
+                                        '第一次聊天，跟着这三步就好',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        siteTranslate(
+                                              context,
+                                              '第 {step} / 3 步 · {label}',
+                                            )
+                                            .replaceAll('{step}', '$setupStep')
+                                            .replaceAll(
+                                              '{label}',
+                                              siteTranslate(
+                                                context,
+                                                [
+                                                  '选择服务',
+                                                  '填写连接信息',
+                                                  '测试并保存',
+                                                ][setupStep - 1],
+                                              ),
+                                            ),
+                                      ),
+                                      const SiteText(
+                                        '语音、记忆和外观可以稍后设置。',
+                                        style: TextStyle(height: 1.7),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            setState(() => guided = false),
+                                        child: const SiteText('查看全部设置'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (guide && !guided)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: 8,
@@ -1808,7 +1997,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
                                     ),
                                   ),
                                 ),
-                              if (mobile) ...[
+                              if (mobile && !guided) ...[
                                 SiteCard(
                                   padding: EdgeInsets.zero,
                                   child: InkWell(
@@ -1850,7 +2039,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (!mobile) ...[
+                                  if (!mobile && !guided) ...[
                                     SizedBox(width: 204, child: _nav()),
                                     const SizedBox(width: 24),
                                   ],
@@ -1951,6 +2140,7 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
                                     ),
                                   ),
                                   if (!mobile &&
+                                      !guided &&
                                       box.maxWidth > 1180 * scale) ...[
                                     const SizedBox(width: 24),
                                     SizedBox(width: 252, child: _summary()),
@@ -1979,55 +2169,58 @@ class _RoomSettingsPageState extends State<RoomSettingsPage> {
                               style: TextStyle(fontSize: 12, color: p.muted),
                             ),
                             const SizedBox(height: 8),
-                            Wrap(
-                              alignment: WrapAlignment.end,
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                TextButton(
-                                  onPressed: !dirty || busy
-                                      ? null
-                                      : () async {
-                                          if (await roomConfirm(
-                                            context,
-                                            '放弃尚未保存的修改？',
-                                            '已保存的记忆、日记与人设不会撤销。',
-                                          )) {
-                                            setState(_restore);
-                                          }
-                                        },
-                                  child: const SiteText('放弃修改'),
-                                ),
-                                if (dirty)
+                            if (guided)
+                              _setupFooter()
+                            else
+                              Wrap(
+                                alignment: WrapAlignment.end,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
                                   TextButton(
+                                    onPressed: !dirty || busy
+                                        ? null
+                                        : () async {
+                                            if (await roomConfirm(
+                                              context,
+                                              '放弃尚未保存的修改？',
+                                              '已保存的记忆、日记与人设不会撤销。',
+                                            )) {
+                                              setState(_restore);
+                                            }
+                                          },
+                                    child: const SiteText('放弃修改'),
+                                  ),
+                                  if (dirty)
+                                    TextButton(
+                                      onPressed: busy
+                                          ? null
+                                          : () => _run(() async {
+                                              await _save();
+                                            }),
+                                      child: const SiteText('保存全部'),
+                                    ),
+                                  FilledButton.icon(
                                     onPressed: busy
                                         ? null
                                         : () => _run(() async {
-                                            await _save();
+                                            if (await _save() &&
+                                                context.mounted) {
+                                              setState(() => allowPop = true);
+                                              Navigator.popUntil(
+                                                context,
+                                                (route) => route.isFirst,
+                                              );
+                                            }
                                           }),
-                                    child: const SiteText('保存全部'),
+                                    icon: const Icon(
+                                      CupertinoIcons.arrow_right,
+                                      size: 17,
+                                    ),
+                                    label: SiteText(dirty ? '保存并进入房间' : '返回房间'),
                                   ),
-                                FilledButton.icon(
-                                  onPressed: busy
-                                      ? null
-                                      : () => _run(() async {
-                                          if (await _save() &&
-                                              context.mounted) {
-                                            setState(() => allowPop = true);
-                                            Navigator.popUntil(
-                                              context,
-                                              (route) => route.isFirst,
-                                            );
-                                          }
-                                        }),
-                                  icon: const Icon(
-                                    CupertinoIcons.arrow_right,
-                                    size: 17,
-                                  ),
-                                  label: SiteText(dirty ? '保存并进入房间' : '返回房间'),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
                           ],
                         ),
                       ),

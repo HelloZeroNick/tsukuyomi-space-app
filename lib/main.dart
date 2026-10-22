@@ -551,6 +551,7 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
           final section = Uri.parse(path!).queryParameters['section'];
           return RoomSettingsPage(
             controller: widget.controller,
+            guidedSetup: Uri.parse(path).queryParameters['setup'] == '1',
             initialSection: roomSections.containsKey(section)
                 ? section!
                 : 'llm',

@@ -579,7 +579,7 @@ class _SiteGuideDialogState extends State<_SiteGuideDialog> {
                                 if (!status.configured)
                                   TextButton(
                                     onPressed: () =>
-                                        widget.onGo('/room/settings'),
+                                        widget.onGo('/room/settings?setup=1'),
                                     child: Text(t('setup')),
                                   ),
                               ],

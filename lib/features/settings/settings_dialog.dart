@@ -7,12 +7,14 @@ Future<void> showRoomSettings(
   BuildContext context,
   RoomController controller, {
   String section = 'llm',
+  bool guidedSetup = false,
   VoidCallback? onTheme,
 }) => Navigator.of(context).push<void>(
   MaterialPageRoute(
     builder: (_) => RoomSettingsPage(
       controller: controller,
       initialSection: section,
+      guidedSetup: guidedSetup,
       onTheme: onTheme,
     ),
     settings: const RouteSettings(name: '/room/settings'),

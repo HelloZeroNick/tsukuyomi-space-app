@@ -28,6 +28,7 @@ import 'room_controller.dart';
 import 'room_panels.dart';
 import 'room_style.dart';
 import 'room_quick_setup.dart';
+import 'room_help.dart';
 import 'room_message_cache.dart';
 import 'room_chat_view.dart';
 import 'room_composer.dart';
@@ -141,6 +142,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   void _settings() =>
       unawaited(showRoomSettings(context, c, onTheme: widget.onToggleTheme));
+  void _help() => unawaited(
+    showRoomHelp(context, c, onGo: _website, onDiary: () => _selectPanel('日记')),
+  );
   void _account() {
     if (c.account != null && !c.sessionExpired && widget.onNavigate != null) {
       widget.onNavigate!('/user');
@@ -528,6 +532,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         onSelected: (v) {
           if (_roomTabs.containsKey(v)) {
             _selectPanel(v);
+          } else if (v == 'help') {
+            _help();
           } else if (v == 'new') {
             _newConversation();
           } else if (v == 'history') {
@@ -541,6 +547,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           }
         },
         itemBuilder: (_) => [
+          const PopupMenuItem<String>(
+            value: 'help',
+            child: SiteText('开始使用与发现功能'),
+          ),
           const PopupMenuItem<String>(
             enabled: false,
             child: SiteText('这一刻，慢慢聊'),
@@ -694,6 +704,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   ),
                 ),
                 IconButton(
+                  tooltip: siteTranslate(context, '开始使用与发现功能'),
+                  onPressed: _help,
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(30, 30),
+                    padding: const EdgeInsets.all(4),
+                  ),
+                  icon: const Icon(CupertinoIcons.question_circle, size: 18),
+                ),
+                IconButton(
                   tooltip: siteTranslate(context, '房间设置'),
                   onPressed: _settings,
                   style: IconButton.styleFrom(
@@ -802,7 +821,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               !c.loading && !c.settings.demo && c.settings.model.trim().isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(8),
-                  child: RoomQuickSetup(controller: c),
+                  child: RoomQuickSetup(controller: c, onDiscover: _help),
                 )
               : c.loading && turns.isEmpty
               ? const Center(child: CircularProgressIndicator())
@@ -1022,6 +1041,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     '我先说',
                     style: TextStyle(fontSize: mobile ? 13 : 10),
                   ),
+                ),
+                TextButton(
+                  onPressed: _help,
+                  child: const SiteText('第一次使用 / 发现功能'),
                 ),
                 if (!mobile && box.maxHeight > 370) ...[
                   SizedBox(height: box.maxHeight * .19),

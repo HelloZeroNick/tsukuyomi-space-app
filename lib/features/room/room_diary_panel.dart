@@ -1,3 +1,5 @@
+import '../../core/site_localization.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -199,6 +201,26 @@ class _RoomDiaryPanelState extends State<RoomDiaryPanel> {
           Text(
             '${entries.length} 篇日记 · 好感度 ${stats['affection'] ?? 0} · 存档 ${archive.archive['slotId']}',
             style: const TextStyle(fontSize: 12),
+          ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: const SiteText('好感度如何变化？'),
+            children: [
+              const SiteText(
+                '好感度来自当前日记存档。结束聊天并成功生成、保存日记后，会记录本次好感度；不会按消息条数或点击角色次数自动增加，也可能保持不变。导入或同步存档后，数值可能改变。',
+                style: TextStyle(height: 1.7),
+              ),
+              Text(
+                entries.isEmpty
+                    ? siteTranslate(context, '还没有生成日记。先聊几句，再使用“结束并写日记”。')
+                    : siteTranslate(context, '最近记录：{date} {time}')
+                          .replaceAll('{date}', '${entries.last['date'] ?? ''}')
+                          .replaceAll(
+                            '{time}',
+                            '${entries.last['time'] ?? ''}',
+                          ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(archive.status, style: const TextStyle(fontSize: 11)),

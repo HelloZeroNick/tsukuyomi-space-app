@@ -2,6 +2,18 @@
 
 GitHub Release只展示对应版本的更新。更早版本的说明保留在本文件；当前版本见[发布说明](release-notes.md)。
 
+0.6.25+32 / v0.6.25-beta.1：同步站内直供，新增原生支付中心与移动端支付宝接入。
+
+- Room 设置可直接选择站内直供，使用网站账号与统一余额；同步可用模型、价格、输出上限、流式回复、日记和结构化 Agent，保留账号隔离与精确计费显示。
+- 个人中心与分组菜单新增原生支付中心，查看余额、商品、订单、付款结果、直供用量明细与月账单；返回应用后向服务端核对订单，支付回调不会直接增加余额。
+- Android 接入支付宝 App 支付 SDK，支持服务端签名订单拉起支付宝；移动网页支付可唤起支付宝并回退 HTTPS 收银台。渠道须由服务端开启，App 支付还需开放平台权限及独立移动应用密钥；当前未完成真实付款验收。
+- 补齐站内直供维护者配置与核对、超级管理员商品和订单管理；凭据只写不读，操作仍受服务端权限校验。
+- 同步网站 Room 对话策略与回放状态，保留原有跨平台 Live2D 渲染及桌面 Agent；加入 Google Play 构建所需的 64 位 ABI 与渠道配置。
+
+普通 Android 手机选择 **arm64-v8a**。iOS IPA 和 HarmonyOS HAP 未签名，需自行签名安装；鸿蒙附件由独立发行流程追加。本版应用不自动开启生产支付渠道，移动支付还依赖配套主站更新及支付宝产品开通。功能与验证边界见[直供与支付记录](https://github.com/redchenk/tsukuyomi-space-app/blob/main/docs/native-official-payments-2026-10-21.md)，安装方法见 Release 附件。
+
+---
+
 0.6.24+31 / v0.6.24-beta.1：Live2D 原生 GPU 渲染扩展至 Apple、Windows 和 Linux。
 
 - iOS / macOS 使用 Cubism Metal 渲染，通过 IOSurface / CVPixelBuffer 交给 Flutter Texture；透明合成、普通与反向遮罩、眨眼、表情和实时口型沿用现有模型逻辑。
