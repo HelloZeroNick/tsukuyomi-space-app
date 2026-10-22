@@ -1,0 +1,22 @@
+{
+  "source_sha": "0002da723611b0058d8d3353b765b0ddcbbc6a1c",
+  "full_regression": {
+    "passed": 1025,
+    "skipped": 19
+  },
+  "desktop_updater_and_rendering": {
+    "windows": 124,
+    "macos": 124,
+    "linux": 124
+  },
+  "native_android_probe": true,
+  "live_update": {
+    "endpoint": "https://downloads.yachiyo.hk/releases.json",
+    "tag": "v0.6.27-beta.1",
+    "fresh_temporary_cache": true,
+    "installer": "tsukuyomi-space-0.6.27-ios-arm64-unsigned.ipa",
+    "size": 128212746,
+    "sha256": "a091cbc857a81305fa4987b543a5a8b6efaf5905517474350e95dbf9f9cbcbc6"
+  },
+  "physical_device_installation": false
+}

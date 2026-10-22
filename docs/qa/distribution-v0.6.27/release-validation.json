@@ -1,0 +1,127 @@
+{
+  "tag": "v0.6.27-beta.1",
+  "release_url": "https://github.com/redchenk/tsukuyomi-space-app/releases/tag/v0.6.27-beta.1",
+  "release_id": 420826330,
+  "prerelease": true,
+  "source_sha": "0002da723611b0058d8d3353b765b0ddcbbc6a1c",
+  "release_run": 39791897860,
+  "hap_build_run": 39791790371,
+  "verified_at_utc": "2026-10-22T14:48:57.640899+00:00",
+  "all_16_downloads_verified": true,
+  "checksum_coverage": [
+    "INSTALL.md",
+    "OHOS-BUILD-INFO.json",
+    "OHOS-INSTALL.md",
+    "OHOS-THIRD-PARTY-NOTICES.md",
+    "THIRD_PARTY_NOTICES.md",
+    "tsukuyomi-space-0.6.27-34-ohos-arm64-unsigned.hap",
+    "tsukuyomi-space-0.6.27-android-arm64-v8a.apk",
+    "tsukuyomi-space-0.6.27-android-x86_64.apk",
+    "tsukuyomi-space-0.6.27-ios-arm64-unsigned.ipa",
+    "tsukuyomi-space-0.6.27-linux-x64.deb",
+    "tsukuyomi-space-0.6.27-linux-x64.tar.gz",
+    "tsukuyomi-space-0.6.27-macos-universal.dmg",
+    "tsukuyomi-space-0.6.27-windows-x64-setup.exe",
+    "tsukuyomi-space-0.6.27-windows-x64.zip"
+  ],
+  "archive_integrity_verified": true,
+  "physical_device_acceptance": false,
+  "assets": [
+    {
+      "name": "INSTALL.md",
+      "size": 17165,
+      "sha256": "af8c2e235fe7f2e4efced9ac9eade708d9dbf8651fdd4fc2245d988f8fa8f7d8",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/INSTALL.md"
+    },
+    {
+      "name": "OHOS-BUILD-INFO.json",
+      "size": 559,
+      "sha256": "1a955b5aecfde818b9f6c677770cbb5ba4007e5769a8101407d22d4d514c9e02",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/OHOS-BUILD-INFO.json"
+    },
+    {
+      "name": "OHOS-INSTALL.md",
+      "size": 1845,
+      "sha256": "583c3eabb771ed0c3bd0c3031a00481523f9a5691f06c2a1719aad770e88efb0",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/OHOS-INSTALL.md"
+    },
+    {
+      "name": "OHOS-SHA256SUMS.txt",
+      "size": 379,
+      "sha256": "776c351699cfcaa3a782f7455b1c98441683368b643b0f0629f634331c1d7b48",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/OHOS-SHA256SUMS.txt"
+    },
+    {
+      "name": "OHOS-THIRD-PARTY-NOTICES.md",
+      "size": 6955,
+      "sha256": "652317c146bc41e544d84676205ec5a3dd393a3427594322da6adc2c31f4ab4d",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/OHOS-THIRD-PARTY-NOTICES.md"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 1031,
+      "sha256": "ed0f7330a58348bce2a2fc662657d014b54b1dd3d71beb61e4250f88e4f68648",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/SHA256SUMS.txt"
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "size": 6955,
+      "sha256": "652317c146bc41e544d84676205ec5a3dd393a3427594322da6adc2c31f4ab4d",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-34-ohos-arm64-unsigned.hap",
+      "size": 154169356,
+      "sha256": "e055943fe0352f2a54f38800206d0c28beedcc51fa9fe3162a7c478f3a10d310",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-34-ohos-arm64-unsigned.hap"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-android-arm64-v8a.apk",
+      "size": 159396637,
+      "sha256": "e7eeed1d7f2dafdf651148ad3626161a58e88344df3b6170480027a6d08c20a7",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-android-arm64-v8a.apk"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-android-x86_64.apk",
+      "size": 164508760,
+      "sha256": "3af596abd6c9191624fffad3f6bf4ddc2d4fd02a48be14cf604805378ad63e95",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-android-x86_64.apk"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-ios-arm64-unsigned.ipa",
+      "size": 128212746,
+      "sha256": "a091cbc857a81305fa4987b543a5a8b6efaf5905517474350e95dbf9f9cbcbc6",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-ios-arm64-unsigned.ipa"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-linux-x64.deb",
+      "size": 261987204,
+      "sha256": "fdf2f988285f72ac920efe2640a94418b8b313637ab09961634d12b08867b086",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-linux-x64.deb"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-linux-x64.tar.gz",
+      "size": 320269668,
+      "sha256": "e0450565793c4734dbb875041fe308fc9be76026a5222ef419d6c4232f6dd9f9",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-linux-x64.tar.gz"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-macos-universal.dmg",
+      "size": 551364390,
+      "sha256": "b0b2ee7b8200fb0b9cefcac7379a001a64a052836849020c23c3f34f384a5c23",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-macos-universal.dmg"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-windows-x64-setup.exe",
+      "size": 269043389,
+      "sha256": "1fcbbff4a6938ee0cceaaf21dedc095c88f319251c5e727c5ef4f552cc848e70",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-windows-x64-setup.exe"
+    },
+    {
+      "name": "tsukuyomi-space-0.6.27-windows-x64.zip",
+      "size": 364177592,
+      "sha256": "f5f555a8d971bd7cd05e3da7e8b9eca3fc7d02440d862f16256181aeb027c261",
+      "url": "https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.27-beta.1/tsukuyomi-space-0.6.27-windows-x64.zip"
+    }
+  ]
+}
