@@ -1,0 +1,29 @@
+name: Distribute published installers
+on:
+  workflow_run:
+    workflows: [Release installers, Release HarmonyOS HAP]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: app-distribution
+  cancel-in-progress: false
+jobs:
+  distribute:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify and send the newest published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_DISTRIBUTION_SSH_KEY: ${{ secrets.APP_DISTRIBUTION_SSH_KEY }}
+          APP_DISTRIBUTION_KNOWN_HOSTS: ${{ secrets.APP_DISTRIBUTION_KNOWN_HOSTS }}
+        run: python3 tool/release/distribute.py
