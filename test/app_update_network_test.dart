@@ -6,7 +6,7 @@ import 'package:tsukuyomi_space_app/core/app_update_service.dart';
 
 void main() {
   test(
-    'official GitHub release detects and downloads a verified installer',
+    'official distribution release detects and downloads a verified installer',
     () async {
       final cache = Directory('artifacts/app-update-live');
       await cache.create(recursive: true);
@@ -29,7 +29,7 @@ void main() {
       expect(await file.length(), release.installer.size);
       // ignore: avoid_print
       print(
-        'TSUKUYOMI_UPDATE_GITHUB_OK ${release.tag} ${release.installer.name} size=${release.installer.size} sha256=${release.installer.digest}',
+        'TSUKUYOMI_UPDATE_DISTRIBUTION_OK ${release.tag} ${release.installer.name} size=${release.installer.size} sha256=${release.installer.digest}',
       );
     },
     skip: !const bool.fromEnvironment('RUN_APP_UPDATE_NETWORK'),

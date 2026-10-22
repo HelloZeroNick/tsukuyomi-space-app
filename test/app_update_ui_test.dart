@@ -30,7 +30,7 @@ class _Transport implements UpdateTransport {
   Stream<List<int>> read(Uri url, UpdateCancellation token) async* {
     calls++;
     final hash = sha256.convert(bytes).toString();
-    if (url.host == 'api.github.com') {
+    if (url == appReleasesApi) {
       yield utf8.encode(
         jsonEncode([
           {
@@ -47,7 +47,7 @@ class _Transport implements UpdateTransport {
                   'size': asset == name ? bytes.length : 200,
                   'digest': asset == name ? 'sha256:$hash' : null,
                   'browser_download_url':
-                      '$appRepository/releases/download/v9.0.0/$asset',
+                      '$appDistributionOrigin/releases/v9.0.0/$asset',
                 },
             ],
           },

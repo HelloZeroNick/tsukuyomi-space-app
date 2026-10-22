@@ -1,11 +1,11 @@
-# 月读空间 0.6.26 测试版
+# 月读空间 0.6.27 测试版
 
 ## 安装
 
 - Android：安装 `android-arm64-v8a.apk`（绝大多数手机）。x86_64 模拟器选择 x86_64。当前 Cubism SDK 已不提供 32 位 ARM 库，因此不发布 32 位 APK。允许安装来自浏览器或文件管理器的应用。所有 APK 使用同一持久发行密钥签名，可覆盖升级本测试版。
 - macOS：打开 DMG，将应用拖到 Applications。Universal 包同时支持 Apple Silicon 和 Intel。当前没有 Developer ID 签名和公证；首次启动可能需在“系统设置 → 隐私与安全性”允许打开此应用。无需关闭系统安全功能。
 - Windows 10/11 x64：运行 setup.exe。按当前用户安装，无需管理员权限；当前未使用商业代码签名，SmartScreen 可能显示未知发布者。安装程序包含经过微软签名验证的 WebView2 引导程序，缺少运行时会联网安装，以支持 QQ 登录。便携 ZIP 解压完整目录后也可运行，使用 QQ 前需运行包内的 `MicrosoftEdgeWebview2Setup.exe`。
-- Linux x64：使用 Ubuntu 22.04 构建，推荐 `sudo apt install ./tsukuyomi-space-0.6.26-linux-x64.deb` 自动安装该版本所需音视频运行库。需桌面登录会话及 Secret Service（如已解锁的 GNOME Keyring）保存密钥。其它发行版须具备相同运行库 ABI，尤其是构建时链接的 libmpv；tar.gz 为便携包，不包含系统 GTK、Secret Service、GStreamer、libmpv 和 libepoxy。DEB 的依赖根据实际安装包中全部 ELF 自动推导。
+- Linux x64：使用 Ubuntu 22.04 构建，推荐 `sudo apt install ./tsukuyomi-space-0.6.27-linux-x64.deb` 自动安装该版本所需音视频运行库。需桌面登录会话及 Secret Service（如已解锁的 GNOME Keyring）保存密钥。其它发行版须具备相同运行库 ABI，尤其是构建时链接的 libmpv；tar.gz 为便携包，不包含系统 GTK、Secret Service、GStreamer、libmpv 和 libepoxy。DEB 的依赖根据实际安装包中全部 ELF 自动推导。
 - iOS：下载 `ios-arm64-unsigned.ipa`，使用自签工具导入，并用自己的 Apple 账号或证书签名。签名器需重新签署 App 和所有内嵌 Framework，配置对应描述文件与 Keychain entitlement。IPA 是真实 iPhoneOS arm64 构建，不是模拟器包；未签名文件不能直接点击安装。签名有效期、设备数量与刷新方式取决于签名账号及工具。本版未做已签名 iPhone 真机验收。
 
 ## 配置真实模型和语音
@@ -99,4 +99,4 @@ Android 使用 Java 17、AGP 8.13.2、Gradle 8.14.5 与 Kotlin 2.3.21。Gradle 8
 
 ## 应用内更新
 
-安装 0.6.11 或更高版本后，使用顶部更新图标或菜单中的“应用更新”检查 GitHub 新版本。下载完成并校验后确认安装；Windows / Android 打开系统安装器，macOS 将 DMG 中的应用拖入 Applications 替换，Linux 在系统软件安装器中安装 DEB，iOS 导出 IPA 后沿用原身份签名安装。聊天、配置与草稿保留。此前的旧版需要先手动安装一次。详见 [应用内更新说明](in-app-updates.md)。
+安装 0.6.11 或更高版本后，使用顶部更新图标或菜单中的“应用更新”从官方下载服务器检查新版本。下载完成并校验后确认安装；Windows / Android 打开系统安装器，macOS 将 DMG 中的应用拖入 Applications 替换，Linux 在系统软件安装器中安装 DEB，iOS 导出 IPA 后沿用原身份签名安装。聊天、配置与草稿保留。此前的旧版需要先手动安装一次。0.6.27 起使用 `downloads.yachiyo.hk` 获取版本信息和安装包，旧版需先更新一次才能切换下载来源。服务器仅保留最新版本，历史版本仍在 GitHub Release。详见 [应用内更新说明](in-app-updates.md)。

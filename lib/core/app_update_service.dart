@@ -43,10 +43,10 @@ abstract interface class UpdateTransport {
   Stream<List<int>> read(Uri url, UpdateCancellation token);
 }
 
-/// Never sends site cookies, model keys or a GitHub token. Only official HTTPS
-/// endpoints and GitHub's signed release-asset redirects are accepted.
-class GithubUpdateTransport implements UpdateTransport {
-  GithubUpdateTransport({HttpClient Function()? clientFactory})
+/// Public downloads never send site cookies, model keys or authorization.
+/// Metadata, installers and redirects must stay on the official HTTPS origin.
+class DistributionUpdateTransport implements UpdateTransport {
+  DistributionUpdateTransport({HttpClient Function()? clientFactory})
     : _clientFactory = clientFactory ?? HttpClient.new;
   final HttpClient Function() _clientFactory;
   static bool trusted(Uri uri) =>
@@ -54,12 +54,11 @@ class GithubUpdateTransport implements UpdateTransport {
       uri.userInfo.isEmpty &&
       uri.port == 443 &&
       !uri.hasFragment &&
-      const {
-        'api.github.com',
-        'github.com',
-        'release-assets.githubusercontent.com',
-        'objects.githubusercontent.com',
-      }.contains(uri.host);
+      !uri.hasQuery &&
+      uri.host == Uri.parse(appDistributionOrigin).host &&
+      (uri.path == '/releases.json' ||
+          RegExp(r'^/releases/v[0-9A-Za-z.-]+/[0-9A-Za-z._-]+$')
+              .hasMatch(uri.path));
 
   @override
   Stream<List<int>> read(Uri url, UpdateCancellation token) async* {
@@ -84,8 +83,8 @@ class GithubUpdateTransport implements UpdateTransport {
         request.headers.set(HttpHeaders.acceptEncodingHeader, 'identity');
         request.headers.set(
           HttpHeaders.acceptHeader,
-          current.host == 'api.github.com'
-              ? 'application/vnd.github+json'
+          current == appReleasesApi
+              ? 'application/json'
               : 'application/octet-stream',
         );
         final response = await request.close().timeout(
@@ -136,7 +135,7 @@ class AppUpdateService {
   AppUpdateService({
     UpdateTransport? transport,
     Future<Directory> Function()? cacheDirectory,
-  }) : transport = transport ?? GithubUpdateTransport(),
+  }) : transport = transport ?? DistributionUpdateTransport(),
        cacheDirectory = cacheDirectory ?? getApplicationCacheDirectory;
   final UpdateTransport transport;
   final Future<Directory> Function() cacheDirectory;

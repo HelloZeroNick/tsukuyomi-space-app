@@ -11,9 +11,9 @@ const _copy = <String, (String, String, String)>{
   ),
   'intro': ('让月读空间保持最新', 'Keep Tsukuyomi Space up to date', '月読空間を最新の状態に'),
   'description': (
-    '从官方 GitHub 获取新版本，下载完成并校验后，由你确认安装。聊天记录与模型配置会保留。',
-    'Get new releases from official GitHub. Downloads are verified before you confirm installation. Your chats and model settings are preserved.',
-    '公式 GitHub から新バージョンを取得します。ダウンロードと検証の後、インストールを確認してください。会話とモデル設定は保持されます。',
+    '从官方下载服务器获取新版本，下载完成并校验后，由你确认安装。聊天记录与模型配置会保留。',
+    'Get new releases from our official download server. Downloads are verified before you confirm installation. Your chats and model settings are preserved.',
+    '公式配信サーバーから新バージョンを取得します。ダウンロードと検証の後、インストールを確認してください。会話とモデル設定は保持されます。',
   ),
   'current': ('当前版本', 'Installed version', '現在のバージョン'),
   'latest': (
@@ -22,11 +22,7 @@ const _copy = <String, (String, String, String)>{
     'このチャンネルの最新バージョンです',
   ),
   'check': ('检查更新', 'Check for updates', '更新を確認'),
-  'checking': (
-    '正在检查 GitHub 新版本…',
-    'Checking GitHub releases…',
-    'GitHub のリリースを確認中…',
-  ),
+  'checking': ('正在检查新版本…', 'Checking for updates…', '新バージョンを確認中…'),
   'new': ('有新版本可用', 'An update is available', '新バージョンがあります'),
   'view': ('查看更新', 'View update', '更新を表示'),
   'download': ('下载更新', 'Download update', '更新をダウンロード'),
@@ -57,9 +53,9 @@ const _copy = <String, (String, String, String)>{
   'notes': ('更新内容', 'What’s new', '更新内容'),
   'github': ('在 GitHub 查看发布', 'View release on GitHub', 'GitHub でリリースを表示'),
   'source': (
-    '下载来源：官方 GitHub · 安装前校验 SHA-256',
-    'Source: official GitHub · SHA-256 verified before installation',
-    '配信元：公式 GitHub · インストール前に SHA-256 を検証',
+    '下载来源：官方下载服务器 · 安装前校验 SHA-256',
+    'Source: official download server · SHA-256 verified before installation',
+    '配信元：公式配信サーバー · インストール前に SHA-256 を検証',
   ),
   'untrusted': (
     '更新来源不可信，已阻止下载和安装。请在官方 GitHub 查看。',
@@ -110,14 +106,14 @@ const _copy = <String, (String, String, String)>{
     '共有メニューで IPA を保存するか署名ツールに送り、署名してインストールしてください。',
   ),
   'network': (
-    '暂时无法连接 GitHub，请检查网络后重试。',
-    'Cannot connect to GitHub. Check your connection and try again.',
-    'GitHub に接続できません。接続を確認して再試行してください。',
+    '暂时无法连接下载服务器，请检查网络后重试。',
+    'Cannot connect to the download server. Check your connection and try again.',
+    '配信サーバーに接続できません。接続を確認して再試行してください。',
   ),
   'rateLimit': (
-    'GitHub 暂时限制了检查请求，请稍后重试。',
-    'GitHub temporarily limited requests. Please try again later.',
-    'GitHub のリクエスト制限に達しました。後で再試行してください。',
+    '下载服务器暂时限制了检查请求，请稍后重试。',
+    'The download server temporarily limited requests. Please try again later.',
+    '配信サーバーのリクエスト制限に達しました。後で再試行してください。',
   ),
   'metadata': (
     '发布信息不完整，请稍后重试或在 GitHub 查看。',

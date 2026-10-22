@@ -19,7 +19,7 @@ Map<String, Object?> _asset(String name, {int? size, String? digest}) => {
   'name': name,
   'state': 'uploaded',
   'size': size ?? _bytes.length,
-  'browser_download_url': '$appRepository/releases/download/$_tag/$name',
+  'browser_download_url': '$appDistributionOrigin/releases/$_tag/$name',
   'digest': digest == null ? null : 'sha256:$digest',
 };
 Map<String, Object?> _release({
@@ -43,7 +43,7 @@ Map<String, Object?> _release({
         {
           ...asset,
           'browser_download_url':
-              '$appRepository/releases/download/$tag/${asset['name']}',
+              '$appDistributionOrigin/releases/$tag/${asset['name']}',
         },
     ],
   };
@@ -66,7 +66,7 @@ class _Transport implements UpdateTransport {
     if (failed) throw const UpdateFailure('network');
     if (gate != null) await gate!.future;
     token.check();
-    if (url.host == 'api.github.com') {
+    if (url == appReleasesApi) {
       yield utf8.encode(jsonEncode(catalog));
     } else if (url.path.endsWith('SHA256SUMS.txt')) {
       yield utf8.encode(checksum ?? '$_hash  ${_parsed().installer.name}\n');
@@ -181,7 +181,7 @@ void main() {
     test('select exact installer for ${platform.name}', () {
       final r = AppUpdateRelease.parse(_release(platform: platform), platform)!;
       expect(r.installer.name, endsWith(platform.suffix));
-      expect(r.installer.url.host, 'github.com');
+      expect(r.installer.url.host, 'downloads.yachiyo.hk');
     });
   }
   test('reject draft, mismatched repository, duplicates, missing checksums and malformed assets', () {
@@ -256,34 +256,36 @@ void main() {
       );
     }
   });
-  test(
-    'reject untrusted download hosts, credentials, ports and insecure URLs',
-    () {
-      for (final value in [
-        'http://github.com/file',
-        'https://github.com.evil.example/file',
-        'https://github.com:444/file',
-        'https://user:secret@github.com/file',
-        'file:///tmp/file',
-        'https://github.com/file#fragment',
-      ]) {
-        expect(GithubUpdateTransport.trusted(Uri.parse(value)), false);
-      }
-      for (final host in [
-        'github.com',
-        'api.github.com',
-        'release-assets.githubusercontent.com',
-        'objects.githubusercontent.com',
-      ]) {
-        expect(
-          GithubUpdateTransport.trusted(
-            Uri.parse('https://$host/download?token=public-signed-token'),
-          ),
-          true,
-        );
-      }
-    },
-  );
+  test('reject untrusted download hosts, credentials, ports and insecure URLs', () {
+    for (final value in [
+      'http://downloads.yachiyo.hk/releases.json',
+      'https://downloads.yachiyo.hk.evil.example/releases.json',
+      'https://downloads.yachiyo.hk:444/releases.json',
+      'https://user:secret@downloads.yachiyo.hk/releases.json',
+      'file:///tmp/file',
+      '$appDistributionOrigin/releases.json#fragment',
+      '$appDistributionOrigin/releases.json?redirect=evil',
+      '$appDistributionOrigin/private/file',
+      '$appDistributionOrigin/releases/v1.0.0/../../secret',
+      'https://github.com/file',
+      'https://api.github.com/releases',
+      'https://release-assets.githubusercontent.com/file?sig=public',
+      'https://objects.githubusercontent.com/file',
+    ]) {
+      expect(
+        DistributionUpdateTransport.trusted(Uri.parse(value)),
+        false,
+        reason: value,
+      );
+    }
+    for (final value in [
+      appReleasesApi.toString(),
+      '$appDistributionOrigin/releases/v0.6.27-beta.1/SHA256SUMS.txt',
+      '$appDistributionOrigin/releases/v0.6.27-beta.1/tsukuyomi-space-0.6.27-android-arm64-v8a.apk',
+    ]) {
+      expect(DistributionUpdateTransport.trusted(Uri.parse(value)), true);
+    }
+  });
 
   group('download and install pipeline', () {
     late Directory temp;

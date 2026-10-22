@@ -87,14 +87,13 @@ void main() {
     final client = _Client([
       _Response(
         302,
-        location:
-            'https://release-assets.githubusercontent.com/file?sig=public',
+        location: '$appDistributionOrigin/releases/v0.6.12/file.exe',
       ),
       _Response(200),
     ]);
-    final bytes = await GithubUpdateTransport(clientFactory: () => client)
+    final bytes = await DistributionUpdateTransport(clientFactory: () => client)
         .read(
-          Uri.parse('$appRepository/releases/download/v0.6.12/file.exe'),
+          Uri.parse('$appDistributionOrigin/releases/v0.6.12/file.exe'),
           UpdateCancellation(),
         )
         .expand((b) => b)
@@ -114,12 +113,13 @@ void main() {
     () async {
       for (final url in [
         'https://evil.example/installer',
+        'https://github.com/redchenk/tsukuyomi-space-app/releases/download/v0.6.12/file.exe',
         'http://github.com/installer',
         'https://user:secret@github.com/installer',
       ]) {
         final client = _Client([_Response(302, location: url)]);
         await expectLater(
-          GithubUpdateTransport(clientFactory: () => client)
+          DistributionUpdateTransport(clientFactory: () => client)
               .read(appReleasesApi, UpdateCancellation())
               .drain<void>(),
           throwsA(
@@ -135,11 +135,11 @@ void main() {
     final client = _Client(
       List.generate(
         6,
-        (_) => _Response(302, location: 'https://github.com/again'),
+        (_) => _Response(302, location: appReleasesApi.toString()),
       ),
     );
     await expectLater(
-      GithubUpdateTransport(clientFactory: () => client)
+      DistributionUpdateTransport(clientFactory: () => client)
           .read(appReleasesApi, UpdateCancellation())
           .drain<void>(),
       throwsA(isA<UpdateFailure>().having((e) => e.code, 'code', 'untrusted')),
@@ -147,9 +147,9 @@ void main() {
     expect(client.urls.length, 6);
     for (final status in [403, 429, 404, 500]) {
       await expectLater(
-        GithubUpdateTransport(clientFactory: () => _Client([_Response(status)]))
-            .read(appReleasesApi, UpdateCancellation())
-            .drain<void>(),
+        DistributionUpdateTransport(
+          clientFactory: () => _Client([_Response(status)]),
+        ).read(appReleasesApi, UpdateCancellation()).drain<void>(),
         throwsA(
           isA<UpdateFailure>().having(
             (e) => e.code,
@@ -176,7 +176,7 @@ void main() {
       final chunks = <List<int>>[];
       await expectLater(
         () async {
-          await for (final chunk in GithubUpdateTransport(
+          await for (final chunk in DistributionUpdateTransport(
             clientFactory: () => client,
           ).read(appReleasesApi, token)) {
             chunks.add(chunk);

@@ -31,9 +31,9 @@
 
 ## 来源与完整性
 
-公开请求直接发往 `api.github.com/repos/redchenk/tsukuyomi-space-app/releases`；安装包和 SHA256SUMS 直接从官方 GitHub Release 下载，网站/CDN 不转发二进制。
+0.6.27 起，公开版本请求发往 `https://downloads.yachiyo.hk/releases.json`，安装包和 SHA256SUMS 从同域 `/releases/<tag>/<filename>` 下载。服务器在 GitHub Release 发布后自动校验并同步，仅保留最新完整版本；历史版本保留在 GitHub。0.6.26 及以前的更新器仍需先更新一次才能使用新来源。
 
-只接受 HTTPS 官方 GitHub 和 release-assets/objects.githubusercontent.com 的重定向，最多 5 次；不发送站点 Cookie、用户模型密钥或 GitHub 令牌。SHA256SUMS 必须精确匹配文件名；存在 GitHub `digest` 时必须一致。安装前再次校验本地文件大小、路径和 SHA-256。Android 在请求安装权限或打开安装器前，额外核对当前包名、签名证书和递增版本号。
+只接受官方下载域名内限定路径的 HTTPS 请求和重定向（最多 5 次），拒绝查询参数、凭据、片段和其他域名；不发送站点 Cookie、用户模型密钥或 GitHub 令牌。SHA256SUMS 必须精确匹配文件名；存在 GitHub `digest` 时必须一致。安装前再次校验本地文件大小、路径和 SHA-256。Android 在请求安装权限或打开安装器前，额外核对当前包名、签名证书和递增版本号。
 
 下载位于应用的私有缓存 `tsukuyomi-updates`。不接受符号链接，不使用任意外部路径；Android FileProvider 只开放这个缓存子目录，并授予临时只读访问。
 

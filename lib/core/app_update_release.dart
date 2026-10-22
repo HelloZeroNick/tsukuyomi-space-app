@@ -1,7 +1,6 @@
 const appRepository = 'https://github.com/redchenk/tsukuyomi-space-app';
-final appReleasesApi = Uri.parse(
-  'https://api.github.com/repos/redchenk/tsukuyomi-space-app/releases?per_page=30',
-);
+const appDistributionOrigin = 'https://downloads.yachiyo.hk';
+final appReleasesApi = Uri.parse('$appDistributionOrigin/releases.json');
 
 class UpdateFailure implements Exception {
   const UpdateFailure(this.code);
@@ -87,7 +86,7 @@ class UpdateAsset {
     }
     final size = data['size'];
     final url = Uri.tryParse('${data['browser_download_url']}');
-    final expected = Uri.parse('$appRepository/releases/download/$tag/$name');
+    final expected = Uri.parse('$appDistributionOrigin/releases/$tag/$name');
     if (size is! int ||
         size <= 0 ||
         size > 2 * 1024 * 1024 * 1024 ||
