@@ -8,8 +8,10 @@ void main() {
   test(
     'official distribution release detects and downloads a verified installer',
     () async {
-      final cache = Directory('artifacts/app-update-live');
-      await cache.create(recursive: true);
+      final cache = await Directory.systemTemp.createTemp(
+        'tsukuyomi-update-live-',
+      );
+      addTearDown(() => cache.delete(recursive: true));
       final service = AppUpdateService(
         cacheDirectory: () async => cache.absolute,
       );
