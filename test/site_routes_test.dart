@@ -5,6 +5,8 @@ void main() {
   test('native routes retain aliases, queries, slugs and fragments', () {
     final routes = {
       '/hub': '/hub',
+      '/privacy': '/privacy',
+      '/delete-account': '/delete-account',
       '/': '/room',
       '/access': '/room',
       '/access.html': '/room',

@@ -48,3 +48,14 @@ Useful primary references:
 [Workflow run 39533744201](https://github.com/redchenk/tsukuyomi-space-app/actions/runs/39533744201) succeeded at `e8b58b79a1cc00f91a981cbf6a6e972838c41420`. The downloaded artifact archive matched the GitHub SHA-256 digest. The extracted AAB and public certificate matched their bundled checksums. AAB SHA-256: `505a29e77b7590ac3a86c3f0a99db968c8cdf6e1319c3ea4714e21f1ba423215`; size 174,475,237 bytes; version code 100031. CI verified signature, packaged assets, absence of APK-install permission and absence of 32-bit ABI libraries.
 
 The Simplified Chinese title, short/full descriptions, 512 × 512 existing app icon, 1024 × 500 feature graphic, and two 9:16 phone screenshots were saved as a Play Console draft. This does not submit the listing for Google review. Local publication materials and sanitized Console status are under ignored `artifacts/google-play/`; no reviewer password is stored there.
+
+
+## 2026-10-22 隐私政策与账号注销
+
+- 隐私政策 URL：`https://yachiyo.hk/privacy`（公开 HTML；App 随包提供中英文正文，可离线阅读）。
+- 账号删除 URL：`https://yachiyo.hk/delete-account`（卸载后仍可用，登录提交或通过绑定邮箱申请）。
+- App 入口：用户中心 → 账户安全 → 申请注销账号；登录/注册页、现实连接也可阅读政策。
+- 注销采用站长核验后人工处理，通常收到申请起 30 日内完成。申请有编号、状态、待核验阶段的撤回功能；并不立即删除账号或处理资金。无登录的邮箱申请同样有效。
+- 后台工作台只有超级管理员可访问；完成登记要求账号已删除、清理清单逐项完成及处理回执。运行与清理规范见网站 `docs/privacy/account-deletion-runbook.md`。
+- 政策单一编辑源为网站 `shared/privacy-policy.json`。更新后执行 `node tool/sync_privacy_policy.mjs <网站仓库路径>`，再执行 `dart format lib/core/privacy_policy.dart`。需同时发布网站与 App 的政策版本。
+- Google Play 候选构建号从 100032 起；候选包不等于上架、真机验收或完成 Data safety/UGC/封闭测试要求。Console 中的政策 URL、删除 URL 和数据安全声明需按当前实测状态保存。

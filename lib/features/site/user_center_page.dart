@@ -677,6 +677,22 @@ class _UserCenterPageState extends State<UserCenterPage>
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       _sectionHeading('账户安全', Icons.shield_outlined),
+      Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => widget.onGo('/privacy'),
+            icon: const Icon(Icons.privacy_tip_outlined),
+            label: const SiteText('隐私政策'),
+          ),
+          OutlinedButton.icon(
+            onPressed: () => widget.onGo('/delete-account'),
+            icon: const Icon(Icons.person_remove_outlined),
+            label: const SiteText('申请注销账号'),
+          ),
+        ],
+      ),
       NativeSiteSection(
         title: '密码安全',
         child: Column(

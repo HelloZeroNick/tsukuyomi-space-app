@@ -13,7 +13,7 @@ on:
     inputs:
       version_code:
         description: Monotonically increasing Google Play version code
-        default: '100031'
+        default: '100032'
         required: true
         type: string
 
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     env:
-      PLAY_VERSION_CODE: ${{ inputs.version_code || '100031' }}
+      PLAY_VERSION_CODE: ${{ inputs.version_code || '100032' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -54,7 +54,7 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze --no-pub
       - name: Check updater and application UI regressions
-        run: flutter test --no-pub test/app_update_test.dart test/app_update_transport_test.dart test/app_update_ui_test.dart
+        run: flutter test --no-pub test/app_update_test.dart test/app_update_transport_test.dart test/app_update_ui_test.dart test/privacy_page_test.dart test/site_routes_test.dart test/native_auth_test.dart test/user_center_account_test.dart
       - name: Build with existing distribution signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}

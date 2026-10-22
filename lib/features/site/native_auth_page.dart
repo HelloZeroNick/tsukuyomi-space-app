@@ -781,6 +781,10 @@ class _NativeAuthPageState extends State<NativeAuthPage> {
                 children: [
                   if (_message.isNotEmpty)
                     nativeSiteFeedback(context, _message, error: _failure),
+                  TextButton(
+                    onPressed: () => widget.onGo('/privacy'),
+                    child: const SiteText('隐私政策 / Privacy policy'),
+                  ),
                   ..._fields(),
                   FilledButton(
                     key: const Key('auth-submit'),

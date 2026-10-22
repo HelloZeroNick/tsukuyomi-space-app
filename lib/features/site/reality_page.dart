@@ -90,6 +90,14 @@ class _RealityPageState extends State<RealityPage> {
             spacing: 12,
             runSpacing: 12,
             children: [
+              OutlinedButton(
+                onPressed: () => widget.onGo('/privacy'),
+                child: const SiteText('隐私政策'),
+              ),
+              OutlinedButton(
+                onPressed: () => widget.onGo('/delete-account'),
+                child: const SiteText('申请注销账号'),
+              ),
               for (final key in const {
                 'contact': 'ContactTitle',
                 'support': 'SupportTitle',

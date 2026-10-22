@@ -23,6 +23,8 @@ const nativeSiteRoutes = {
   '/friend-links',
   '/friend-links/apply',
   '/reality',
+  '/privacy',
+  '/delete-account',
   '/editor',
   '/attachments',
   '/admin',

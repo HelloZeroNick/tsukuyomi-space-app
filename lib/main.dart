@@ -1,3 +1,4 @@
+import 'features/site/privacy_page.dart';
 import 'core/site_localization.dart';
 import 'core/desktop_window.dart';
 
@@ -457,6 +458,14 @@ class _TsukuyomiAppState extends State<TsukuyomiApp>
         }
         if (route == '/wiki' || route?.startsWith('/wiki/') == true) {
           return WikiPage(
+            controller: c,
+            path: path!,
+            onGo: go,
+            onTheme: _toggleTheme,
+          );
+        }
+        if (route == '/privacy' || route == '/delete-account') {
+          return PrivacyPage(
             controller: c,
             path: path!,
             onGo: go,
