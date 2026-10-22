@@ -58,6 +58,8 @@ def selected_assets(release):
 
 
 def main():
+    if not all(os.environ.get(name, '').strip() for name in ['APP_DISTRIBUTION_SSH_KEY', 'APP_DISTRIBUTION_KNOWN_HOSTS']):
+        raise RuntimeError('Dedicated distribution credentials are not configured')
     releases = json.loads(subprocess.check_output(['gh', 'api', f'repos/{REPO}/releases?per_page=20']))
     ready = [(r, selected_assets(r)) for r in releases]
     ready = [(r, assets) for r, assets in ready if assets]

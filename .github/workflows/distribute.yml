@@ -3,6 +3,8 @@ on:
   workflow_run:
     workflows: [Release installers, Release HarmonyOS HAP]
     types: [completed]
+  release:
+    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   distribute:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
