@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Send the newest published installers to the restricted distribution receiver."""
 import hashlib
+import datetime
 import io
 import json
 import os
@@ -100,6 +101,11 @@ def main():
         finally:
             if process.poll() is None:
                 process.kill(); process.wait()
+        report = {'tag': release['tag_name'], 'release_url': release['html_url'],
+                  'verified_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                  'public_release_downloads_verified': len(assets), 'receiver_accepted': True,
+                  'assets': [{'name': a['name'], 'size': a['size'], 'sha256': a['digest'][7:]} for a in assets]}
+        Path('distribution-validation.json').write_text(json.dumps(report, indent=2) + '\n')
         print(f"Distributed {release['tag_name']}: {len(assets)} verified files")
 
 

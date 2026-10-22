@@ -29,3 +29,8 @@ jobs:
           APP_DISTRIBUTION_SSH_KEY: ${{ secrets.APP_DISTRIBUTION_SSH_KEY }}
           APP_DISTRIBUTION_KNOWN_HOSTS: ${{ secrets.APP_DISTRIBUTION_KNOWN_HOSTS }}
         run: python3 tool/release/distribute.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution-validation
+          path: distribution-validation.json
+          if-no-files-found: error
