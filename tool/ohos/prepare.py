@@ -10,13 +10,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def prepare(root):
     source = root / 'tool/ohos'
-    # Standard Flutter can still analyze/test the unprepared branch. Only the
-    # dedicated CPF-Flutter build lowers its minimum to that SDK's Dart 3.12.2.
+    # Standard Flutter can still analyze/test the unprepared branch. The
+    # dedicated CPF-Flutter build tracks the same Dart baseline as the other
+    # platforms, so the manifests keep main's SDK constraint unchanged.
     for relative in ['pubspec.yaml', 'packages/tsukuyomi_live2d/pubspec.yaml']:
         path = root / relative
         text = path.read_text()
-        text, count = re.subn(r'(?m)^  sdk: \^3\.\d+\.\d+$', '  sdk: ^3.12.2', text)
-        if count != 1:
+        if len(re.findall(r'(?m)^  sdk: \^3\.\d+\.\d+$', text)) != 1:
             raise ValueError(f'Unsupported SDK declaration in {relative}')
         if relative == 'pubspec.yaml' and '  flutter_geolocator_ohos:' not in text:
             # The pinned facade mistakenly endorses geolocator_ohos, but the

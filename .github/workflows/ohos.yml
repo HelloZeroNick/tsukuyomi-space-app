@@ -50,10 +50,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install pinned CPF-Flutter
+      - name: Install CPF-Flutter
         run: |
-          git clone -b oh-3.44.9-dev https://gitcode.com/CPF-Flutter/flutter_flutter.git "$RUNNER_TEMP/flutter-ohos"
-          git -C "$RUNNER_TEMP/flutter-ohos" checkout 3ffe70c6280cc6ddf613bffa59dd70611f238f7e
+          git clone -b oh-3.47.7-dev https://gitcode.com/CPF-Flutter/flutter_flutter.git "$RUNNER_TEMP/flutter-ohos"
           echo "$RUNNER_TEMP/flutter-ohos/bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/flutter-ohos/bin/flutter" config --no-analytics
       - name: Install HarmonyOS SDK 26

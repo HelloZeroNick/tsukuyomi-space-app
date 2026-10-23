@@ -39,7 +39,7 @@ class PreparationTests(unittest.TestCase):
                 load('prepare').prepare(root)
             self.assertEqual(json.loads(app.read_text())['app']['versionCode'], 42)
             self.assertEqual(json.loads(app.read_text())['app']['versionName'], '0.7.0')
-            self.assertIn('sdk: ^3.12.2', (root / 'pubspec.yaml').read_text())
+            self.assertIn('sdk: ^3.13.4', (root / 'pubspec.yaml').read_text())
             self.assertIn('  flutter_geolocator_ohos: any', (root / 'pubspec.yaml').read_text())
             self.assertIn('MacOsOptions()', (root / 'lib/core/storage.dart').read_text())
             self.assertTrue((root / 'packages/flutter_secure_storage/lib/flutter_secure_storage.dart').is_file())
