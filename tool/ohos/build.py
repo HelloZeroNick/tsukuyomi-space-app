@@ -12,6 +12,19 @@ ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = Path('ohos/entry/build/default/outputs/default')
 
 
+def flutter_commit():
+    """Record the CPF-Flutter revision actually used; CI tracks the branch tip."""
+    binary = shutil.which('flutter')
+    if binary is None:
+        raise RuntimeError('flutter is not on PATH')
+    root = Path(binary).resolve().parent.parent
+    try:
+        return subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise RuntimeError(f'Cannot resolve flutter revision in {root}') from error
+
+
 def is_missing_signature(log):
     return bool(re.search(
         r'(?i)(no signing configs|signing config.*(?:not found|not exist)|'
@@ -75,7 +88,7 @@ def build(root):
     shutil.copyfile(root / 'THIRD_PARTY_NOTICES.md', destination / 'THIRD_PARTY_NOTICES.md')
     provenance = {
         'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
-        'flutter': 'CPF-Flutter 3ffe70c6280cc6ddf613bffa59dd70611f238f7e',
+        'flutter': f'CPF-Flutter {flutter_commit()}',
         'sdk': '26.0.0.821', 'signed': False,
         'file': name, 'sha256': digest,
     }

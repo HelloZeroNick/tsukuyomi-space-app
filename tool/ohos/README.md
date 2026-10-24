@@ -4,7 +4,7 @@
 
 ## 工具链
 
-- CPF-Flutter `oh-3.44.9-dev`，固定提交 `3ffe70c6280cc6ddf613bffa59dd70611f238f7e`，Dart 3.12.2。
+- CPF-Flutter `oh-3.47.7-dev` 分支（CI 跟随该分支最新提交，构建来源记录实际使用的提交），Dart 3.13.5。
 - HarmonyOS 工具链安装包 `26.0.0.821`（实测内置编译 SDK `26.0.0.105` / API 26）；当前工程最低版本 `6.0.2(22)`，只构建 ARM64。构建来源文件的 `sdk` 字段记录安装包版本，HAP 的 `module.json` 记录实际编译 SDK。
 - JDK 17、SDK 自带的 Node、ohpm、Hvigor；真机调试须有 DevEco Studio/hdc 和开发证书。
 - `dependency_overrides.json` 把 41 个 Git 插件及子包固定到贡献者 lockfile 对应的提交；不跟随可变的插件分支。
@@ -14,7 +14,7 @@
 ```sh
 git clone --branch ohos https://github.com/redchenk/tsukuyomi-space-app.git tsukuyomi-space-ohos
 cd tsukuyomi-space-ohos
-# 按 CPF-Flutter 文档安装上述 SDK，确保 flutter 指向固定版本。
+# 按 CPF-Flutter 文档安装上述 SDK，确保 flutter 指向 oh-3.47.7-dev 分支。
 python3 tool/release/prepare_assets.py
 python3 tool/ohos/prepare.py
 GIT_LFS_SKIP_SMUDGE=1 flutter pub get
@@ -22,7 +22,7 @@ flutter analyze --no-pub
 python3 tool/ohos/build.py
 ```
 
-`prepare.py` 仅为此构建启用鸿蒙插件和 Dart 3.12.2 下限，并从主线 `pubspec.yaml` 写入 HAP 版本。运行后不要把临时 manifest、lockfile 和 storage 兼容修改提交回来；丢弃此独立 checkout 即可恢复。标准 Flutter 的回归在准备前执行。
+`prepare.py` 为此构建启用鸿蒙插件，Dart 下限与其它平台保持一致（不再降级），并从主线 `pubspec.yaml` 写入 HAP 版本。运行后不要把临时 manifest、lockfile 和 storage 兼容修改提交回来；丢弃此独立 checkout 即可恢复。标准 Flutter 的回归在准备前执行。
 
 Live2D 从经 SHA-256 校验的官方 Cubism SDK 和模型编译，不使用贡献者预编译 `.so`。缺少 Core 时构建失败。HAP 包检查要求模型、纹理、AOT、Flutter、Live2D 库和依赖许可完整。`dist/ohos/` 输出未签名 HAP、SHA256SUMS、构建来源和第三方说明。
 

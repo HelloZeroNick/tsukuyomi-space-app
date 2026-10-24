@@ -138,6 +138,7 @@ class _AppUpdatePageState extends State<AppUpdatePage> {
               UpdatePlatform.macos => '\n\n${t('macos')}',
               UpdatePlatform.linux => '\n\n${t('linux')}',
               UpdatePlatform.ios => '\n\n${t('ios')}',
+              UpdatePlatform.ohos => '\n\n${t('ohos')}',
               _ => '',
             }}',
           ),
@@ -321,11 +322,11 @@ class _AppUpdatePageState extends State<AppUpdatePage> {
                       ),
                     if (c.phase == AppUpdatePhase.opened)
                       Text(
-                        t(
-                          platform == UpdatePlatform.ios
-                              ? 'iosOpened'
-                              : 'opened',
-                        ),
+                        t(switch (platform) {
+                          UpdatePlatform.ios => 'iosOpened',
+                          UpdatePlatform.ohos => 'ohosOpened',
+                          _ => 'opened',
+                        }),
                         style: TextStyle(height: 1.6, color: p.success),
                       ),
                     const SizedBox(height: 12),
@@ -346,14 +347,13 @@ class _AppUpdatePageState extends State<AppUpdatePage> {
                           label: Text(
                             t(
                               canInstall
-                                  ? platform == UpdatePlatform.ios
-                                        ? 'share'
-                                        : {
-                                            UpdatePlatform.macos,
-                                            UpdatePlatform.linux,
-                                          }.contains(platform)
-                                        ? 'open'
-                                        : 'install'
+                                  ? switch (platform) {
+                                      UpdatePlatform.ios => 'share',
+                                      UpdatePlatform.ohos => 'shareOhos',
+                                      UpdatePlatform.macos ||
+                                      UpdatePlatform.linux => 'open',
+                                      _ => 'install',
+                                    }
                                   : 'download',
                             ),
                           ),
@@ -377,6 +377,7 @@ class _AppUpdatePageState extends State<AppUpdatePage> {
                       UpdatePlatform.macos,
                       UpdatePlatform.linux,
                       UpdatePlatform.ios,
+                      UpdatePlatform.ohos,
                     }.contains(platform)) ...[
                       const SizedBox(height: 14),
                       Text(

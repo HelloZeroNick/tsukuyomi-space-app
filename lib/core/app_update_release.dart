@@ -53,7 +53,7 @@ class AppVersion implements Comparable<AppVersion> {
   }
 }
 
-enum UpdatePlatform { androidArm64, androidX64, windows, macos, linux, ios }
+enum UpdatePlatform { androidArm64, androidX64, windows, macos, linux, ios, ohos }
 
 extension UpdatePlatformAsset on UpdatePlatform {
   String get suffix => switch (this) {
@@ -63,6 +63,14 @@ extension UpdatePlatformAsset on UpdatePlatform {
     UpdatePlatform.macos => 'macos-universal.dmg',
     UpdatePlatform.linux => 'linux-x64.deb',
     UpdatePlatform.ios => 'ios-arm64-unsigned.ipa',
+    UpdatePlatform.ohos => 'ohos-arm64-unsigned.hap',
+  };
+
+  /// Checksum manifest published next to the installer. HarmonyOS releases ship
+  /// their own manifest that covers only the HAP and the OHOS documents.
+  String get checksumsName => switch (this) {
+    UpdatePlatform.ohos => 'OHOS-SHA256SUMS.txt',
+    _ => 'SHA256SUMS.txt',
   };
   String get label => switch (this) {
     UpdatePlatform.androidArm64 => 'Android · ARM64',
@@ -71,6 +79,7 @@ extension UpdatePlatformAsset on UpdatePlatform {
     UpdatePlatform.macos => 'macOS · Universal',
     UpdatePlatform.linux => 'Linux · x64',
     UpdatePlatform.ios => 'iOS · ARM64',
+    UpdatePlatform.ohos => 'HarmonyOS · ARM64',
   };
 }
 
@@ -146,10 +155,28 @@ class AppUpdateRelease {
           : null;
     }
 
-    final installer = asset(
-      'tsukuyomi-space-${version.base}-${platform.suffix}',
-    );
-    final checksums = asset('SHA256SUMS.txt');
+    UpdateAsset? assetWhere(RegExp pattern) {
+      final names = assets
+          .map((a) => a is Map ? a['name'] : null)
+          .whereType<String>()
+          .where(pattern.hasMatch)
+          .toList();
+      return names.length == 1 ? asset(names.single) : null;
+    }
+
+    // Every platform except HarmonyOS bakes the asset suffix into the published
+    // name. A HAP additionally carries the build number, which is not part of
+    // the release tag, so the name is matched by shape but must still occur
+    // exactly once.
+    final installer = platform == UpdatePlatform.ohos
+        ? assetWhere(
+            RegExp(
+              '^tsukuyomi-space-${RegExp.escape(version.base)}'
+              r'-\d{1,9}-ohos-arm64-unsigned\.hap$',
+            ),
+          )
+        : asset('tsukuyomi-space-${version.base}-${platform.suffix}');
+    final checksums = asset(platform.checksumsName);
     if (installer == null || checksums == null || checksums.size > 65536) {
       return null;
     }

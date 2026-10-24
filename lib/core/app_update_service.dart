@@ -143,7 +143,7 @@ class AppUpdateService {
   Future<void> _prune(Directory root, String keep) async {
     // Only this updater's old installer cache; never recurse or follow links.
     final known = RegExp(
-      r'^tsukuyomi-space-\d+\.\d+\.\d+-(?:windows-x64-setup\.exe|macos-universal\.dmg|linux-x64\.deb|android-(?:arm64-v8a|x86_64)\.apk|ios-arm64-unsigned\.ipa)(?:\.part)?$',
+      r'^tsukuyomi-space-\d+\.\d+\.\d+-(?:\d{1,9}-ohos-arm64-unsigned\.hap|windows-x64-setup\.exe|macos-universal\.dmg|linux-x64\.deb|android-(?:arm64-v8a|x86_64)\.apk|ios-arm64-unsigned\.ipa)(?:\.part)?$',
     );
     try {
       await for (final entry in root.list(followLinks: false).take(64)) {

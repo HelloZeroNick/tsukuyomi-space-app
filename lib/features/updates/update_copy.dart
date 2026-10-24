@@ -105,6 +105,17 @@ const _copy = <String, (String, String, String)>{
     'Save or send the IPA to your signing tool from the share sheet, then sign and install it.',
     '共有メニューで IPA を保存するか署名ツールに送り、署名してインストールしてください。',
   ),
+  'shareOhos': ('导出 HAP', 'Export HAP', 'HAP を書き出す'),
+  'ohos': (
+    '当前鸿蒙包为未签名 HAP。下载后导出，使用自己的证书签名并安装；无法在应用内直接覆盖安装。更新时保留已有应用数据，不要先卸载。',
+    'The HarmonyOS release is an unsigned HAP. Export it, sign it with your own certificate, then install. Direct in-app installation is unavailable. Keep the installed app so its data survives the update.',
+    'HarmonyOS 版は未署名の HAP です。書き出してご自身の証明書で署名し、インストールしてください。アプリ内の直接インストールには対応していません。更新時は既存データを残すため、アンインストールしないでください。',
+  ),
+  'ohosOpened': (
+    '请在分享菜单中保存 HAP 或交给签名工具，签名后覆盖安装；不要先卸载应用。',
+    'Save the HAP or send it to your signing tool from the share sheet, sign it, then install over the existing app without uninstalling it first.',
+    '共有メニューで HAP を保存するか署名ツールに送り、署名して上書きインストールしてください。先にアンインストールしないでください。',
+  ),
   'network': (
     '暂时无法连接下载服务器，请检查网络后重试。',
     'Cannot connect to the download server. Check your connection and try again.',
