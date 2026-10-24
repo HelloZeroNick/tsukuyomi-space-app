@@ -27,7 +27,10 @@ Map<String, Object?> _release({
   UpdatePlatform platform = UpdatePlatform.windows,
 }) {
   final version = AppVersion.parse(tag)!;
-  final file = 'tsukuyomi-space-${version.base}-${platform.suffix}';
+  // A HAP carries the build number in its name, like the published artifacts.
+  final file = platform == UpdatePlatform.ohos
+      ? 'tsukuyomi-space-${version.base}-42-${platform.suffix}'
+      : 'tsukuyomi-space-${version.base}-${platform.suffix}';
   return {
     'tag_name': tag,
     'draft': false,
@@ -38,7 +41,7 @@ Map<String, Object?> _release({
     'assets': [
       for (final asset in [
         _asset(file, digest: _hash),
-        _asset('SHA256SUMS.txt', size: 200),
+        _asset(platform.checksumsName, size: 200),
       ])
         {
           ...asset,
@@ -182,8 +185,39 @@ void main() {
       final r = AppUpdateRelease.parse(_release(platform: platform), platform)!;
       expect(r.installer.name, endsWith(platform.suffix));
       expect(r.installer.url.host, 'downloads.yachiyo.hk');
+      expect(r.checksums.name, platform.checksumsName);
     });
   }
+  test('HarmonyOS release requires the HAP and its own checksum manifest', () {
+    final hap = _release(platform: UpdatePlatform.ohos);
+    expect(AppUpdateRelease.parse(hap, UpdatePlatform.ohos), isNotNull);
+    // The generic manifest is not enough for HarmonyOS, and a HAP is not a
+    // valid installer for the other platforms.
+    final generic = {
+      ...hap,
+      'assets': [
+        for (final asset in (hap['assets'] as List).cast<Map>())
+          if (asset['name'] != 'OHOS-SHA256SUMS.txt')
+            {...asset, 'name': 'SHA256SUMS.txt'}
+          else
+            asset,
+      ],
+    };
+    expect(AppUpdateRelease.parse(generic, UpdatePlatform.ohos), isNull);
+    expect(AppUpdateRelease.parse(hap, UpdatePlatform.windows), isNull);
+    // Two HAPs for the same version are ambiguous and must be rejected.
+    final ambiguous = {
+      ...hap,
+      'assets': [
+        ...hap['assets'] as List,
+        {
+          ...(hap['assets'] as List).first as Map,
+          'name': 'tsukuyomi-space-0.6.12-43-ohos-arm64-unsigned.hap',
+        },
+      ],
+    };
+    expect(AppUpdateRelease.parse(ambiguous, UpdatePlatform.ohos), isNull);
+  });
   test('reject draft, mismatched repository, duplicates, missing checksums and malformed assets', () {
     final valid = _release();
     final assets = valid['assets'] as List;

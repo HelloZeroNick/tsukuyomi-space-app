@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'app_update_abi_stub.dart' if (dart.library.ffi) 'dart:ffi' show Abi;
 import 'app_release.dart';
 import 'app_update_release.dart';
+import 'platform_ohos.dart';
 
 const appUpdateChannel = MethodChannel('space.tsukuyomi/app_update');
 
@@ -22,7 +23,10 @@ class InstalledApp {
     final tag = AppVersion.parse(appReleaseTag)!;
     if (version == null) throw const UpdateFailure('metadata');
     UpdatePlatform? platform;
-    if (Platform.isAndroid) {
+    if (isOhosPlatform) {
+      // Only the ARM64 HAP is published; the emulator x64 build is not.
+      platform = UpdatePlatform.ohos;
+    } else if (Platform.isAndroid) {
       final abis =
           await appUpdateChannel.invokeListMethod<String>('supportedAbis') ??
           [];
@@ -65,6 +69,25 @@ abstract interface class UpdateInstaller {
 }
 
 class NativeUpdateInstaller implements UpdateInstaller {
+  static Future<void> _share(File file, String subject) async {
+    final view = PlatformDispatcher.instance.implicitView;
+    final size = view == null
+        ? const Size(2, 2)
+        : view.physicalSize / view.devicePixelRatio;
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        subject: subject,
+        sharePositionOrigin: Rect.fromLTWH(
+          size.width / 2,
+          size.height / 2,
+          1,
+          1,
+        ),
+      ),
+    );
+  }
+
   @override
   Future<UpdateInstallResult> install(
     File file,
@@ -78,23 +101,15 @@ class NativeUpdateInstaller implements UpdateInstaller {
           ? UpdateInstallResult.permissionRequired
           : UpdateInstallResult.opened;
     }
+    if (isOhosPlatform) {
+      // A HAP must carry the developer's own signing identity, which the app
+      // cannot supply. Hand the verified package to the system share sheet so
+      // the user can sign and install it, mirroring the iOS IPA flow.
+      await _share(file, 'Tsukuyomi Space · HarmonyOS HAP');
+      return UpdateInstallResult.shared;
+    }
     if (Platform.isIOS) {
-      final view = PlatformDispatcher.instance.implicitView;
-      final size = view == null
-          ? const Size(2, 2)
-          : view.physicalSize / view.devicePixelRatio;
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          subject: 'Tsukuyomi Space · iOS IPA',
-          sharePositionOrigin: Rect.fromLTWH(
-            size.width / 2,
-            size.height / 2,
-            1,
-            1,
-          ),
-        ),
-      );
+      await _share(file, 'Tsukuyomi Space · iOS IPA');
       return UpdateInstallResult.shared;
     }
     if (Platform.isWindows) {

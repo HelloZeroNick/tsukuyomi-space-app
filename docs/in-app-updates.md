@@ -18,6 +18,7 @@
 | macOS Universal | 下载、校验、打开 DMG | 拖入 Applications，确认替换旧版并重新打开 |
 | Debian / Ubuntu x64 | 下载、校验、打开 DEB | 系统软件安装器按系统权限提示完成更新；无图形安装器时按 GitHub 安装说明执行 |
 | iOS ARM64 | 下载、校验、分享/导出未签名 IPA | 使用自己的证书和签名工具签名安装；不能直接在应用内覆盖安装 |
+| HarmonyOS ARM64 | 下载、校验、分享/导出未签名 HAP | 使用自己的证书和签名工具签名后覆盖安装；不能直接在应用内覆盖安装，也不要先卸载应用 |
 
 更新不卸载应用，不清除账号、聊天、文章草稿和模型配置。Android 调试版与官方发布包签名不同，不能直接覆盖；应用会说明这个原因。iOS 改变签名身份或卸载可能影响本机数据，应沿用原签名身份。
 
@@ -34,6 +35,8 @@
 0.6.27 起，公开版本请求发往 `https://downloads.yachiyo.hk/releases.json`，安装包和 SHA256SUMS 从同域 `/releases/<tag>/<filename>` 下载。服务器在 GitHub Release 发布后自动校验并同步，仅保留最新完整版本；历史版本保留在 GitHub。0.6.26 及以前的更新器仍需先更新一次才能使用新来源。
 
 只接受官方下载域名内限定路径的 HTTPS 请求和重定向（最多 5 次），拒绝查询参数、凭据、片段和其他域名；不发送站点 Cookie、用户模型密钥或 GitHub 令牌。SHA256SUMS 必须精确匹配文件名；存在 GitHub `digest` 时必须一致。安装前再次校验本地文件大小、路径和 SHA-256。Android 在请求安装权限或打开安装器前，额外核对当前包名、签名证书和递增版本号。
+
+鸿蒙平台通过 `Platform.operatingSystem == 'ohos'` 识别，不使用 `Platform.isOhos` 或 `TargetPlatform.ohos`：这两个成员只存在于鸿蒙 Flutter 分支，在其它 SDK 下引用会编译失败。鸿蒙安装包名带构建号（`tsukuyomi-space-<版本>-<构建号>-ohos-arm64-unsigned.hap`），按形状匹配且必须唯一；校验表使用该发布自带的 `OHOS-SHA256SUMS.txt`，而不是五个通用平台的 `SHA256SUMS.txt`。
 
 下载位于应用的私有缓存 `tsukuyomi-updates`。不接受符号链接，不使用任意外部路径；Android FileProvider 只开放这个缓存子目录，并授予临时只读访问。
 
